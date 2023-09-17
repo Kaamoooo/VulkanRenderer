@@ -3,23 +3,23 @@
 #include <memory>
 #include "Model.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace Kaamoo {
-    struct Transform2dComponent {
-        glm::vec2 translation{};
-        glm::vec2 scale{1.f, 1.f};
-        float rotation;
+    struct TransformComponent {
+        glm::vec3 translation{};
+        glm::vec3 scale{1.f, 1.f, 1.f};
+        glm::vec3 rotation;
 
-        glm::mat2 mat2() {
-            const float s = glm::sin(rotation);
-            const float c = glm::cos(rotation);
-
-            //glm的矩阵是列主序！！
-            glm::mat2 rotationMatrix = {
-                    {c, s}, {-s, c}
-            };
-            glm::mat2 scaleMatrix = {{scale.x, 0},
-                                     {0,scale.y}};
-            return rotationMatrix*scaleMatrix;
+        glm::mat4 mat4() {
+            auto transform = glm::translate(glm::mat4{1.f},translation);
+            
+            transform=glm::rotate(transform,rotation.y,{0,1,0});
+            transform=glm::rotate(transform,rotation.x,{1,0,0});
+            transform=glm::rotate(transform,rotation.z,{0,0,1});
+            
+            transform = glm::scale(transform,scale);
+            return transform;
         }
     };
 
@@ -30,7 +30,7 @@ namespace Kaamoo {
         using id_t = unsigned int;
         std::shared_ptr<Model> model;
         glm::vec3 color;
-        Transform2dComponent transform2d;
+        TransformComponent transform{};
 
         static GameObject createGameObject() {
             static id_t currentID = 0;

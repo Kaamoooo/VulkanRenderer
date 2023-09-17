@@ -81,7 +81,7 @@ namespace Kaamoo {
             swapChain = std::make_unique<SwapChain>(device, extent,oldSwapChain);
 
             if (!oldSwapChain->compareSwapFormats(*swapChain)){
-                throw std::runtime_error("Swap chain's image or depth format has  changed");
+                throw std::runtime_error("Swap chain's image or depth format has changed");
             }
             
         }

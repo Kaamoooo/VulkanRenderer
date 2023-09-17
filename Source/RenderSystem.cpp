@@ -7,8 +7,7 @@ namespace Kaamoo {
     //由于Shader中的constant data变量是按16bytes来分别存储的，即不满16字节的变量也要存储16字节，所以此处必须添加alignas(16)来与Shader匹配，表示内存地址是16的倍数
     struct SimplePushConstantData {
         //按对角线初始化
-        glm::mat2 transform{1.f};
-        alignas(16)glm::vec2 offset;
+        glm::mat4 transform{1.f};
         alignas(16)glm::vec3 color;
     };
 
@@ -57,11 +56,10 @@ namespace Kaamoo {
     void RenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects) {
         pipeline->bind(commandBuffer);
         for (auto &obj: gameObjects) {
-            obj.transform2d.rotation = obj.transform2d.rotation + 0.01f;
+            obj.transform.rotation = obj.transform.rotation + 0.01f;
             SimplePushConstantData pushConstantData{};
-            pushConstantData.offset = obj.transform2d.translation;
             pushConstantData.color = obj.color;
-            pushConstantData.transform = obj.transform2d.mat2();
+            pushConstantData.transform = obj.transform.mat4();
 
             vkCmdPushConstants(commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
