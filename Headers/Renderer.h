@@ -39,7 +39,10 @@ namespace Kaamoo {
             assert(isFrameStarted && "Cannot get frame index when frame is not in progress");
             return currentFrameIndex;
         }
-
+        
+        float getAspectRatio() const{
+            return swapChain->extentAspectRatio();
+        }
     private:
         void createCommandBuffers();
 
