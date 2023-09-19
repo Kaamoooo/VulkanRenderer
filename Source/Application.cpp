@@ -5,13 +5,31 @@ namespace Kaamoo {
     void Application::run() {
         RenderSystem renderSystem{device, renderer.getSwapChainRenderPass()};
 
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        
         Camera camera{};
+//        camera.setViewDirection(glm::vec3{0},glm::vec3{0.5f,0,1.f});
+        camera.setViewTarget(glm::vec3{-1.f,-2.f,20.f},glm::vec3{0,0,2.5f});
 
+        //没有模型的gameObject，用以存储相机的状态
+        auto viewerObject = GameObject::createGameObject();
+        KeyboardMovementController cameraController{};
+        
+        
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
+            
+            //glfwPollEvents函数会阻塞程序，因此在这里定义新时间
+            auto newTime = std::chrono::high_resolution_clock::now();
+            float frameTime = std::chrono::duration<float,std::chrono::seconds::period>(newTime-currentTime).count();
+            currentTime=newTime;
+            
+            cameraController.moveInPlaneXZ(myWindow.getGLFWwindow(),frameTime,viewerObject);
+            camera.setViewYXZ(viewerObject.transform.translation,viewerObject.transform.rotation); 
+            
             float aspectRatio = renderer.getAspectRatio();
 //            camera.setOrthographicProjection(-aspectRatio, aspectRatio, -1, 1, -1, 1);
-            camera.setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 10.f);
+            camera.setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
             if (auto commandBuffer = renderer.beginFrame()) {
                 //Q:为什么没有将beginFrame与beginSwapChainRenderPass结合在一起？
                 //A:为了在这里添加一些其他的pass，例如offscreen shadow pass
@@ -108,6 +126,7 @@ namespace Kaamoo {
         std::shared_ptr<Model> cubeModel = createCubeModel(device, {0, 0, 0});
         auto cubeGameObj = GameObject::createGameObject();
         cubeGameObj.model = cubeModel;
+        //世界坐标
         cubeGameObj.transform.translation = {0, 0, 2.5f};
         //vulkan的view视图，xy在-1~1，z在0~1，除此之外会被裁剪
         cubeGameObj.transform.scale = {0.5f, 0.5f, 0.5f};

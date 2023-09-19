@@ -37,6 +37,10 @@ namespace Kaamoo {
         vkUnmapMemory(device.device(), vertexBufferMemory);
     }
 
+    Model::Model(Device &device, const Model::Builder &builder) {
+
+    }
+
     std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
         bindingDescriptions[0].binding=0;

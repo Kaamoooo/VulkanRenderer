@@ -56,11 +56,13 @@ namespace Kaamoo {
     void RenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects,
                                          const Camera &camera) {
         pipeline->bind(commandBuffer);
+        
+        auto projectionView = camera.getProjectionMatrix()*camera.getViewMatrix();
+        
         for (auto &obj: gameObjects) {
-            obj.transform.rotation = obj.transform.rotation + 0.01f;
             SimplePushConstantData pushConstantData{};
             pushConstantData.color = obj.color;
-            pushConstantData.transform = camera.getProjectionMatrix() * obj.transform.mat4();
+            pushConstantData.transform = projectionView * obj.transform.mat4();
 
             vkCmdPushConstants(commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,

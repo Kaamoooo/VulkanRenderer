@@ -9,6 +9,8 @@
 #include "Model.hpp"
 #include "GameObject.h"
 #include "RenderSystem.h"
+#include "KeyboardMovementController.h"
+#include <chrono>
 
 namespace Kaamoo {
     class Application {

@@ -22,8 +22,14 @@ namespace Kaamoo {
 
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
         };
+        
+        struct Builder{
+            std::vector<Vertex> vertices{};
+            std::vector<uint32_t> indices{};
+        };
 
-        Model(Device &device, const std::vector<Vertex> &vertices);
+//        Model(Device &device, const std::vector<Vertex> &vertices);
+        Model(Device &device, const Builder& builder);
 
         ~Model();
 

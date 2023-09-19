@@ -32,6 +32,10 @@ namespace Kaamoo {
         //禁用窗口的赋值
         MyWindow(const MyWindow &) = delete;
         MyWindow operator=(const MyWindow &) = delete;
+        
+        [[nodiscard]] GLFWwindow* getGLFWwindow() const {
+            return window;
+        }
 
     private:
         static void frameBufferResizedCallback(GLFWwindow* myWindow, int width, int height);
