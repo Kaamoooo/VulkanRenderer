@@ -336,7 +336,9 @@ namespace Kaamoo {
             viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
             viewInfo.format = depthFormat;
             viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            //起始mip层级
             viewInfo.subresourceRange.baseMipLevel = 0;
+            //涵盖的mip层级数目
             viewInfo.subresourceRange.levelCount = 1;
             viewInfo.subresourceRange.baseArrayLayer = 0;
             viewInfo.subresourceRange.layerCount = 1;
