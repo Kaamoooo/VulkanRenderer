@@ -48,9 +48,20 @@ namespace Kaamoo {
 
         GameObject &operator=(GameObject &&) = default;
 
+        glm::vec3 getForwardDir() const {
+            float yaw = transform.rotation.y;
+            return glm::vec3{glm::sin(yaw), 0, glm::cos(yaw)};
+        };
+        
+        void setIterationTimes(int times);
+        
+        uint32_t getIterationTimes() const {
+            return iteration;
+        }
 
     private:
         id_t id;
+        uint32_t iteration=0;
 
         GameObject(id_t id) : id{id} {};
     };

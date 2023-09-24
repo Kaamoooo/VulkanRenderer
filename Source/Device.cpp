@@ -152,6 +152,7 @@ void Device::createLogicalDevice() {
 
   VkPhysicalDeviceFeatures deviceFeatures = {};
   deviceFeatures.samplerAnisotropy = VK_TRUE;
+  deviceFeatures.geometryShader=VK_TRUE;
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -163,8 +164,6 @@ void Device::createLogicalDevice() {
   createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
   createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-  // might not really be necessary anymore because device specific validation layers
-  // have been deprecated
   if (enableValidationLayers) {
     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
     createInfo.ppEnabledLayerNames = validationLayers.data();
@@ -211,7 +210,7 @@ bool Device::isDeviceSuitable(VkPhysicalDevice device) {
   vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
   return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-         supportedFeatures.samplerAnisotropy;
+         supportedFeatures.samplerAnisotropy&&supportedFeatures.geometryShader;
 }
 
 void Device::populateDebugMessengerCreateInfo(

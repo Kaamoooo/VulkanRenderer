@@ -18,7 +18,7 @@ namespace Kaamoo {
 
         RenderSystem(const RenderSystem&)=delete;
         RenderSystem& operator= (const RenderSystem&) = delete;
-        void renderGameObjects(VkCommandBuffer commandBuffer,std::vector<GameObject>& gameObjects,const Camera& camera);
+        void renderGameObjects(VkCommandBuffer commandBuffer,std::vector<GameObject>& gameObjects,const Camera& camera,const GameObject& viewerObject);
 
     private:
         void createPipelineLayout();

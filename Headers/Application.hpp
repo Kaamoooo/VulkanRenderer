@@ -27,7 +27,7 @@ namespace Kaamoo {
     private:
         void loadGameObjects();
         
-        MyWindow myWindow{WIDTH, HEIGHT, "Hello, Vulkan!"};
+        MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         //手动编译Shader，此时读取编译后的文件
         //路径是从可执行文件开始的，并非从根目录
         Device device{myWindow};

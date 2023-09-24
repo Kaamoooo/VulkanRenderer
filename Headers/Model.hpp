@@ -28,8 +28,8 @@ namespace Kaamoo {
             std::vector<uint32_t> indices{};
         };
 
-//        Model(Device &device, const std::vector<Vertex> &vertices);
-        Model(Device &device, const Builder& builder);
+        Model(Device &device, const std::vector<Vertex> &vertices);
+//        Model(Device &device, const Builder& builder);
 
         ~Model();
 

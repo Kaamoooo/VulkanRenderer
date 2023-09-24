@@ -19,29 +19,46 @@ namespace Kaamoo {
         return buffer;
     }
 
-    Pipeline::Pipeline(Device &device, const std::string &vertShaderPath, const std::string &fragShaderPath,
-                       const PipelineConfigureInfo &pipelineConfigureInfo) : device(device) {
-        createPipeline(vertShaderPath, fragShaderPath, pipelineConfigureInfo);
+    Pipeline::Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo,
+                       const std::string &vertShaderPath, const std::string &fragShaderPath,
+                       const std::string &geoShaderPath
+    ) : device(device) {
+        createPipeline(pipelineConfigureInfo, vertShaderPath, fragShaderPath, geoShaderPath);
     }
+
 
     Pipeline::~Pipeline() {
         vkDestroyShaderModule(device.device(), vertShaderModule, nullptr);
         vkDestroyShaderModule(device.device(), fragShaderModule, nullptr);
+        vkDestroyShaderModule(device.device(), geoShaderModule, nullptr);
         vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
     }
 
-    void Pipeline::createPipeline(const std::string &vertShaderPath, const std::string &fragShaderPath,
-                                  const PipelineConfigureInfo &pipelineConfigureInfo) {
+    void Pipeline::createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo, const std::string &vertShaderPath,
+                                  const std::string &fragShaderPath, const std::string &geoShaderPath
+    ) {
         auto vertShaderCode = readFile(vertShaderPath);
         auto fragShaderCode = readFile(fragShaderPath);
+        std::vector<char> geoShaderCode;
+        if (!geoShaderPath.empty()) geoShaderCode = readFile(geoShaderPath);
 
         std::cout << "Vertex Shader Code Size: " << vertShaderCode.size() << std::endl;
         std::cout << "Fragment Shader Code Size: " << fragShaderCode.size() << std::endl;
 
+
         createShaderModule(vertShaderCode, &vertShaderModule);
         createShaderModule(fragShaderCode, &fragShaderModule);
 
-        VkPipelineShaderStageCreateInfo shaderStageCreateInfo[2];
+        uint32_t shaderStageCount = 2;
+
+        if (enableGeometryShader) {
+            std::cout << "Geometry Shader Code Size: " << geoShaderCode.size() << std::endl;
+            createShaderModule(geoShaderCode, &geoShaderModule);
+            shaderStageCount++;
+        }
+
+
+        VkPipelineShaderStageCreateInfo shaderStageCreateInfo[shaderStageCount];
 
         shaderStageCreateInfo[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStageCreateInfo[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -50,7 +67,7 @@ namespace Kaamoo {
         shaderStageCreateInfo[0].flags = 0;
         shaderStageCreateInfo[0].pNext = nullptr;
         shaderStageCreateInfo[0].pSpecializationInfo = nullptr;
-
+        
         shaderStageCreateInfo[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStageCreateInfo[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
         shaderStageCreateInfo[1].module = fragShaderModule;
@@ -58,6 +75,16 @@ namespace Kaamoo {
         shaderStageCreateInfo[1].flags = 0;
         shaderStageCreateInfo[1].pNext = nullptr;
         shaderStageCreateInfo[1].pSpecializationInfo = nullptr;
+
+        if (enableGeometryShader) {
+            shaderStageCreateInfo[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            shaderStageCreateInfo[2].stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+            shaderStageCreateInfo[2].module = geoShaderModule;
+            shaderStageCreateInfo[2].pName = "main";
+            shaderStageCreateInfo[2].flags = 0;
+            shaderStageCreateInfo[2].pNext = nullptr;
+            shaderStageCreateInfo[2].pSpecializationInfo = nullptr;
+        }
 
 //        VkPipelineViewportStateCreateInfo viewportInfo{};
 //        viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -78,7 +105,7 @@ namespace Kaamoo {
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
         pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineCreateInfo.stageCount = 2;
+        pipelineCreateInfo.stageCount = shaderStageCount;
         pipelineCreateInfo.pStages = shaderStageCreateInfo;
         pipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
         pipelineCreateInfo.pInputAssemblyState = &pipelineConfigureInfo.inputAssemblyInfo;
@@ -104,7 +131,7 @@ namespace Kaamoo {
 
     }
 
-    void Pipeline::setDefaultPipelineConfigureInfo(PipelineConfigureInfo& configureInfo) {
+    void Pipeline::setDefaultPipelineConfigureInfo(PipelineConfigureInfo &configureInfo) {
         configureInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configureInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         configureInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
@@ -119,10 +146,10 @@ namespace Kaamoo {
 //        configureInfo.scissor.offset = {0, 0};
 //        configureInfo.scissor.extent = {width, height};
         configureInfo.viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        configureInfo.viewportStateCreateInfo.viewportCount=1;
-        configureInfo.viewportStateCreateInfo.pViewports= nullptr;
-        configureInfo.viewportStateCreateInfo.scissorCount=1;
-        configureInfo.viewportStateCreateInfo.pScissors= nullptr;
+        configureInfo.viewportStateCreateInfo.viewportCount = 1;
+        configureInfo.viewportStateCreateInfo.pViewports = nullptr;
+        configureInfo.viewportStateCreateInfo.scissorCount = 1;
+        configureInfo.viewportStateCreateInfo.pScissors = nullptr;
 
 
         configureInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -131,7 +158,7 @@ namespace Kaamoo {
         configureInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
         configureInfo.rasterizationInfo.lineWidth = 1.0f;
         configureInfo.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
-        configureInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        configureInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         configureInfo.rasterizationInfo.depthBiasEnable = VK_FALSE;
         configureInfo.rasterizationInfo.depthBiasConstantFactor = 0.0f;  // Optional
         configureInfo.rasterizationInfo.depthBiasClamp = 0.0f;           // Optional
@@ -178,12 +205,12 @@ namespace Kaamoo {
         configureInfo.depthStencilInfo.back = {};   // Optional
 
         //指定管线的动态状态
-        configureInfo.dynamicStateEnables={VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR};
-        configureInfo.dynamicStateCreateInfo.sType=VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        configureInfo.dynamicStateCreateInfo.pDynamicStates=configureInfo.dynamicStateEnables.data();
-        configureInfo.dynamicStateCreateInfo.dynamicStateCount=static_cast<uint32_t>(configureInfo.dynamicStateEnables.size());
-        configureInfo.dynamicStateCreateInfo.flags=0;
-        configureInfo.dynamicStateCreateInfo.pNext= nullptr;
+        configureInfo.dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        configureInfo.dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        configureInfo.dynamicStateCreateInfo.pDynamicStates = configureInfo.dynamicStateEnables.data();
+        configureInfo.dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(configureInfo.dynamicStateEnables.size());
+        configureInfo.dynamicStateCreateInfo.flags = 0;
+        configureInfo.dynamicStateCreateInfo.pNext = nullptr;
     }
 
     void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {
@@ -200,5 +227,6 @@ namespace Kaamoo {
     void Pipeline::bind(VkCommandBuffer commandBuffer) {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
     }
+
 
 }

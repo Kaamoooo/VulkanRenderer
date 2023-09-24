@@ -13,8 +13,7 @@ namespace Kaamoo {
 
         //没有模型的gameObject，用以存储相机的状态
         auto viewerObject = GameObject::createGameObject();
-        KeyboardMovementController cameraController{};
-        
+        KeyboardController cameraController{};
         
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
@@ -25,6 +24,7 @@ namespace Kaamoo {
             currentTime=newTime;
             
             cameraController.moveInPlaneXZ(myWindow.getGLFWwindow(),frameTime,viewerObject);
+            cameraController.changeIteration(myWindow.getGLFWwindow(),gameObjects);
             camera.setViewYXZ(viewerObject.transform.translation,viewerObject.transform.rotation); 
             
             float aspectRatio = renderer.getAspectRatio();
@@ -34,7 +34,7 @@ namespace Kaamoo {
                 //Q:为什么没有将beginFrame与beginSwapChainRenderPass结合在一起？
                 //A:为了在这里添加一些其他的pass，例如offscreen shadow pass
                 renderer.beginSwapChainRenderPass(commandBuffer);
-                renderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
+                renderSystem.renderGameObjects(commandBuffer, gameObjects, camera, viewerObject);
                 renderer.endSwapChainRenderPass(commandBuffer);
                 renderer.endFrame();
             }
@@ -52,11 +52,11 @@ namespace Kaamoo {
 
                 // left face (white)
                 {{-.5f, -.5f, -.5f},  {.9f, .9f, .9f}},
-                {{-.5f, .5f,  .5f},   {.9f, .9f, .9f}},
                 {{-.5f, -.5f, .5f},   {.9f, .9f, .9f}},
-                {{-.5f, -.5f, -.5f},  {.9f, .9f, .9f}},
-                {{-.5f, .5f,  -.5f},  {.9f, .9f, .9f}},
                 {{-.5f, .5f,  .5f},   {.9f, .9f, .9f}},
+                {{-.5f, -.5f, -.5f},  {.9f, .9f, .9f}},
+                {{-.5f, .5f,  .5f},   {.9f, .9f, .9f}},
+                {{-.5f, .5f,  -.5f},  {.9f, .9f, .9f}},
 
                 // right face (yellow)
                 {{.5f,  -.5f, -.5f},  {.8f, .8f, .1f}},
@@ -66,7 +66,7 @@ namespace Kaamoo {
                 {{.5f,  .5f,  -.5f},  {.8f, .8f, .1f}},
                 {{.5f,  .5f,  .5f},   {.8f, .8f, .1f}},
 
-                // top face (orange, remember y-axis points down)
+                // top face (orange)
                 {{-.5f, -.5f, -.5f},  {.9f, .6f, .1f}},
                 {{.5f,  -.5f, .5f},   {.9f, .6f, .1f}},
                 {{-.5f, -.5f, .5f},   {.9f, .6f, .1f}},
@@ -76,13 +76,13 @@ namespace Kaamoo {
 
                 // bottom face (red)
                 {{-.5f, .5f,  -.5f},  {.8f, .1f, .1f}},
-                {{.5f,  .5f,  .5f},   {.8f, .1f, .1f}},
                 {{-.5f, .5f,  .5f},   {.8f, .1f, .1f}},
-                {{-.5f, .5f,  -.5f},  {.8f, .1f, .1f}},
-                {{.5f,  .5f,  -.5f},  {.8f, .1f, .1f}},
                 {{.5f,  .5f,  .5f},   {.8f, .1f, .1f}},
+                {{-.5f, .5f,  -.5f},  {.8f, .1f, .1f}},
+                {{.5f,  .5f,  .5f},   {.8f, .1f, .1f}},
+                {{.5f,  .5f,  -.5f},  {.8f, .1f, .1f}},
 
-                // nose face (blue)
+                // back face (blue)
                 {{-.5f, -.5f, 0.5f},  {.1f, .1f, .8f}},
                 {{.5f,  .5f,  0.5f},  {.1f, .1f, .8f}},
                 {{-.5f, .5f,  0.5f},  {.1f, .1f, .8f}},
@@ -90,13 +90,13 @@ namespace Kaamoo {
                 {{.5f,  -.5f, 0.5f},  {.1f, .1f, .8f}},
                 {{.5f,  .5f,  0.5f},  {.1f, .1f, .8f}},
 
-                // tail face (green)
+                // front face (green)
                 {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-                {{.5f,  .5f,  -0.5f}, {.1f, .8f, .1f}},
                 {{-.5f, .5f,  -0.5f}, {.1f, .8f, .1f}},
-                {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-                {{.5f,  -.5f, -0.5f}, {.1f, .8f, .1f}},
                 {{.5f,  .5f,  -0.5f}, {.1f, .8f, .1f}},
+                {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+                {{.5f,  .5f,  -0.5f}, {.1f, .8f, .1f}},
+                {{.5f,  -.5f, -0.5f}, {.1f, .8f, .1f}},
 
         };
         for (auto &v: vertices) {

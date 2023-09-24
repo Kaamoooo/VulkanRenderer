@@ -30,6 +30,7 @@ namespace Kaamoo {
 //        VkViewport viewport;
 //        VkRect2D scissor;
 
+
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;
         uint32_t subpass = 0;
@@ -37,8 +38,9 @@ namespace Kaamoo {
 
     class Pipeline {
     public:
-        Pipeline(Device &device, const std::string &vertShaderPath, const std::string &fragShaderPath,
-                 const PipelineConfigureInfo &pipelineConfigureInfo);
+        Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, const std::string &vertShaderPath,
+                 const std::string &fragShaderPath, const std::string &geoShaderPath
+        );
 
         ~Pipeline();
 
@@ -46,21 +48,27 @@ namespace Kaamoo {
 
         void operator=(const Pipeline &) = delete;
 
-        static void setDefaultPipelineConfigureInfo(PipelineConfigureInfo&);
+        static void setDefaultPipelineConfigureInfo(PipelineConfigureInfo &);
 
         void bind(VkCommandBuffer commandBuffer);
+
+        bool isGeometryShaderEnabled() const { return enableGeometryShader; }
+        
 
     private:
         Device &device;
         VkPipeline graphicsPipeline;
         VkShaderModule vertShaderModule;
         VkShaderModule fragShaderModule;
+        VkShaderModule geoShaderModule = VK_NULL_HANDLE;
+
+        bool enableGeometryShader = true;
 
         static std::vector<char> readFile(const std::string &filepath);
 
         void
-        createPipeline(const std::string &vertShaderPath, const std::string &fragShaderPath,
-                       const PipelineConfigureInfo &pipelineConfigureInfo);
+        createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo, const std::string &vertShaderPath,
+                       const std::string &fragShaderPath, const std::string &geoShaderPath);
 
         void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
     };

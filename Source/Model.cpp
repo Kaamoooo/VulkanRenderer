@@ -22,6 +22,7 @@ namespace Kaamoo {
 
     void Model::createVertexBuffers(const std::vector<Vertex> &vertices) {
         vertexCount = static_cast<uint32_t>(vertices.size());
+        
         assert(vertexCount >= 3 && "vertex count must be at least 3");
         //uint64_t
         VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
@@ -37,9 +38,9 @@ namespace Kaamoo {
         vkUnmapMemory(device.device(), vertexBufferMemory);
     }
 
-    Model::Model(Device &device, const Model::Builder &builder) {
-
-    }
+//    Model::Model(Device &device, const Model::Builder &builder) {
+//
+//    }
 
     std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);

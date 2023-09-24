@@ -4,7 +4,7 @@
 #include "MyWindow.hpp"
 
 namespace Kaamoo{
-    class KeyboardMovementController{
+    class KeyboardController{
     public:
         struct KeyMappings{
             int moveLeft = GLFW_KEY_A;
@@ -17,6 +17,12 @@ namespace Kaamoo{
             int lookRight = GLFW_KEY_RIGHT;
             int lookUp = GLFW_KEY_UP;
             int lookDown = GLFW_KEY_DOWN;
+            
+            int zero = GLFW_KEY_0;
+            int one = GLFW_KEY_1;
+            int two = GLFW_KEY_2;
+            int three = GLFW_KEY_3;
+            int four = GLFW_KEY_4;
         };
         
         KeyMappings keys{};
@@ -25,5 +31,7 @@ namespace Kaamoo{
         float lookSpeed{1.5f};
         
         void moveInPlaneXZ(GLFWwindow* glfWwindow,float dt,GameObject& gameObject);
+        
+        void changeIteration(GLFWwindow* glfWwindow,std::vector<GameObject>&);
     };
 }
