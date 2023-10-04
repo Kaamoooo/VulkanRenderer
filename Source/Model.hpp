@@ -28,8 +28,7 @@ namespace Kaamoo {
             std::vector<uint32_t> indices{};
         };
 
-        Model(Device &device, const std::vector<Vertex> &vertices);
-//        Model(Device &device, const Builder& builder);
+        Model(Device &device, const Builder& builder);
 
         ~Model();
 
@@ -39,10 +38,17 @@ namespace Kaamoo {
 
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
+        void createIndexBuffers(const std::vector<uint32_t> &indices);
 
         Device &device;
+        
         VkBuffer vertexBuffer;
         VkDeviceMemory vertexBufferMemory;
         uint32_t vertexCount;
+
+        bool hasIndexBuffer= false;
+        VkBuffer indexBuffer;
+        VkDeviceMemory indexBufferMemory;
+        uint32_t indexCount;
     };
 }

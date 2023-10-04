@@ -1,7 +1,7 @@
 ﻿//
 // Created by asus on 2023/9/19.
 //
-#include "../Headers/KeyboardMovementController.h"
+#include "KeyboardMovementController.h"
 
 namespace Kaamoo {
     void KeyboardController::moveInPlaneXZ(GLFWwindow *window, float dt, GameObject &gameObject) {

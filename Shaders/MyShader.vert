@@ -13,7 +13,7 @@ layout(push_constant) uniform PushConstantData{
 } pushConstantData;
 
 void main(){
-    gl_Position = vec4(positions, 1.0);
-//    gl_Position = pushConstantData.transform *vec4(positions, 1.0);
+//    gl_Position = vec4(positions, 1.0);
+    gl_Position = pushConstantData.transform *vec4(positions, 1.0);
     fragColor=color;
 }

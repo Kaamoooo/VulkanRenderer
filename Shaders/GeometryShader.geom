@@ -60,7 +60,7 @@ void main() {
     float finalEdgeLength = normalEdgeLength / pow(3.0, float(iterations));
 
 
-    //1 2 25
+    //1 2 25 ...
     for (int i=0;i<240;i++){
         if (index<=0)break;
         vec4 v2=vertices[index--];

@@ -1,4 +1,4 @@
-﻿#include "../Headers/MyWindow.hpp"
+﻿#include "MyWindow.hpp"
 
 namespace Kaamoo {
     MyWindow::MyWindow(int w, int h, std::string name) : width(w), height(h), windowName(name) {

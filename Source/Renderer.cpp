@@ -2,7 +2,7 @@
 // Created by asus on 2023/9/16.
 //
 
-#include "../Headers/Renderer.h"
+#include "Renderer.h"
 
 
 namespace Kaamoo {

@@ -1,4 +1,4 @@
-﻿#include "../Headers/Pipeline.hpp"
+﻿#include "Pipeline.hpp"
 
 namespace Kaamoo {
     std::vector<char> Pipeline::readFile(const std::string &filepath) {

@@ -1,4 +1,4 @@
-﻿#include "../Headers/RenderSystem.h"
+﻿#include "RenderSystem.h"
 
 namespace Kaamoo {
 
@@ -10,7 +10,6 @@ namespace Kaamoo {
         glm::mat4 transform{1.f};
         alignas(16)glm::vec3 color;
         alignas(16)glm::vec3 forwardDir;
-        uint32_t fractalIterations = 4;
     };
 
     RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass) : device{device} {
@@ -25,7 +24,7 @@ namespace Kaamoo {
     void RenderSystem::createPipelineLayout() {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags =
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT;
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
 
@@ -68,10 +67,9 @@ namespace Kaamoo {
             pushConstantData.color = obj.color;
             pushConstantData.transform = projectionView * obj.transform.mat4();
             pushConstantData.forwardDir=viewerObject.getForwardDir();
-            pushConstantData.fractalIterations = obj.getIterationTimes();
 
             vkCmdPushConstants(commandBuffer, pipelineLayout,
-                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT,
+                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                0,
                                sizeof(SimplePushConstantData),
                                &pushConstantData);

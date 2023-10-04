@@ -62,7 +62,7 @@ namespace Kaamoo {
         VkShaderModule fragShaderModule;
         VkShaderModule geoShaderModule = VK_NULL_HANDLE;
 
-        bool enableGeometryShader = true;
+        bool enableGeometryShader = false;
 
         static std::vector<char> readFile(const std::string &filepath);
 

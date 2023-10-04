@@ -1,4 +1,4 @@
-#include "../Headers/Application.hpp"
+#include "Application.hpp"
 
 #include <cstdlib>
 #include <iostream>
