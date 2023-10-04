@@ -15,3 +15,5 @@
 9.20~9.21 完成程序结构示例图
 
 9.23~9.24 完成几何着色器动态生成三维分形
+
+10.4 添加了index buffer，更改了buffer属性为device local并配合staging buffer以优化性能
