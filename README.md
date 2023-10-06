@@ -17,3 +17,7 @@
 9.23~9.24 完成几何着色器动态生成三维分形
 
 10.4 添加了index buffer，更改了buffer属性为device local并配合staging buffer以优化性能
+
+10.5 添加了对obj文件的读取功能(调用了tiny obj loader库)，同时根据obj文件数据建立index buffer，难点在于对自定义vertex类型的hash模板特化重载
+
+10.6 添加了最简单的diffuse光照，抽象提取了Buffer类（依靠开源代码），创建了Uniform Buffer

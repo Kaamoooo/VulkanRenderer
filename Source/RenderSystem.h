@@ -7,6 +7,7 @@
 #include "Model.hpp"
 #include "GameObject.h"
 #include "Camera.h"
+#include "FrameInfo.h"
 
 namespace Kaamoo {
     class RenderSystem {
@@ -18,7 +19,7 @@ namespace Kaamoo {
 
         RenderSystem(const RenderSystem&)=delete;
         RenderSystem& operator= (const RenderSystem&) = delete;
-        void renderGameObjects(VkCommandBuffer commandBuffer,std::vector<GameObject>& gameObjects,const Camera& camera,const GameObject& viewerObject);
+        void renderGameObjects(FrameInfo &frameInfo,std::vector<GameObject>& gameObjects);
 
     private:
         void createPipelineLayout();

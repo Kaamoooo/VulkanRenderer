@@ -1,4 +1,5 @@
 ﻿#include "RenderSystem.h"
+#include "FrameInfo.h" 
 
 namespace Kaamoo {
 
@@ -8,8 +9,7 @@ namespace Kaamoo {
     struct SimplePushConstantData {
         //按对角线初始化
         glm::mat4 transform{1.f};
-        alignas(16)glm::vec3 color;
-        alignas(16)glm::vec3 forwardDir;
+        glm::mat4 normalMatrix{1.f};
     };
 
     RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass) : device{device} {
@@ -56,25 +56,24 @@ namespace Kaamoo {
         );
     }
 
-    void RenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects,
-                                         const Camera &camera,const GameObject& viewerObject) {
-        pipeline->bind(commandBuffer);
+    void RenderSystem::renderGameObjects(FrameInfo &frameInfo,std::vector<GameObject>& gameObjects) {
+        pipeline->bind(frameInfo.commandBuffer);
 
-        auto projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+        auto projectionView = frameInfo.camera.getProjectionMatrix() * frameInfo.camera.getViewMatrix();
         
         for (auto &obj: gameObjects) {
             SimplePushConstantData pushConstantData{};
-            pushConstantData.color = obj.color;
-            pushConstantData.transform = projectionView * obj.transform.mat4();
-            pushConstantData.forwardDir=viewerObject.getForwardDir();
+            auto modelMatrix = obj.transform.mat4();
+            pushConstantData.transform = projectionView * modelMatrix;
+            pushConstantData.normalMatrix = obj.transform.normalMatrix(); 
 
-            vkCmdPushConstants(commandBuffer, pipelineLayout,
+            vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                0,
                                sizeof(SimplePushConstantData),
                                &pushConstantData);
-            obj.model->bind(commandBuffer);
-            obj.model->draw(commandBuffer);
+            obj.model->bind(frameInfo.commandBuffer);
+            obj.model->draw(frameInfo.commandBuffer);
         }
     }
 }

@@ -11,16 +11,9 @@ namespace Kaamoo {
         glm::vec3 scale{1.f, 1.f, 1.f};
         glm::vec3 rotation;
 
-        glm::mat4 mat4() {
-            auto transform = glm::translate(glm::mat4{1.f},translation);
-            
-            transform=glm::rotate(transform,rotation.y,{0,1,0});
-            transform=glm::rotate(transform,rotation.x,{1,0,0});
-            transform=glm::rotate(transform,rotation.z,{0,0,1});
-            
-            transform = glm::scale(transform,scale);
-            return transform;
-        }
+        //根据 平移 缩放 旋转 构造model to world的变换矩阵
+        glm::mat4 mat4();
+        glm::mat3  normalMatrix();
     };
 
 
