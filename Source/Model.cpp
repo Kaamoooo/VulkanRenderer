@@ -3,7 +3,7 @@
 //引用tiny obj loader库读取模型
 #define TINYOBJLOADER_IMPLEMENTATION
 
-#include <tiny_obj_loader.h>
+#include "../External/tiny_obj_loader.h"
 #include <iostream>
 #include "Untils.h"
 #include <unordered_map>

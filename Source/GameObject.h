@@ -4,6 +4,7 @@
 #include "Model.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <unordered_map>
 
 namespace Kaamoo {
     struct TransformComponent {
@@ -21,6 +22,8 @@ namespace Kaamoo {
     public:
         //定义一个类型别名，id即代表无符号整数
         using id_t = unsigned int;
+        using Map = std::unordered_map<id_t,GameObject>;
+        
         std::shared_ptr<Model> model;
         glm::vec3 color;
         TransformComponent transform{};

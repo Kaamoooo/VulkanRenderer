@@ -2,6 +2,7 @@
 
 #include "Camera.h"
 #include <vulkan/vulkan.h>
+#include "GameObject.h"
 
 namespace Kaamoo{
     struct FrameInfo{
@@ -9,5 +10,7 @@ namespace Kaamoo{
         float frameTime;
         VkCommandBuffer commandBuffer;
         Camera &camera;
+        VkDescriptorSet globalDescriptorSet;
+        GameObject::Map &gameObjects;
     };
 }

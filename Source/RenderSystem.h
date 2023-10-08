@@ -14,15 +14,15 @@ namespace Kaamoo {
     public:
 
         void run();
-        RenderSystem(Device &device,VkRenderPass renderPass);
+        RenderSystem(Device &device,VkRenderPass renderPass,VkDescriptorSetLayout globalSetLayout);
         ~RenderSystem();
 
         RenderSystem(const RenderSystem&)=delete;
         RenderSystem& operator= (const RenderSystem&) = delete;
-        void renderGameObjects(FrameInfo &frameInfo,std::vector<GameObject>& gameObjects);
+        void renderGameObjects(FrameInfo &frameInfo);
 
     private:
-        void createPipelineLayout();
+        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
         //手动编译Shader，此时读取编译后的文件
