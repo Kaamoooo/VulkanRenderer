@@ -8,7 +8,8 @@
 #include "Device.hpp"
 #include "Model.hpp"
 #include "GameObject.h"
-#include "RenderSystem.h"
+#include "Systems/RenderSystem.h"
+#include "Systems/PointLightSystem.h"
 #include "KeyboardMovementController.h"
 #include <chrono>
 #include "Descriptor.h"

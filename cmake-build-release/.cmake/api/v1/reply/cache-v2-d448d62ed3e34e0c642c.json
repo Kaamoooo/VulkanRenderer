@@ -1254,6 +1254,18 @@
 			"value" : "FALSE"
 		},
 		{
+			"name" : "GLSL_VALIDATOR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to a program."
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "E:/Vulkan/SDK/Bin/glslangValidator.exe"
+		},
+		{
 			"name" : "VulkanTestClion_BINARY_DIR",
 			"properties" : 
 			[

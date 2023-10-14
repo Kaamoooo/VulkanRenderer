@@ -1,5 +1,5 @@
 ﻿#include "RenderSystem.h"
-#include "FrameInfo.h"
+#include "../FrameInfo.h"
 
 namespace Kaamoo {
 
@@ -73,6 +73,8 @@ namespace Kaamoo {
         );
 
         for (auto &pair: frameInfo.gameObjects) {
+            if (pair.second.model== nullptr)continue;
+            
             SimplePushConstantData push{};
             push.modelMatrix = pair.second.transform.mat4();
             push.normalMatrix = pair.second.transform.normalMatrix();

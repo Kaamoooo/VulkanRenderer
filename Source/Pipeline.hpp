@@ -15,6 +15,8 @@ namespace Kaamoo {
 
         PipelineConfigureInfo &operator=(const PipelineConfigureInfo) = delete;
 
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
@@ -39,7 +41,7 @@ namespace Kaamoo {
     class Pipeline {
     public:
         Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, const std::string &vertShaderPath,
-                 const std::string &fragShaderPath, const std::string &geoShaderPath
+                 const std::string &fragShaderPath, const std::string &geoShaderPath= ""
         );
 
         ~Pipeline();

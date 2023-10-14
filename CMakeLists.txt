@@ -7,8 +7,10 @@ set(CMAKE_EXE_LINKER_FLAGS "-static")
 include_directories("E:\\Vulkan\\glfw-3.3.8.bin.WIN64\\include")
 include_directories("E:\\Vulkan\\SDK\\Include")
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/Source/*.cpp)
-add_executable(${PROJECT_NAME} ${SOURCES})
+file(GLOB_RECURSE SOURCES 
+        ${PROJECT_SOURCE_DIR}/Source/*.cpp
+        ${PROJECT_SOURCE_DIR}/Source/Systems/*.cpp)
+add_executable(${PROJECT_NAME} ${SOURCES} Source/Systems/PointLightSystem.cpp Source/Systems/PointLightSystem.h)
 #target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Source)
 #add_executable(VulkanTestClion Source/main.cpp Source/MyWindow.hpp Source/Application.hpp Source/Pipeline.hpp Source/Device.cpp Source/Device.hpp Source/Application.cpp Source/MyWindow.cpp Source/Pipeline.cpp Source/SwapChain.cpp Source/Model.hpp Source/Model.cpp Source/Model.cpp Source/GameObject.h Source/Renderer.h Source/Renderer.cpp Source/RenderSystem.h Source/RenderSystem.cpp Source/Camera.h Source/Camera.h Source/Camera.cpp Source/KeyboardMovementController.h Source/KeyboardController.cpp Source/GameObject.cpp Source/Untils.h Source/Buffer.h Source/Buffer.cpp Source/FrameInfo.h Source/Descriptor.h Source/Descriptor.cpp)
 

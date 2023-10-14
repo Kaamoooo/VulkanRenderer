@@ -3,37 +3,41 @@
 
 namespace Kaamoo {
 
-    struct GlobalUbo {
-        glm::mat4 projectionViewMatrix{1.f};
-        glm::vec4 ambientColor{1,1,1,0.02f};
-        glm::vec4 pointLightPosition{-1};
-        glm::vec4 pointLightColor{1.f};
-    };
 
     void Application::run() {
-        uint32_t minOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,device.properties.limits.nonCoherentAtomSize);
+        uint32_t minOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,
+                                               device.properties.limits.nonCoherentAtomSize);
         Buffer globalUboBuffer(
                 device,
                 sizeof(GlobalUbo),
                 SwapChain::MAX_FRAMES_IN_FLIGHT,
-                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                 minOffsetAlignment
         );
         globalUboBuffer.map();
-        
-        auto globalSetLayout = 
+
+        auto globalSetLayout =
                 DescriptorSetLayout::Builder(device)
-                .addBinding(0,VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_ALL_GRAPHICS)
-                .build();
-        
+                        .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+                        .build();
+
         VkDescriptorSet globalDescriptorSet{};
         auto bufferInfo = globalUboBuffer.descriptorInfo();
-        DescriptorWriter(*globalSetLayout,*globalPool)
-        .writeBuffer(0,&bufferInfo)
-        .build(globalDescriptorSet);
+        DescriptorWriter(*globalSetLayout, *globalPool)
+                .writeBuffer(0, &bufferInfo)
+                .build(globalDescriptorSet);
 
-        RenderSystem renderSystem{device, renderer.getSwapChainRenderPass(),globalSetLayout->getDescriptorSetLayout()};
+        RenderSystem renderSystem{
+                device,
+                renderer.getSwapChainRenderPass(),
+                globalSetLayout->getDescriptorSetLayout()};
+
+        PointLightSystem pointLightSystem{
+                device,
+                renderer.getSwapChainRenderPass(),
+                globalSetLayout->getDescriptorSetLayout()
+        };
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -41,8 +45,8 @@ namespace Kaamoo {
         camera.setViewTarget(glm::vec3{-1.f, -2.f, 20.f}, glm::vec3{0, 0, 2.5f});
 
         auto viewerObject = GameObject::createGameObject();
-        viewerObject.transform.translation.z=-2.5f;
-        viewerObject.transform.translation.y=-0.5f;
+        viewerObject.transform.translation.z = -2.5f;
+        viewerObject.transform.translation.y = -0.5f;
         KeyboardController cameraController{};
 
         while (!myWindow.shouldClose()) {
@@ -70,14 +74,20 @@ namespace Kaamoo {
                 };
 
                 GlobalUbo ubo{};
-                ubo.projectionViewMatrix = camera.getProjectionMatrix() * camera.getViewMatrix();
+                ubo.viewMatrix = camera.getViewMatrix();
+                ubo.projectionMatrix = camera.getProjectionMatrix();
+                pointLightSystem.update(frameInfo, ubo);
+                
+                
                 globalUboBuffer.writeToIndex(&ubo, frameIndex);
                 globalUboBuffer.flushIndex(frameIndex);
 
+                
                 //Q:为什么没有将beginFrame与beginSwapChainRenderPass结合在一起？
                 //A:为了在这里添加一些其他的pass，例如offscreen shadow pass
                 renderer.beginSwapChainRenderPass(commandBuffer);
                 renderSystem.renderGameObjects(frameInfo);
+                pointLightSystem.render(frameInfo);
                 renderer.endSwapChainRenderPass(commandBuffer);
                 renderer.endFrame();
             }
@@ -86,11 +96,11 @@ namespace Kaamoo {
     }
 
     Application::Application() {
-        globalPool=DescriptorPool::Builder(device)
+        globalPool = DescriptorPool::Builder(device)
                 .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,SwapChain::MAX_FRAMES_IN_FLIGHT)
+                .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
                 .build();
-        
+
         loadGameObjects();
     }
 
@@ -101,13 +111,30 @@ namespace Kaamoo {
         vaseObj.model = vaseModel;
         vaseObj.transform.translation = {0, 0, 0};
         vaseObj.transform.scale = {2.5f, 2.5f, 2.5f};
-        gameObjects.emplace(vaseObj.getId(),std::move(vaseObj));
-        
-        std ::shared_ptr<Model> floorModel = Model::createModelFromFile(device, "../Models/quad.obj");
+        gameObjects.emplace(vaseObj.getId(), std::move(vaseObj));
+
+        std::shared_ptr<Model> floorModel = Model::createModelFromFile(device, "../Models/quad.obj");
         auto floorObj = GameObject::createGameObject();
         floorObj.model = floorModel;
         floorObj.transform.translation = {0, 0, 0};
         floorObj.transform.scale = {2.5f, 1, 2.5f};
-        gameObjects.emplace(floorObj.getId(),std::move(floorObj));
+        gameObjects.emplace(floorObj.getId(), std::move(floorObj));
+        
+        std::vector<glm::vec3> lightColors{
+                {1.f, .1f, .1f},
+                {.1f, .1f, 1.f},
+                {.1f, 1.f, .1f},
+                {1.f, 1.f, .1f},
+                {.1f, 1.f, 1.f},
+                {1.f, 1.f, 1.f}  
+        };
+
+        for (int i = 0; i < lightColors.size(); ++i) {
+            auto pointLight = GameObject::makePointLight(0.2f,0.1f,lightColors[i]);
+            pointLight.transform.translation = {0.5f,-0.5f,-1};
+            auto rotateLight = glm::rotate(glm::mat4{1.f},(float)i*glm::two_pi<float>()/static_cast<float>(lightColors.size()),glm::vec3(0,-1.f,0));
+            pointLight.transform.translation = glm::vec3(rotateLight*glm::vec4(-1,-1,-1,1));
+            gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+        }
     }
 }

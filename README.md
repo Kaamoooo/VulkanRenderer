@@ -23,3 +23,5 @@
 10.6 添加了最简单的diffuse光照，抽象提取了Buffer类（依靠开源代码），创建了Uniform Buffer
 
 10.8 使用Uniform Buffer，实现逐像素光照
+
+10.14 实现了光源的可视化(Billboard)，实现了多光源光照

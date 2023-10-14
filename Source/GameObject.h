@@ -16,6 +16,10 @@ namespace Kaamoo {
         glm::mat4 mat4();
         glm::mat3  normalMatrix();
     };
+    
+    struct PointLightComponent{
+        float lightIntensity = 1.0f;
+    };
 
 
     class GameObject {
@@ -24,14 +28,19 @@ namespace Kaamoo {
         using id_t = unsigned int;
         using Map = std::unordered_map<id_t,GameObject>;
         
-        std::shared_ptr<Model> model;
-        glm::vec3 color;
         TransformComponent transform{};
+        glm::vec3 color{};
+        
+        //可选组件
+        std::shared_ptr<Model> model= nullptr;
+        std::unique_ptr<PointLightComponent> pointLightComponent= nullptr;
 
         static GameObject createGameObject() {
             static id_t currentID = 0;
             return GameObject(currentID++);
         }
+        
+        static GameObject makePointLight(float intensity=10.f,float radius=0.1f,glm::vec3 color = glm::vec3(1.f));
 
         id_t getId() { return id; }
 
@@ -54,6 +63,7 @@ namespace Kaamoo {
         uint32_t getIterationTimes() const {
             return iteration;
         }
+        
 
     private:
         id_t id;

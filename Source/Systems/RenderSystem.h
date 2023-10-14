@@ -2,12 +2,12 @@
 
 #include <memory>
 #include <glm/gtc/constants.hpp>
-#include "Pipeline.hpp"
-#include "Device.hpp"
-#include "Model.hpp"
-#include "GameObject.h"
-#include "Camera.h"
-#include "FrameInfo.h"
+#include "../Pipeline.hpp"
+#include "../Device.hpp"
+#include "../Model.hpp"
+#include "../GameObject.h"
+#include "../Camera.h"
+#include "../FrameInfo.h"
 
 namespace Kaamoo {
     class RenderSystem {

@@ -93,8 +93,8 @@ namespace Kaamoo {
 //        viewportInfo.scissorCount = 1;
 //        viewportInfo.pScissors = &pipelineConfigureInfo.scissor;
 
-        auto bindingDescription = Model::Vertex::getBindingDescriptions();
-        auto attributeDescription = Model::Vertex::getAttributeDescriptions();
+        auto& bindingDescription = pipelineConfigureInfo.bindingDescriptions;
+        auto& attributeDescription = pipelineConfigureInfo.attributeDescriptions;
 
         VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
         vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -211,6 +211,9 @@ namespace Kaamoo {
         configureInfo.dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(configureInfo.dynamicStateEnables.size());
         configureInfo.dynamicStateCreateInfo.flags = 0;
         configureInfo.dynamicStateCreateInfo.pNext = nullptr;
+        
+        configureInfo.bindingDescriptions = Model::Vertex::getBindingDescriptions();
+        configureInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
     }
 
     void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {

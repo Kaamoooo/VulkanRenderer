@@ -6,6 +6,15 @@ namespace Kaamoo {
         iteration = times;
     }
 
+    GameObject GameObject::makePointLight(float intensity, float radius, glm::vec3 color) {
+        GameObject gameObject = GameObject::createGameObject();
+        gameObject.color = color;
+        gameObject.transform.scale.x = radius;
+        gameObject.pointLightComponent = std::make_unique<PointLightComponent>();
+        gameObject.pointLightComponent->lightIntensity = intensity;
+        return gameObject;
+    }
+
     glm::mat4 TransformComponent::mat4() {
 
         auto transform = glm::translate(glm::mat4{1.f}, translation);
@@ -24,7 +33,7 @@ namespace Kaamoo {
         invScaleMatrix[0][0] = invScale.x;
         invScaleMatrix[1][1] = invScale.y;
         invScaleMatrix[2][2] = invScale.z;
-        
+
         auto rotationMatrix = glm::mat4(1.0f);
         rotationMatrix = glm::rotate(rotationMatrix, rotation.y, {0, 1, 0});
         rotationMatrix = glm::rotate(rotationMatrix, rotation.x, {1, 0, 0});

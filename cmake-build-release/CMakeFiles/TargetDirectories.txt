@@ -1,4 +1,4 @@
-E:/MyProjects/VulkanTestClion/cmake-build-release/CMakeFiles/CompileShaders.dir
 E:/MyProjects/VulkanTestClion/cmake-build-release/CMakeFiles/VulkanTestClion.dir
+E:/MyProjects/VulkanTestClion/cmake-build-release/CMakeFiles/Shaders.dir
 E:/MyProjects/VulkanTestClion/cmake-build-release/CMakeFiles/edit_cache.dir
 E:/MyProjects/VulkanTestClion/cmake-build-release/CMakeFiles/rebuild_cache.dir

@@ -40,15 +40,15 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "CompileShaders::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-CompileShaders-Release-da15f5d952d36f6896c0.json",
-					"name" : "CompileShaders",
+					"id" : "Shaders::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Shaders-Release-3f85ec8614725dde923f.json",
+					"name" : "Shaders",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "VulkanTestClion::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-VulkanTestClion-Release-ff2d2d7ca3d7f38091aa.json",
+					"jsonFile" : "target-VulkanTestClion-Release-da2d54cfe57763db6fd0.json",
 					"name" : "VulkanTestClion",
 					"projectIndex" : 0
 				}
