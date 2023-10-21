@@ -25,3 +25,5 @@
 10.8 使用Uniform Buffer，实现逐像素光照
 
 10.14 实现了光源的可视化(Billboard)，实现了多光源光照
+
+10.21 添加了alpha blending, 初起image类
