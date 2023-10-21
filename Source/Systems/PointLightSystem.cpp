@@ -1,4 +1,5 @@
-﻿#include "PointLightSystem.h"
+﻿#include <map>
+#include "PointLightSystem.h"
 #include "../FrameInfo.h"
 
 namespace Kaamoo {
@@ -45,6 +46,7 @@ namespace Kaamoo {
     void PointLightSystem::createPipeline(VkRenderPass renderPass) {
         PipelineConfigureInfo pipelineConfigureInfo{};
         Pipeline::setDefaultPipelineConfigureInfo(pipelineConfigureInfo);
+        Pipeline::enableAlphaBlending(pipelineConfigureInfo);
         pipelineConfigureInfo.attributeDescriptions.clear();
         pipelineConfigureInfo.bindingDescriptions.clear();
         pipelineConfigureInfo.renderPass = renderPass;
@@ -58,6 +60,16 @@ namespace Kaamoo {
     }
 
     void PointLightSystem::render(FrameInfo &frameInfo) {
+        std::map<float, GameObject::id_t> sorted;
+        for(auto& kv:frameInfo.gameObjects){
+            auto& obj=kv.second;
+            if (obj.pointLightComponent== nullptr) continue;
+            
+            auto offset = frameInfo.camera.getPosition() - obj.transform.translation;
+            float disSquared = glm::dot(offset,offset);
+            sorted[disSquared]=obj.getId();
+        }
+        
         pipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
@@ -70,9 +82,9 @@ namespace Kaamoo {
                 0,
                 nullptr
         );
-        for (auto &kv: frameInfo.gameObjects) {
-            auto &obj = kv.second;
-            if (obj.pointLightComponent == nullptr)continue;
+        for (auto it = sorted.rbegin();it!=sorted.rend();it++) {
+            
+            auto &obj = frameInfo.gameObjects.at(it->second);
 
             PointLightPushConstant pointLightPushConstant{};
             pointLightPushConstant.position = glm::vec4(obj.transform.translation, 1.f);

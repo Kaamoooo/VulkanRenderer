@@ -11,8 +11,8 @@
 namespace Kaamoo {
 
     struct PipelineConfigureInfo {
+        PipelineConfigureInfo()=default;
         PipelineConfigureInfo(const PipelineConfigureInfo &) = delete;
-
         PipelineConfigureInfo &operator=(const PipelineConfigureInfo) = delete;
 
         std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
@@ -51,6 +51,7 @@ namespace Kaamoo {
         void operator=(const Pipeline &) = delete;
 
         static void setDefaultPipelineConfigureInfo(PipelineConfigureInfo &);
+        static void enableAlphaBlending(PipelineConfigureInfo&);
 
         void bind(VkCommandBuffer commandBuffer);
 

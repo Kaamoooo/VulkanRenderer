@@ -23,6 +23,12 @@ namespace Kaamoo {
         glm::mat4 getViewMatrix() const {
             return viewMatrix;
         }
+        
+        glm::mat4  getInverseViewMatrix()const {
+            return inverseViewMatrix;
+        }
+        
+        glm::vec3 getPosition() const {return glm::vec3(inverseViewMatrix[3]);}
 
         void setViewDirection(glm::vec3 position,glm::vec3 direction,glm::vec3 up = glm::vec3(0,-fabs(1),0));
         void setViewTarget(glm::vec3 position,glm::vec3 target,glm::vec3 up = glm::vec3(0,-fabs(1),0));
@@ -33,5 +39,6 @@ namespace Kaamoo {
     private:
         glm::mat4 projectionMatrix{1.f};
         glm::mat4 viewMatrix{1.f};
+        glm::mat4 inverseViewMatrix{1.f};
     };
 }

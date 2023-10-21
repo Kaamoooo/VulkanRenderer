@@ -13,6 +13,7 @@
 #include "KeyboardMovementController.h"
 #include <chrono>
 #include "Descriptor.h"
+#include "Image.h"
 
 namespace Kaamoo {
     class Application {

@@ -179,6 +179,7 @@ namespace Kaamoo {
             throw std::runtime_error("failed to create swap chain!");
         }
  
+        //swapchain自动创建了image，
         vkGetSwapchainImagesKHR(device.device(), swapChain, &imageCount, nullptr);
         swapChainImages.resize(imageCount);
         vkGetSwapchainImagesKHR(device.device(), swapChain, &imageCount, swapChainImages.data());

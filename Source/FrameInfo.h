@@ -15,6 +15,7 @@ namespace Kaamoo {
 
     struct GlobalUbo {
         glm::mat4 viewMatrix{1.f};
+        glm::mat4 inverseViewMatrix{1.f};
         glm::mat4 projectionMatrix{1.f};
         glm::vec4 ambientColor{1, 1, 1, 0.02f};
         PointLight pointLights[MAX_LIGHT_NUM];
