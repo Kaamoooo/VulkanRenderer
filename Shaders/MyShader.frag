@@ -3,6 +3,7 @@
 layout(location=0) in vec3 fragColor;
 layout(location=1) in vec4 worldPos;
 layout(location=2) in vec4 worldNormal;
+layout(location = 3) in vec2 uv;
 
 
 layout (location=0) out vec4 outColor;
@@ -26,7 +27,11 @@ layout(set=0, binding=0) uniform GlobalUbo{
     int lightNum;
 } ubo;
 
+layout(set=0,binding=1) uniform sampler2D texSampler;
+
 void main(){
+    vec3 texColor = texture(texSampler,uv).xyz;
+    
     vec3 ambientLightColor = ubo.ambientLightColor.xyz*ubo.ambientLightColor.w;
     vec3 totalDiffuse=vec3(0,0,0);
     vec3 totalSpecular = vec3(0, 0, 0);
@@ -53,5 +58,5 @@ void main(){
     }
 
 //    outColor=vec4(totalSpecular, 1);
-    outColor=vec4(fragColor*(totalDiffuse+ambientLightColor+totalSpecular), 1);
+    outColor=vec4(fragColor*texColor*(totalDiffuse+ambientLightColor+totalSpecular), 1);
 }

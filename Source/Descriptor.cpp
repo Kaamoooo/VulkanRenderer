@@ -6,19 +6,17 @@
 
 namespace Kaamoo {
 
-// *************** Descriptor Set Layout Builder *********************
-
     DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::addBinding(
             uint32_t binding,
             VkDescriptorType descriptorType,
             VkShaderStageFlags stageFlags,
             uint32_t count) {
-        assert(bindings.count(binding) == 0 && "Binding already in use");
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
         layoutBinding.descriptorType = descriptorType;
         layoutBinding.descriptorCount = count;
         layoutBinding.stageFlags = stageFlags;
+        
         bindings[binding] = layoutBinding;
         return *this;
     }

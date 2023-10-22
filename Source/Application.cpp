@@ -1,12 +1,20 @@
 ﻿#include "Application.hpp"
+#include "Sampler.h"
 #include <numeric>
 
 namespace Kaamoo {
 
 
     void Application::run() {
+
+#pragma region 加载纹理,buffer,并绑定descriptor
+        std::unique_ptr<Image> image = std::make_unique<Image>(device);
+        image->createTextureImage("../Textures/texture1.jpg");
+        image->createTextureImageView();
+
+        std::shared_ptr<Sampler> sampler = std::make_shared<Sampler>(device);
+        sampler->createTextureSampler();
         
-#pragma region 创建ubo, description set并将ubo写入到descriptor
         uint32_t minOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,
                                                device.properties.limits.nonCoherentAtomSize);
         Buffer globalUboBuffer(
@@ -19,15 +27,19 @@ namespace Kaamoo {
         );
         globalUboBuffer.map();
 
+        //绑定UBO和sampler
         auto globalSetLayout =
                 DescriptorSetLayout::Builder(device)
                         .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+                        .addBinding(1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,VK_SHADER_STAGE_ALL_GRAPHICS)
                         .build();
 
         VkDescriptorSet globalDescriptorSet{};
         auto bufferInfo = globalUboBuffer.descriptorInfo();
+        auto imageInfo = image->descriptorInfo(*sampler);
         DescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
+                .writeImage(1,&imageInfo)
                 .build(globalDescriptorSet);
 #pragma endregion
 
@@ -43,9 +55,7 @@ namespace Kaamoo {
                 globalSetLayout->getDescriptorSetLayout()
         };
 #pragma endregion
-        
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        
+
 #pragma region 设置camera相关参数
         Camera camera{};
         camera.setViewTarget(glm::vec3{-1.f, -2.f, 20.f}, glm::vec3{0, 0, 2.5f});
@@ -56,12 +66,9 @@ namespace Kaamoo {
         KeyboardController cameraController{};
 #pragma endregion
 
-#pragma region 加载纹理
-        std::unique_ptr<Image> image=std::make_unique<Image>(device);
-        image->createTextureImage("../Textures/texture1.jpg");
-        
-#pragma endregion
-        
+
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
 
@@ -111,9 +118,11 @@ namespace Kaamoo {
     }
 
     Application::Application() {
+        //尽管驱动可能会自动帮助我们分配足够的内存，但是出于健壮性的考虑，还是按需分配足够的pool size
         globalPool = DescriptorPool::Builder(device)
                 .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,SwapChain::MAX_FRAMES_IN_FLIGHT)
                 .build();
 
         loadGameObjects();

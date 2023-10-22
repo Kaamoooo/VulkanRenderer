@@ -24,6 +24,8 @@ namespace Kaamoo {
  */
     VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
         if (minOffsetAlignment > 0) {
+            //(instanceSize + minOffsetAlignment - 1) 防止instanceSize小于alignment时计算结果为0，因此加上minOffsetAlignment-1保证其结果有效，同时-1是为了防止计算结果偏大
+            //~(minOffsetAlignment-1)即取minOffsetAlignment的公倍数
             return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
         }
         return instanceSize;
@@ -93,7 +95,7 @@ namespace Kaamoo {
         if (size == VK_WHOLE_SIZE) {
             memcpy(mapped, data, bufferSize);
         } else {
-            char *memOffset = (char *)mapped;
+            char *memOffset = (char *) mapped;
             memOffset += offset;
             memcpy(memOffset, data, size);
         }

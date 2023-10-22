@@ -4,7 +4,7 @@
 #include "Buffer.h"
 
 namespace Kaamoo {
-    void Image::createTextureImage(std::string path) {
+    void Image::createTextureImage(std::string path, VkImageCreateInfo createInfo) {
         stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
@@ -21,9 +21,9 @@ namespace Kaamoo {
         stagingBuffer->unmap();
 
         stbi_image_free(pixels);
-        
-        createInfo.extent.width=texWidth;
-        createInfo.extent.height=texHeight;
+
+        createInfo.extent.width = texWidth;
+        createInfo.extent.height = texHeight;
 
         device.createImageWithInfo(createInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 
@@ -33,20 +33,17 @@ namespace Kaamoo {
                                  static_cast<uint32_t>(texHeight), 1);
         device.transitionImageLayout(image, createInfo.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        
-        
-    }
 
-    Image::Image(Device &device, VkImageCreateInfo &imageCreateInfo) : device{device}, createInfo{imageCreateInfo} {
+
     }
 
 
     Image::Image(Device &device) : device{device} {
-        setDefaultImageCreateInfo(createInfo);
     }
 
     Image::~Image() {
         vkDestroyImage(device.device(), image, nullptr);
+        vkDestroyImageView(device.device(), imageView, nullptr);
         vkFreeMemory(device.device(), imageMemory, nullptr);
     }
 
@@ -68,4 +65,44 @@ namespace Kaamoo {
         defaultCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         defaultCreateInfo.flags = 0;
     }
+
+    void Image::createTextureImageView(VkImageViewCreateInfo imageViewCreateInfo) {
+        if (vkCreateImageView(device.device(), &imageViewCreateInfo, nullptr, &imageView) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create image view");
+        }
+    }
+
+    void Image::setDefaultImageViewCreateInfo(VkImageViewCreateInfo &imageViewCreateInfo) {
+        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        imageViewCreateInfo.image = image;
+        imageViewCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageViewCreateInfo.subresourceRange.layerCount = 1;
+        imageViewCreateInfo.subresourceRange.levelCount = 1;
+        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+    }
+
+    void Image::createTextureImage(std::string path) {
+        VkImageCreateInfo createInfo{};
+        setDefaultImageCreateInfo(createInfo);
+        createTextureImage(path, createInfo);
+    }
+
+    void Image::createTextureImageView() {
+        VkImageViewCreateInfo createInfo{};
+        setDefaultImageViewCreateInfo(createInfo);
+        createTextureImageView(createInfo);
+    }
+
+    VkDescriptorImageInfo Image::descriptorInfo(Sampler &sampler) {
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.sampler = sampler.getSampler();
+        imageInfo.imageView = imageView;
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        return imageInfo;
+    }
+
+
 }
