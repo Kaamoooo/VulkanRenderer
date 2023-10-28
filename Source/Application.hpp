@@ -14,6 +14,8 @@
 #include <chrono>
 #include "Descriptor.h"
 #include "Image.h"
+#include "Material.h"
+#include "Shaders.h"
 
 namespace Kaamoo {
     class Application {
@@ -31,14 +33,14 @@ namespace Kaamoo {
 
     private:
         void loadGameObjects();
-
+        void loadMaterials();
+        std::string readJsonFile(const std::string &path);
         MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         Device device{myWindow};
         Renderer renderer{myWindow, device};
 
         GameObject::Map gameObjects;
+        Material::Map materials;
         std::unique_ptr<DescriptorPool> globalPool;
     };
-
-
 }

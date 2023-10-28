@@ -21,7 +21,7 @@ namespace Kaamoo {
                     VkShaderStageFlags stageFlags,
                     uint32_t count = 1);
 
-            std::unique_ptr<DescriptorSetLayout> build() const;
+            std::shared_ptr<DescriptorSetLayout> build() const;
 
         private:
             Device &Device;
@@ -81,7 +81,7 @@ namespace Kaamoo {
         DescriptorPool &operator=(const DescriptorPool &) = delete;
 
         bool allocateDescriptor(
-                const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const;
+                const VkDescriptorSetLayout descriptorSetLayout, std::shared_ptr<VkDescriptorSet> &descriptorPtr) const;
 
         void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
 
@@ -100,9 +100,9 @@ namespace Kaamoo {
 
         DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
 
-        DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
+        DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo &imageInfo);
 
-        bool build(VkDescriptorSet &set);
+        bool build(std::shared_ptr<VkDescriptorSet>& setPtr);
 
         void overwrite(VkDescriptorSet &set);
 

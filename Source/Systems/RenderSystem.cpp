@@ -1,4 +1,6 @@
 ﻿#include "RenderSystem.h"
+
+#include <utility>
 #include "../FrameInfo.h"
 
 namespace Kaamoo {
@@ -11,10 +13,15 @@ namespace Kaamoo {
         glm::mat4 modelMatrix{1.f};
         glm::mat4 normalMatrix{1.f};
     };
+    struct PointLightPushConstant {
+        glm::vec4 position{};
+        glm::vec4 color{};
+        float radius;
+    };
 
-    RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout descriptorSetLayout)
-            : device{device} {
-        createPipelineLayout(descriptorSetLayout);
+    RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, Material &material)
+            : device{device}, material{material} {
+        createPipelineLayout();
         createPipeline(renderPass);
     }
 
@@ -22,18 +29,23 @@ namespace Kaamoo {
         vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
     }
 
-    void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+    void RenderSystem::createPipelineLayout() {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags =
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
-
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts = {globalSetLayout};
+        if (material.getPipelineCategory() == "Light") {
+            pushConstantRange.size = sizeof(PointLightPushConstant);
+        } else if (material.getPipelineCategory() == "Opaque")
+            pushConstantRange.size = sizeof(SimplePushConstantData);
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(material.getDescriptorSetLayoutPointers().size());
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+        for (auto &descriptorSetLayoutPointer: material.getDescriptorSetLayoutPointers()) {
+            descriptorSetLayouts.push_back(descriptorSetLayoutPointer->getDescriptorSetLayout());
+        }
         pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
         pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
@@ -47,45 +59,82 @@ namespace Kaamoo {
     void RenderSystem::createPipeline(VkRenderPass renderPass) {
         PipelineConfigureInfo pipelineConfigureInfo{};
         Pipeline::setDefaultPipelineConfigureInfo(pipelineConfigureInfo);
+        if (material.getPipelineCategory() == "Light") {
+            Pipeline::enableAlphaBlending(pipelineConfigureInfo);
+            pipelineConfigureInfo.attributeDescriptions.clear();
+            pipelineConfigureInfo.vertexBindingDescriptions.clear();
+        }
         pipelineConfigureInfo.renderPass = renderPass;
         pipelineConfigureInfo.pipelineLayout = pipelineLayout;
         pipeline = std::make_unique<Pipeline>(
                 device,
                 pipelineConfigureInfo,
-                "../Shaders/MyShader.vert.spv",
-                "../Shaders/MyShader.frag.spv",
-                "../Shaders/GeometryShader.spv"
+                material
         );
     }
 
-    void RenderSystem::renderGameObjects(FrameInfo &frameInfo) {
+    void updateLight(FrameInfo &frameInfo, GameObject &obj) {
+        int lightIndex = obj.pointLightComponent->lightIndex;
+
+        assert(lightIndex < MAX_LIGHT_NUM && "点光源数目过多");
+
+        auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
+        obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1));
+
+        PointLight pointLight{};
+        pointLight.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
+        pointLight.position = glm::vec4(obj.transform.translation, 1.f);
+        frameInfo.globalUbo.pointLights[lightIndex] = pointLight;
+
+    }
+
+    void RenderSystem::render(FrameInfo &frameInfo) {
         pipeline->bind(frameInfo.commandBuffer);
 
+        std::vector<VkDescriptorSet> descriptorSets;
+        for (auto &descriptorSetPointer: material.getDescriptorSetPointers()) {
+            if (*descriptorSetPointer != nullptr) {
+                descriptorSets.push_back(*descriptorSetPointer);
+            }
+        }
         vkCmdBindDescriptorSets(
                 frameInfo.commandBuffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 0,
-                1,
-                &frameInfo.globalDescriptorSet,
+                material.getDescriptorSetLayoutPointers().size(),
+                descriptorSets.data(),
                 0,
                 nullptr
         );
 
         for (auto &pair: frameInfo.gameObjects) {
-            if (pair.second.model== nullptr)continue;
-            
-            SimplePushConstantData push{};
-            push.modelMatrix = pair.second.transform.mat4();
-            push.normalMatrix = pair.second.transform.normalMatrix();
+            auto &obj = pair.second;
+            if (obj.getMaterialId() != material.getMaterialId())continue;
+            if (obj.pointLightComponent != nullptr) {
+                updateLight(frameInfo, obj);
+                PointLightPushConstant pointLightPushConstant{};
+                pointLightPushConstant.position = glm::vec4(obj.transform.translation, 1.f);
+                pointLightPushConstant.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
+                pointLightPushConstant.radius = obj.transform.scale.x;
+                vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                                   sizeof(PointLightPushConstant), &pointLightPushConstant);
+                vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+            } else {
+                SimplePushConstantData push{};
+                push.modelMatrix = pair.second.transform.mat4();
+                push.normalMatrix = pair.second.transform.normalMatrix();
 
-            vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
-                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                               0,
-                               sizeof(SimplePushConstantData),
-                               &push);
-            pair.second.model->bind(frameInfo.commandBuffer);
-            pair.second.model->draw(frameInfo.commandBuffer);
+                vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                                   0,
+                                   sizeof(SimplePushConstantData),
+                                   &push);
+                pair.second.model->bind(frameInfo.commandBuffer);
+                pair.second.model->draw(frameInfo.commandBuffer);
+            }
         }
     }
+
 }

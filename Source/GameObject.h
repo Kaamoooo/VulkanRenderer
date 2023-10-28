@@ -2,6 +2,7 @@
 
 #include <memory>
 #include "Model.hpp"
+#include "Material.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <unordered_map>
@@ -14,10 +15,12 @@ namespace Kaamoo {
 
         //根据 平移 缩放 旋转 构造model to world的变换矩阵
         glm::mat4 mat4();
-        glm::mat3  normalMatrix();
+
+        glm::mat3 normalMatrix();
     };
-    
-    struct PointLightComponent{
+
+    struct PointLightComponent {
+        int lightIndex = 0;
         float lightIntensity = 1.0f;
     };
 
@@ -26,25 +29,25 @@ namespace Kaamoo {
     public:
         //定义一个类型别名，id即代表无符号整数
         using id_t = unsigned int;
-        using Map = std::unordered_map<id_t,GameObject>;
-        
+        using Map = std::unordered_map<id_t, GameObject>;
+
         TransformComponent transform{};
         glm::vec3 color{};
-        
-        //可选组件
-        std::shared_ptr<Model> model= nullptr;
-        std::unique_ptr<PointLightComponent> pointLightComponent= nullptr;
 
-        static GameObject createGameObject() {
+        //可选组件
+        std::shared_ptr<Model> model = nullptr;
+        std::unique_ptr<PointLightComponent> pointLightComponent = nullptr;
+
+        static GameObject createGameObject(id_t materialId = -1) {
             static id_t currentID = 0;
-            return GameObject(currentID++);
+            return {currentID++, materialId};
         }
-        
-        static GameObject makePointLight(float intensity=10.f,float radius=0.1f,glm::vec3 color = glm::vec3(1.f));
+
+        static GameObject makePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f));
 
         id_t getId() { return id; }
 
-        GameObject(GameObject &) = delete;
+        id_t getMaterialId() const { return materialId; }
 
         //移动构造函数
         GameObject(GameObject &&) = default;
@@ -57,18 +60,17 @@ namespace Kaamoo {
             float yaw = transform.rotation.y;
             return glm::vec3{glm::sin(yaw), 0, glm::cos(yaw)};
         };
-        
-        void setIterationTimes(int times);
-        
-        uint32_t getIterationTimes() const {
-            return iteration;
-        }
-        
+
+
+    private:
+    public:
+        void setMaterialId(id_t materialId);
 
     private:
         id_t id;
-        uint32_t iteration=0;
+        id_t materialId;
 
-        GameObject(id_t id) : id{id} {};
+//        Material& material; 
+        GameObject(id_t id, id_t materialId = -1) : id{id}, materialId{materialId} {};
     };
 }

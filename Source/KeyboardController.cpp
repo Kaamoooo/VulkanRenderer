@@ -34,33 +34,6 @@ namespace Kaamoo {
         }
     }
 
-    void KeyboardController::changeIteration(GLFWwindow *window, std::vector<GameObject> &gameObjects) {
-        if (glfwGetKey(window, keys.zero) == GLFW_PRESS) {
-            for (GameObject &item: gameObjects) {
-                item.setIterationTimes(0);
-            }
-        } else
-        if (glfwGetKey(window, keys.one) == GLFW_PRESS) {
-            for (GameObject &item: gameObjects) {
-                item.setIterationTimes(1);
-            }
-        } else
-        if (glfwGetKey(window, keys.two) == GLFW_PRESS) {
-            for (GameObject &item: gameObjects) {
-                item.setIterationTimes(2);
-            }
-        } else
-        if (glfwGetKey(window, keys.three) == GLFW_PRESS) {
-            for (GameObject &item: gameObjects) {
-                item.setIterationTimes(3);
-            }
-        }if (glfwGetKey(window, keys.four) == GLFW_PRESS) {
-            for (GameObject &item: gameObjects) {
-                item.setIterationTimes(4);
-            }
-        }
-        
-    }
 
 }
 

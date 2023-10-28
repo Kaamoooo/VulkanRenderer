@@ -14,7 +14,7 @@ namespace Kaamoo {
 
         void createTextureSampler(VkSamplerCreateInfo createInfo);
 
-        void setDefaultSamplerCreateInfo(VkSamplerCreateInfo &createInfo);
+        void setDefaultSamplerCreateInfo(VkSamplerCreateInfo &createInfo) const;
 
         VkSampler getSampler() const {
             return sampler;

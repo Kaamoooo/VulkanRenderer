@@ -1,18 +1,21 @@
 ﻿#include "GameObject.h"
 
 namespace Kaamoo {
-
-    void GameObject::setIterationTimes(int times) {
-        iteration = times;
-    }
-
+    
     GameObject GameObject::makePointLight(float intensity, float radius, glm::vec3 color) {
+        static int lightNum=0;
         GameObject gameObject = GameObject::createGameObject();
         gameObject.color = color;
         gameObject.transform.scale.x = radius;
         gameObject.pointLightComponent = std::make_unique<PointLightComponent>();
         gameObject.pointLightComponent->lightIntensity = intensity;
+        gameObject.pointLightComponent->lightIndex=lightNum;
+        lightNum++;
         return gameObject;
+    }
+
+    void GameObject::setMaterialId(GameObject::id_t materialId) {
+        GameObject::materialId = materialId;
     }
 
     glm::mat4 TransformComponent::mat4() {

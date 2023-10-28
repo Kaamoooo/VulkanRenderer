@@ -7,15 +7,18 @@
 
 #include "Device.hpp"
 #include "Model.hpp"
+#include "Material.h"
 
 namespace Kaamoo {
 
     struct PipelineConfigureInfo {
-        PipelineConfigureInfo()=default;
+        PipelineConfigureInfo() = default;
+
         PipelineConfigureInfo(const PipelineConfigureInfo &) = delete;
+
         PipelineConfigureInfo &operator=(const PipelineConfigureInfo) = delete;
 
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
+        std::vector<VkVertexInputBindingDescription> vertexBindingDescriptions{};
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -40,9 +43,7 @@ namespace Kaamoo {
 
     class Pipeline {
     public:
-        Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, const std::string &vertShaderPath,
-                 const std::string &fragShaderPath, const std::string &geoShaderPath= ""
-        );
+        Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, Material &material);
 
         ~Pipeline();
 
@@ -51,29 +52,19 @@ namespace Kaamoo {
         void operator=(const Pipeline &) = delete;
 
         static void setDefaultPipelineConfigureInfo(PipelineConfigureInfo &);
-        static void enableAlphaBlending(PipelineConfigureInfo&);
+
+        static void enableAlphaBlending(PipelineConfigureInfo &);
 
         void bind(VkCommandBuffer commandBuffer);
-
-        bool isGeometryShaderEnabled() const { return enableGeometryShader; }
-        
 
     private:
         Device &device;
         VkPipeline graphicsPipeline;
-        VkShaderModule vertShaderModule;
-        VkShaderModule fragShaderModule;
-        VkShaderModule geoShaderModule = VK_NULL_HANDLE;
+        Material &material;
 
-        bool enableGeometryShader = false;
-
-        static std::vector<char> readFile(const std::string &filepath);
 
         void
-        createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo, const std::string &vertShaderPath,
-                       const std::string &fragShaderPath, const std::string &geoShaderPath);
-
-        void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
+        createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
     };
 
 

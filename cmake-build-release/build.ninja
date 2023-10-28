@@ -52,119 +52,133 @@ build cmake_object_order_depends_target_VulkanTestClion: phony || CMakeFiles/Vul
 build CMakeFiles/VulkanTestClion.dir/Source/Application.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Application.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Application.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Buffer.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Buffer.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Buffer.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Camera.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Camera.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Camera.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Descriptor.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Descriptor.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Descriptor.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Device.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Device.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Device.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/GameObject.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/GameObject.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\GameObject.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Image.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Image.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Image.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/KeyboardController.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/KeyboardController.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\KeyboardController.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
+  OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
+  OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
+
+build CMakeFiles/VulkanTestClion.dir/Source/Material.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Material.cpp || cmake_object_order_depends_target_VulkanTestClion
+  DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Material.cpp.obj.d
+  FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Model.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Model.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Model.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/MyWindow.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/MyWindow.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\MyWindow.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Pipeline.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Pipeline.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Pipeline.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Renderer.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Renderer.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Renderer.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Sampler.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Sampler.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Sampler.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
+  OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
+  OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
+
+build CMakeFiles/VulkanTestClion.dir/Source/Shaders.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Shaders.cpp || cmake_object_order_depends_target_VulkanTestClion
+  DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Shaders.cpp.obj.d
+  FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/SwapChain.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/SwapChain.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\SwapChain.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
 build CMakeFiles/VulkanTestClion.dir/Source/Systems/PointLightSystem.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Systems/PointLightSystem.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Systems\PointLightSystem.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source\Systems
 
 build CMakeFiles/VulkanTestClion.dir/Source/Systems/RenderSystem.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/Systems/RenderSystem.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\Systems\RenderSystem.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source\Systems
 
 build CMakeFiles/VulkanTestClion.dir/Source/main.cpp.obj: CXX_COMPILER__VulkanTestClion_Release E$:/MyProjects/VulkanTestClion/Source/main.cpp || cmake_object_order_depends_target_VulkanTestClion
   DEP_FILE = CMakeFiles\VulkanTestClion.dir\Source\main.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -fdiagnostics-color=always
-  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include
+  INCLUDES = -IE:/Vulkan/glfw-3.3.8.bin.WIN64/include -IE:/Vulkan/SDK/Include -IE:/MyProjects/VulkanTestClion/External
   OBJECT_DIR = CMakeFiles\VulkanTestClion.dir
   OBJECT_FILE_DIR = CMakeFiles\VulkanTestClion.dir\Source
 
@@ -176,7 +190,7 @@ build CMakeFiles/VulkanTestClion.dir/Source/main.cpp.obj: CXX_COMPILER__VulkanTe
 #############################################
 # Link the executable VulkanTestClion.exe
 
-build VulkanTestClion.exe: CXX_EXECUTABLE_LINKER__VulkanTestClion_Release CMakeFiles/VulkanTestClion.dir/Source/Application.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Buffer.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Camera.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Descriptor.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Device.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/GameObject.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Image.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/KeyboardController.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Model.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/MyWindow.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Pipeline.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Renderer.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Sampler.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/SwapChain.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Systems/PointLightSystem.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Systems/RenderSystem.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/main.cpp.obj | E$:/Vulkan/SDK/Lib/vulkan-1.lib E$:/Vulkan/glfw-3.3.8.bin.WIN64/lib-mingw-w64/libglfw3.a
+build VulkanTestClion.exe: CXX_EXECUTABLE_LINKER__VulkanTestClion_Release CMakeFiles/VulkanTestClion.dir/Source/Application.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Buffer.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Camera.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Descriptor.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Device.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/GameObject.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Image.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/KeyboardController.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Material.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Model.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/MyWindow.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Pipeline.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Renderer.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Sampler.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Shaders.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/SwapChain.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Systems/PointLightSystem.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/Systems/RenderSystem.cpp.obj CMakeFiles/VulkanTestClion.dir/Source/main.cpp.obj | E$:/Vulkan/SDK/Lib/vulkan-1.lib E$:/Vulkan/glfw-3.3.8.bin.WIN64/lib-mingw-w64/libglfw3.a
   FLAGS = -O3 -DNDEBUG
   LINK_FLAGS = -static
   LINK_LIBRARIES = E:/Vulkan/SDK/Lib/vulkan-1.lib  E:/Vulkan/glfw-3.3.8.bin.WIN64/lib-mingw-w64/libglfw3.a  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32

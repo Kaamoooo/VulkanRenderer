@@ -16,7 +16,7 @@ namespace Kaamoo{
         }
     }
 
-    void Sampler::setDefaultSamplerCreateInfo(VkSamplerCreateInfo &createInfo) {
+    void Sampler::setDefaultSamplerCreateInfo(VkSamplerCreateInfo &createInfo) const {
         createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         createInfo.magFilter = VK_FILTER_LINEAR;
         createInfo.minFilter = VK_FILTER_LINEAR;

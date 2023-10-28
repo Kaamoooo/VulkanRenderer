@@ -48,15 +48,13 @@ namespace Kaamoo {
         Pipeline::setDefaultPipelineConfigureInfo(pipelineConfigureInfo);
         Pipeline::enableAlphaBlending(pipelineConfigureInfo);
         pipelineConfigureInfo.attributeDescriptions.clear();
-        pipelineConfigureInfo.bindingDescriptions.clear();
+        pipelineConfigureInfo.vertexBindingDescriptions.clear();
         pipelineConfigureInfo.renderPass = renderPass;
         pipelineConfigureInfo.pipelineLayout = pipelineLayout;
-        pipeline = std::make_unique<Pipeline>(
-                device,
-                pipelineConfigureInfo,
-                "../Shaders/PointLight.vert.spv",
-                "../Shaders/PointLight.frag.spv"
-        );
+//        pipeline = std::make_unique<Pipeline>(
+//                device,
+//                material
+//        );
     }
 
     void PointLightSystem::render(FrameInfo &frameInfo) {
@@ -72,16 +70,6 @@ namespace Kaamoo {
         
         pipeline->bind(frameInfo.commandBuffer);
 
-        vkCmdBindDescriptorSets(
-                frameInfo.commandBuffer,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
-                0,
-                1,
-                &frameInfo.globalDescriptorSet,
-                0,
-                nullptr
-        );
         for (auto it = sorted.rbegin();it!=sorted.rend();it++) {
             
             auto &obj = frameInfo.gameObjects.at(it->second);
@@ -99,25 +87,4 @@ namespace Kaamoo {
         }
     }
 
-    void PointLightSystem::update(FrameInfo &frameInfo, GlobalUbo &ubo) {
-        int lightIndex = 0;
-
-        for (auto &kv: frameInfo.gameObjects) {
-            auto &obj = kv.second;
-            if (obj.pointLightComponent == nullptr)continue;
-
-            assert(lightIndex < MAX_LIGHT_NUM&&"点光源数目过多");
-
-            auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
-            obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1));
-
-            PointLight pointLight{};
-            pointLight.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
-            pointLight.position = glm::vec4(obj.transform.translation, 1.f);
-            ubo.pointLights[lightIndex] = pointLight;
-            lightIndex++;
-        }
-
-        ubo.lightNum = lightIndex;
-    }
 }

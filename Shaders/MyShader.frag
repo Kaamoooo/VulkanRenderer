@@ -27,7 +27,7 @@ layout(set=0, binding=0) uniform GlobalUbo{
     int lightNum;
 } ubo;
 
-layout(set=0,binding=1) uniform sampler2D texSampler;
+layout(set=1,binding=0) uniform sampler2D texSampler;
 
 void main(){
     vec3 texColor = texture(texSampler,uv).xyz;

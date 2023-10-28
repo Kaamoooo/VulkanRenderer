@@ -16,13 +16,13 @@ namespace Kaamoo {
         layoutBinding.descriptorType = descriptorType;
         layoutBinding.descriptorCount = count;
         layoutBinding.stageFlags = stageFlags;
-        
+
         bindings[binding] = layoutBinding;
         return *this;
     }
 
-    std::unique_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const {
-        return std::make_unique<DescriptorSetLayout>(Device, bindings);
+    std::shared_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const {
+        return std::make_shared<DescriptorSetLayout>(Device,bindings);
     }
 
 // *************** Descriptor Set Layout *********************
@@ -57,7 +57,7 @@ namespace Kaamoo {
 
     DescriptorPool::Builder &DescriptorPool::Builder::addPoolSize(
             VkDescriptorType descriptorType, uint32_t count) {
-        poolSizes.push_back( VkDescriptorPoolSize{descriptorType, count} );
+        poolSizes.push_back(VkDescriptorPoolSize{descriptorType, count});
         return *this;
     }
 
@@ -102,16 +102,15 @@ namespace Kaamoo {
     }
 
     bool DescriptorPool::allocateDescriptor(
-            const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const {
+            VkDescriptorSetLayout descriptorSetLayout, std::shared_ptr<VkDescriptorSet> &descriptorPtr) const {
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = descriptorPool;
         allocInfo.pSetLayouts = &descriptorSetLayout;
         allocInfo.descriptorSetCount = 1;
 
-        // Might want to create a "DescriptorPoolManager" class that handles this case, and builds
-        // a new pool whenever an old pool fills up. But this is beyond our current scope
-        if (vkAllocateDescriptorSets(Device.device(), &allocInfo, &descriptor) != VK_SUCCESS) {
+        if (vkAllocateDescriptorSets(Device.device(), &allocInfo, descriptorPtr.get()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate descriptor set");
             return false;
         }
         return true;
@@ -156,7 +155,7 @@ namespace Kaamoo {
     }
 
     DescriptorWriter &DescriptorWriter::writeImage(
-            uint32_t binding, VkDescriptorImageInfo *imageInfo) {
+            uint32_t binding, VkDescriptorImageInfo &imageInfo) {
         assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
         auto &bindingDescription = setLayout.bindings[binding];
@@ -169,19 +168,19 @@ namespace Kaamoo {
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.descriptorType = bindingDescription.descriptorType;
         write.dstBinding = binding;
-        write.pImageInfo = imageInfo;
+        write.pImageInfo = &imageInfo;
         write.descriptorCount = 1;
 
         writes.push_back(write);
         return *this;
     }
 
-    bool DescriptorWriter::build(VkDescriptorSet &set) {
-        bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
+    bool DescriptorWriter::build(std::shared_ptr<VkDescriptorSet> &setPtr) {
+        bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), setPtr);
         if (!success) {
             return false;
         }
-        overwrite(set);
+        overwrite(*setPtr);
         return true;
     }
 

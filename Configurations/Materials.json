@@ -1,0 +1,28 @@
+[
+  {
+    "id": 0,
+    "pipelineCategory": "Light",
+    "vertexShader": "PointLight.vert.spv",
+    "fragmentShader": "PointLight.frag.spv",
+    "texture": [
+    ]
+  },
+  {
+    "id": 1,
+    "pipelineCategory": "Opaque",
+    "vertexShader": "MyShader.vert.spv",
+    "fragmentShader": "MyShader.frag.spv",
+    "texture": [
+      "texture1.jpg"
+    ]
+  },
+  {
+    "id": 2,
+    "pipelineCategory": "Opaque",
+    "vertexShader": "MyShader.vert.spv",
+    "fragmentShader": "MyShader.frag.spv",
+    "texture": [
+      "water.jpg"
+    ]
+  }
+]

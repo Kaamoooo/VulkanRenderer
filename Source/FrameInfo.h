@@ -3,12 +3,13 @@
 #include "Camera.h"
 #include <vulkan/vulkan.h>
 #include "GameObject.h"
+#include "Material.h"
 
 namespace Kaamoo {
 
 #define MAX_LIGHT_NUM 10
-    
-    struct PointLight{
+
+    struct PointLight {
         glm::vec4 position{};
         glm::vec4 color{};
     };
@@ -27,7 +28,8 @@ namespace Kaamoo {
         float frameTime;
         VkCommandBuffer commandBuffer;
         Camera &camera;
-        VkDescriptorSet globalDescriptorSet;
         GameObject::Map &gameObjects;
+        Material::Map &materials;
+        GlobalUbo& globalUbo;
     };
 }

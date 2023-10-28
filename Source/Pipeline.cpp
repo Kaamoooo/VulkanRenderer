@@ -1,89 +1,45 @@
 ﻿#include "Pipeline.hpp"
+#include "Material.h"
 
 namespace Kaamoo {
-    std::vector<char> Pipeline::readFile(const std::string &filepath) {
-        std::ifstream inputFileStream{filepath, std::ios::ate | std::ios::binary};
-
-        if (!inputFileStream.is_open()) {
-            throw std::runtime_error("Failed to open file: " + filepath);
-        }
-
-        size_t fileSize = static_cast<size_t>(inputFileStream.tellg());
-
-        std::vector<char> buffer(fileSize);
-
-        inputFileStream.seekg(0);
-        inputFileStream.read(buffer.data(), fileSize);
-
-        inputFileStream.close();
-        return buffer;
-    }
-
-    Pipeline::Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo,
-                       const std::string &vertShaderPath, const std::string &fragShaderPath,
-                       const std::string &geoShaderPath
-    ) : device(device) {
-        createPipeline(pipelineConfigureInfo, vertShaderPath, fragShaderPath, geoShaderPath);
+    Pipeline::Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, Material &material)
+            : device(device), material(material) {
+        createPipeline(pipelineConfigureInfo);
     }
 
 
     Pipeline::~Pipeline() {
-        vkDestroyShaderModule(device.device(), vertShaderModule, nullptr);
-        vkDestroyShaderModule(device.device(), fragShaderModule, nullptr);
-        vkDestroyShaderModule(device.device(), geoShaderModule, nullptr);
+        for (auto &shaderModule: material.getShaderModulePointers()) {
+            if (*shaderModule != nullptr) {
+                vkDestroyShaderModule(device.device(), *shaderModule, nullptr);
+                *shaderModule= nullptr;
+            }
+        }
         vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
     }
 
-    void Pipeline::createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo, const std::string &vertShaderPath,
-                                  const std::string &fragShaderPath, const std::string &geoShaderPath
-    ) {
-        auto vertShaderCode = readFile(vertShaderPath);
-        auto fragShaderCode = readFile(fragShaderPath);
-        std::vector<char> geoShaderCode;
-        if (!geoShaderPath.empty()) geoShaderCode = readFile(geoShaderPath);
-
-        std::cout << "Vertex Shader Code Size: " << vertShaderCode.size() << std::endl;
-        std::cout << "Fragment Shader Code Size: " << fragShaderCode.size() << std::endl;
-
-
-        createShaderModule(vertShaderCode, &vertShaderModule);
-        createShaderModule(fragShaderCode, &fragShaderModule);
-
+    void Pipeline::createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo) {
         uint32_t shaderStageCount = 2;
-
-        if (enableGeometryShader) {
-            std::cout << "Geometry Shader Code Size: " << geoShaderCode.size() << std::endl;
-            createShaderModule(geoShaderCode, &geoShaderModule);
-            shaderStageCount++;
-        }
-
 
         VkPipelineShaderStageCreateInfo shaderStageCreateInfo[shaderStageCount];
 
-        shaderStageCreateInfo[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStageCreateInfo[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-        shaderStageCreateInfo[0].module = vertShaderModule;
-        shaderStageCreateInfo[0].pName = "main";
-        shaderStageCreateInfo[0].flags = 0;
-        shaderStageCreateInfo[0].pNext = nullptr;
-        shaderStageCreateInfo[0].pSpecializationInfo = nullptr;
-        
-        shaderStageCreateInfo[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStageCreateInfo[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        shaderStageCreateInfo[1].module = fragShaderModule;
-        shaderStageCreateInfo[1].pName = "main";
-        shaderStageCreateInfo[1].flags = 0;
-        shaderStageCreateInfo[1].pNext = nullptr;
-        shaderStageCreateInfo[1].pSpecializationInfo = nullptr;
-
-        if (enableGeometryShader) {
-            shaderStageCreateInfo[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            shaderStageCreateInfo[2].stage = VK_SHADER_STAGE_GEOMETRY_BIT;
-            shaderStageCreateInfo[2].module = geoShaderModule;
-            shaderStageCreateInfo[2].pName = "main";
-            shaderStageCreateInfo[2].flags = 0;
-            shaderStageCreateInfo[2].pNext = nullptr;
-            shaderStageCreateInfo[2].pSpecializationInfo = nullptr;
+        for (int i = 0; i < material.getShaderModulePointers().size(); i++) {
+            shaderStageCreateInfo[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            switch (i) {
+                case 0:
+                    shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_VERTEX_BIT;
+                    break;
+                case 1:
+                    shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    break;
+                default:
+                    break;
+            }
+            shaderStageCreateInfo[i].module = *material.getShaderModulePointers()[i];
+            shaderStageCreateInfo[i].pName = "main";
+            shaderStageCreateInfo[i].flags = 0;
+            shaderStageCreateInfo[i].pNext = nullptr;
+            shaderStageCreateInfo[i].pSpecializationInfo = nullptr;
         }
 
 //        VkPipelineViewportStateCreateInfo viewportInfo{};
@@ -93,8 +49,8 @@ namespace Kaamoo {
 //        viewportInfo.scissorCount = 1;
 //        viewportInfo.pScissors = &pipelineConfigureInfo.scissor;
 
-        auto& bindingDescription = pipelineConfigureInfo.bindingDescriptions;
-        auto& attributeDescription = pipelineConfigureInfo.attributeDescriptions;
+        auto &bindingDescription = pipelineConfigureInfo.vertexBindingDescriptions;
+        auto &attributeDescription = pipelineConfigureInfo.attributeDescriptions;
 
         VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
         vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -211,27 +167,16 @@ namespace Kaamoo {
         configureInfo.dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(configureInfo.dynamicStateEnables.size());
         configureInfo.dynamicStateCreateInfo.flags = 0;
         configureInfo.dynamicStateCreateInfo.pNext = nullptr;
-        
-        configureInfo.bindingDescriptions = Model::Vertex::getBindingDescriptions();
-        configureInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
-    }
 
-    void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {
-        VkShaderModuleCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        createInfo.codeSize = code.size();
-        //reinterpret_cast是更底层的转换，直接在二进制上进行类型转换，不进行类型检查
-        createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
-        if (vkCreateShaderModule(device.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create shader module");
-        }
+        configureInfo.vertexBindingDescriptions = Model::Vertex::getBindingDescriptions();
+        configureInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
     }
 
     void Pipeline::bind(VkCommandBuffer commandBuffer) {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
     }
 
-    void Pipeline::enableAlphaBlending(PipelineConfigureInfo & configureInfo) {
+    void Pipeline::enableAlphaBlending(PipelineConfigureInfo &configureInfo) {
         configureInfo.colorBlendAttachment.colorWriteMask =
                 VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
                 VK_COLOR_COMPONENT_A_BIT;

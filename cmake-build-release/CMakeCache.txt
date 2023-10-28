@@ -243,6 +243,24 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 GLSL_VALIDATOR:FILEPATH=E:/Vulkan/SDK/Bin/glslangValidator.exe
 
 //Value Computed by CMake
+ShaderPipeline_BINARY_DIR:STATIC=E:/MyProjects/VulkanTestClion/cmake-build-release/ShaderPipeline
+
+//Value Computed by CMake
+ShaderPipeline_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+ShaderPipeline_SOURCE_DIR:STATIC=E:/MyProjects/VulkanTestClion/ShaderPipeline
+
+//Value Computed by CMake
+Source_BINARY_DIR:STATIC=E:/MyProjects/VulkanTestClion/cmake-build-release/ShaderPipeline
+
+//Value Computed by CMake
+Source_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+Source_SOURCE_DIR:STATIC=E:/MyProjects/VulkanTestClion/ShaderPipeline
+
+//Value Computed by CMake
 VulkanTestClion_BINARY_DIR:STATIC=E:/MyProjects/VulkanTestClion/cmake-build-release
 
 //Value Computed by CMake

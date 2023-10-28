@@ -1,0 +1,20 @@
+[
+  {
+    "model": "smooth_vase.obj",
+    "transform": {
+      "translation": [0,0,0],
+      "scale": [2.5,2.5,2.5],
+      "rotation": [0,0,0]
+    },
+    "materialId": 2
+  },
+  {
+    "model": "quad.obj",
+    "transform": {
+      "translation": [0,0,0],
+      "scale": [2.5,1,2.5],
+      "rotation": [0,0,0]
+    },
+    "materialId": 1
+  }
+]

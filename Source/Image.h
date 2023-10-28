@@ -25,16 +25,16 @@ namespace Kaamoo {
 
         void createTextureImageView(VkImageViewCreateInfo createInfo);
 
-        VkDescriptorImageInfo descriptorInfo(Sampler& sampler);
+        VkDescriptorImageInfo descriptorInfo(Sampler &sampler);
 
         void setImage(VkImage vkImage) { this->image = vkImage; }
-        
-        VkImage getImage() const {return this->image;};
+
+        VkImage getImage() const { return this->image; };
 
         static void setDefaultImageCreateInfo(VkImageCreateInfo &defaultCreateInfo);
 
         void setDefaultImageViewCreateInfo(VkImageViewCreateInfo &createInfo);
-        
+
 
     private:
         Device &device;
