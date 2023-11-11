@@ -38,6 +38,9 @@ namespace Kaamoo {
             pushConstantRange.size = sizeof(PointLightPushConstant);
         } else if (material.getPipelineCategory() == "Opaque")
             pushConstantRange.size = sizeof(SimplePushConstantData);
+        else if (material.getPipelineCategory() == "Overlay"){
+            pushConstantRange.size = 0;
+        }
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -46,8 +49,9 @@ namespace Kaamoo {
         for (auto &descriptorSetLayoutPointer: material.getDescriptorSetLayoutPointers()) {
             descriptorSetLayouts.push_back(descriptorSetLayoutPointer->getDescriptorSetLayout());
         }
+        
         pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
-        pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+        pipelineLayoutCreateInfo.pushConstantRangeCount = pushConstantRange.size == 0 ? 0 : 1;
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
         if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) !=
             VK_SUCCESS) {
@@ -59,11 +63,16 @@ namespace Kaamoo {
     void RenderSystem::createPipeline(VkRenderPass renderPass) {
         PipelineConfigureInfo pipelineConfigureInfo{};
         Pipeline::setDefaultPipelineConfigureInfo(pipelineConfigureInfo);
+        
         if (material.getPipelineCategory() == "Light") {
             Pipeline::enableAlphaBlending(pipelineConfigureInfo);
             pipelineConfigureInfo.attributeDescriptions.clear();
             pipelineConfigureInfo.vertexBindingDescriptions.clear();
+        } else if (material.getPipelineCategory() == "Overlay") {
+            pipelineConfigureInfo.attributeDescriptions.clear();
+            pipelineConfigureInfo.vertexBindingDescriptions.clear();
         }
+        
         pipelineConfigureInfo.renderPass = renderPass;
         pipelineConfigureInfo.pipelineLayout = pipelineLayout;
         pipeline = std::make_unique<Pipeline>(
@@ -73,27 +82,13 @@ namespace Kaamoo {
         );
     }
 
-    void updateLight(FrameInfo &frameInfo, GameObject &obj) {
-        int lightIndex = obj.pointLightComponent->lightIndex;
-
-        assert(lightIndex < MAX_LIGHT_NUM && "点光源数目过多");
-
-        auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
-        obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1));
-
-        PointLight pointLight{};
-        pointLight.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
-        pointLight.position = glm::vec4(obj.transform.translation, 1.f);
-        frameInfo.globalUbo.pointLights[lightIndex] = pointLight;
-
-    }
-
+    
     void RenderSystem::render(FrameInfo &frameInfo) {
         pipeline->bind(frameInfo.commandBuffer);
 
         std::vector<VkDescriptorSet> descriptorSets;
         for (auto &descriptorSetPointer: material.getDescriptorSetPointers()) {
-            if (*descriptorSetPointer != nullptr) {
+            if (descriptorSetPointer != nullptr) {
                 descriptorSets.push_back(*descriptorSetPointer);
             }
         }
@@ -111,8 +106,10 @@ namespace Kaamoo {
         for (auto &pair: frameInfo.gameObjects) {
             auto &obj = pair.second;
             if (obj.getMaterialId() != material.getMaterialId())continue;
-            if (obj.pointLightComponent != nullptr) {
-                updateLight(frameInfo, obj);
+            
+            if (material.getPipelineCategory()=="Overlay"){
+                vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+            }else if (material.getPipelineCategory()=="Light") {
                 PointLightPushConstant pointLightPushConstant{};
                 pointLightPushConstant.position = glm::vec4(obj.transform.translation, 1.f);
                 pointLightPushConstant.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
@@ -121,7 +118,7 @@ namespace Kaamoo {
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                    sizeof(PointLightPushConstant), &pointLightPushConstant);
                 vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
-            } else {
+            } else if (material.getPipelineCategory()=="Opaque") {
                 SimplePushConstantData push{};
                 push.modelMatrix = pair.second.transform.mat4();
                 push.normalMatrix = pair.second.transform.normalMatrix();

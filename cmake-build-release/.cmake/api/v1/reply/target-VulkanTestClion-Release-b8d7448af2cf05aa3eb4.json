@@ -117,7 +117,8 @@
 				15,
 				16,
 				17,
-				18
+				18,
+				19
 			]
 		}
 	],
@@ -182,7 +183,15 @@
 				15,
 				16,
 				17,
-				18
+				18,
+				19
+			]
+		},
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				20
 			]
 		}
 	],
@@ -263,7 +272,7 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "Source/Renderer.cpp",
+			"path" : "Source/Renderers/Renderer.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -299,8 +308,19 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "Source/Systems/ShadowSystem.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "Source/main.cpp",
 			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/Systems/ShadowSystem.h",
+			"sourceGroupIndex" : 1
 		}
 	],
 	"type" : "EXECUTABLE"

@@ -13,7 +13,7 @@
     "vertexShader": "MyShader.vert.spv",
     "fragmentShader": "MyShader.frag.spv",
     "texture": [
-      "texture1.jpg"
+      "water.jpg"
     ]
   },
   {
@@ -22,7 +22,22 @@
     "vertexShader": "MyShader.vert.spv",
     "fragmentShader": "MyShader.frag.spv",
     "texture": [
-      "water.jpg"
+      "Tiles.jpg"
+    ]
+  },
+  {
+    "id": 3,
+    "pipelineCategory": "Shadow",
+    "vertexShader": "Shadow.vert.spv",
+    "fragmentShader": "Shadow.frag.spv",
+    "texture": []
+  },
+  {
+    "id": 4,
+    "pipelineCategory": "Overlay",
+    "vertexShader": "ShadowDisplay.vert.spv",
+    "fragmentShader": "ShadowDisplay.frag.spv",
+    "texture": [
     ]
   }
 ]

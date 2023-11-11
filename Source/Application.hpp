@@ -4,7 +4,7 @@
 #include <glm/gtc/constants.hpp>
 #include "MyWindow.hpp"
 #include "Pipeline.hpp"
-#include "Renderer.h"
+#include "Renderers/Renderer.h"
 #include "Device.hpp"
 #include "Model.hpp"
 #include "GameObject.h"
@@ -34,6 +34,7 @@ namespace Kaamoo {
     private:
         void loadGameObjects();
         void loadMaterials();
+        void updateLight(FrameInfo &frameInfo);
         std::string readJsonFile(const std::string &path);
         MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         Device device{myWindow};
@@ -42,5 +43,7 @@ namespace Kaamoo {
         GameObject::Map gameObjects;
         Material::Map materials;
         std::unique_ptr<DescriptorPool> globalPool;
+        std::shared_ptr<VkRenderPass> shadowPass;
+        std::shared_ptr<VkFramebuffer> shadowFramebuffer;
     };
 }

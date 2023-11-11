@@ -45,10 +45,10 @@ namespace Kaamoo {
         for (int i = 0; i < depthImages.size(); i++) {
             vkDestroyImageView(device.device(), depthImageViews[i], nullptr);
             vkDestroyImage(device.device(), depthImages[i], nullptr);
-            vkFreeMemory(device.device(), depthImageMemorys[i], nullptr);
+            vkFreeMemory(device.device(), depthImageMemories[i], nullptr);
         }
 
-        for (auto framebuffer: swapChainFramebuffers) {
+        for (auto framebuffer: swapChainFrameBuffers) {
             vkDestroyFramebuffer(device.device(), framebuffer, nullptr);
         }
 
@@ -265,12 +265,12 @@ namespace Kaamoo {
         renderPassInfo.pDependencies = &dependency;
 
         if (vkCreateRenderPass(device.device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create render pass!");
+            throw std::runtime_error("failed to create renderShadow pass!");
         }
     }
 
     void SwapChain::createFramebuffers() {
-        swapChainFramebuffers.resize(imageCount());
+        swapChainFrameBuffers.resize(imageCount());
         for (size_t i = 0; i < imageCount(); i++) {
             std::array<VkImageView, 2> attachments = {swapChainImageViews[i], depthImageViews[i]};
 
@@ -288,7 +288,7 @@ namespace Kaamoo {
                     device.device(),
                     &framebufferInfo,
                     nullptr,
-                    &swapChainFramebuffers[i]) != VK_SUCCESS) {
+                    &swapChainFrameBuffers[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create framebuffer!");
             }
         }
@@ -300,7 +300,7 @@ namespace Kaamoo {
         swapChainDepthFormat = depthFormat;
 
         depthImages.resize(imageCount());
-        depthImageMemorys.resize(imageCount());
+        depthImageMemories.resize(imageCount());
         depthImageViews.resize(imageCount());
 
         for (int i = 0; i < depthImages.size(); i++) {
@@ -324,7 +324,7 @@ namespace Kaamoo {
                     imageInfo,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                     depthImages[i],
-                    depthImageMemorys[i]);
+                    depthImageMemories[i]);
 
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

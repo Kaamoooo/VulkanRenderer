@@ -21,11 +21,11 @@ namespace Kaamoo {
 
         void createTextureImage(std::string path, VkImageCreateInfo createInfo);
 
-        void createTextureImageView();
+        void createImageView();
 
-        void createTextureImageView(VkImageViewCreateInfo createInfo);
+        void createImageView(VkImageViewCreateInfo createInfo);
 
-        VkDescriptorImageInfo descriptorInfo(Sampler &sampler);
+        std::shared_ptr<VkDescriptorImageInfo> descriptorInfo(Sampler &sampler);
 
         void setImage(VkImage vkImage) { this->image = vkImage; }
 
@@ -35,11 +35,16 @@ namespace Kaamoo {
 
         void setDefaultImageViewCreateInfo(VkImageViewCreateInfo &createInfo);
 
+        void createImage(VkImageCreateInfo createInfo);
 
     private:
         Device &device;
         VkImage image;
         VkImageView imageView;
+    public:
+        const VkImageView *getImageView() const;
+
+    private:
         VkDeviceMemory imageMemory{};
         int texWidth, texHeight, texChannels;
 

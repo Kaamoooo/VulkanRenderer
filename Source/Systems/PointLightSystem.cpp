@@ -2,6 +2,7 @@
 #include "PointLightSystem.h"
 #include "../FrameInfo.h"
 
+//deprecated, I combined pointLightSystem into regular render system in that they are based on game objects.
 namespace Kaamoo {
 
     struct PointLightPushConstant {

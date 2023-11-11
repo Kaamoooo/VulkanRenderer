@@ -101,7 +101,7 @@ namespace tinyobj {
 //  -t u [v [w]]                           # Turbulence                (default
 //  0 0 0)
 //  -texres resolution                     # texture resolution to create
-//  -clamp on | off                        # only render texels in the clamped
+//  -clamp on | off                        # only renderShadow texels in the clamped
 //  0-1 range (default off)
 //                                         #   When unclamped, textures are
 //                                         repeated across a surface,

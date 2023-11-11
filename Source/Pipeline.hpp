@@ -61,10 +61,9 @@ namespace Kaamoo {
         Device &device;
         VkPipeline graphicsPipeline;
         Material &material;
+        void createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
 
 
-        void
-        createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
     };
 
 

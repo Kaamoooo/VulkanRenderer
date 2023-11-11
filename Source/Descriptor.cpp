@@ -17,28 +17,29 @@ namespace Kaamoo {
         layoutBinding.descriptorCount = count;
         layoutBinding.stageFlags = stageFlags;
 
-        bindings[binding] = layoutBinding;
+        bindings.push_back(layoutBinding);
         return *this;
     }
 
     std::shared_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const {
-        return std::make_shared<DescriptorSetLayout>(Device,bindings);
+        return std::make_shared<DescriptorSetLayout>(Device, bindings);
+    }
+
+    const std::vector<VkDescriptorSetLayoutBinding> &
+    DescriptorSetLayout::Builder::getBindings() const {
+        return bindings;
     }
 
 // *************** Descriptor Set Layout *********************
 
     DescriptorSetLayout::DescriptorSetLayout(
-            class Device &Device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
+            class Device &Device, const std::vector<VkDescriptorSetLayoutBinding> &bindings)
             : Device{Device}, bindings{bindings} {
-        std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
-        for (auto kv: bindings) {
-            setLayoutBindings.push_back(kv.second);
-        }
 
         VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo{};
         descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-        descriptorSetLayoutInfo.pBindings = setLayoutBindings.data();
+        descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+        descriptorSetLayoutInfo.pBindings = bindings.data();
 
         if (vkCreateDescriptorSetLayout(
                 Device.device(),
@@ -130,53 +131,48 @@ namespace Kaamoo {
 
 // *************** Descriptor Writer *********************
 
-    DescriptorWriter::DescriptorWriter(DescriptorSetLayout &setLayout, DescriptorPool &pool)
+    DescriptorWriter::DescriptorWriter(std::shared_ptr<DescriptorSetLayout> setLayout, DescriptorPool &pool)
             : setLayout{setLayout}, pool{pool} {}
 
     DescriptorWriter &DescriptorWriter::writeBuffer(
-            uint32_t binding, VkDescriptorBufferInfo *bufferInfo) {
-        assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+            uint32_t binding, VkDescriptorBufferInfo bufferInfo) {
+//        assert(setLayout->bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
-        auto &bindingDescription = setLayout.bindings[binding];
+        auto &bindingDescription = setLayout->bindings[binding];
 
         assert(
                 bindingDescription.descriptorCount == 1 &&
                 "Binding single descriptor info, but binding expects multiple");
 
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType = bindingDescription.descriptorType;
-        write.dstBinding = binding;
-        write.pBufferInfo = bufferInfo;
-        write.descriptorCount = 1;
+        auto write = std::make_shared<VkWriteDescriptorSet>();
+        write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write->descriptorType = bindingDescription.descriptorType;
+        write->dstBinding = binding;
+        write->pBufferInfo = &bufferInfo;
+        write->descriptorCount = 1;
 
         writes.push_back(write);
         return *this;
     }
 
     DescriptorWriter &DescriptorWriter::writeImage(
-            uint32_t binding, VkDescriptorImageInfo &imageInfo) {
-        assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+            uint32_t binding, std::shared_ptr<VkDescriptorImageInfo> imageInfo) {
 
-        auto &bindingDescription = setLayout.bindings[binding];
+        auto &bindingDescription = setLayout->bindings[binding];
 
-        assert(
-                bindingDescription.descriptorCount == 1 &&
-                "Binding single descriptor info, but binding expects multiple");
-
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.descriptorType = bindingDescription.descriptorType;
-        write.dstBinding = binding;
-        write.pImageInfo = &imageInfo;
-        write.descriptorCount = 1;
+        auto write = std::make_shared<VkWriteDescriptorSet>();
+        write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write->descriptorType = bindingDescription.descriptorType;
+        write->dstBinding = binding;
+        write->pImageInfo = imageInfo.get();
+        write->descriptorCount = 1;
 
         writes.push_back(write);
         return *this;
     }
 
     bool DescriptorWriter::build(std::shared_ptr<VkDescriptorSet> &setPtr) {
-        bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), setPtr);
+        bool success = pool.allocateDescriptor(setLayout->getDescriptorSetLayout(), setPtr);
         if (!success) {
             return false;
         }
@@ -185,10 +181,12 @@ namespace Kaamoo {
     }
 
     void DescriptorWriter::overwrite(VkDescriptorSet &set) {
+        std::vector<VkWriteDescriptorSet> writeVector;
         for (auto &write: writes) {
-            write.dstSet = set;
+            write->dstSet = set;
+            writeVector.push_back(*write);
         }
-        vkUpdateDescriptorSets(pool.Device.device(), writes.size(), writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(pool.Device.device(), writes.size(), writeVector.data(), 0, nullptr);
     }
 
 }  // namespace 

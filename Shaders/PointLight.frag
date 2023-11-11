@@ -15,6 +15,7 @@ layout(set=0, binding=0) uniform GlobalUbo{
     vec4 ambientLightColor;
     PointLight pointLights[10];
     int lightNum;
+    mat4 lightProjectionViewMatrix;
 } ubo;
 
 

@@ -21,15 +21,18 @@ namespace Kaamoo {
                     VkShaderStageFlags stageFlags,
                     uint32_t count = 1);
 
-            std::shared_ptr<DescriptorSetLayout> build() const;
+            std::shared_ptr<DescriptorSetLayout> build( ) const;
 
         private:
             Device &Device;
-            std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
+//            std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
+            std::vector<VkDescriptorSetLayoutBinding> bindings{};
+        public:
+            const std::vector<VkDescriptorSetLayoutBinding> &getBindings() const;
         };
 
         DescriptorSetLayout(
-                Device &Device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
+                Device &Device, const std::vector<VkDescriptorSetLayoutBinding>& bindings);
 
         ~DescriptorSetLayout();
 
@@ -42,7 +45,7 @@ namespace Kaamoo {
     private:
         Device &Device;
         VkDescriptorSetLayout descriptorSetLayout;
-        std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
+        std::vector< VkDescriptorSetLayoutBinding> bindings;
 
         friend class DescriptorWriter;
     };
@@ -96,20 +99,20 @@ namespace Kaamoo {
 
     class DescriptorWriter {
     public:
-        DescriptorWriter(DescriptorSetLayout &setLayout, DescriptorPool &pool);
+        DescriptorWriter(std::shared_ptr<DescriptorSetLayout> setLayout, DescriptorPool &pool);
 
-        DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
+        DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo bufferInfo);
 
-        DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo &imageInfo);
+        DescriptorWriter &writeImage(uint32_t binding, std::shared_ptr<VkDescriptorImageInfo> imageInfo);
 
-        bool build(std::shared_ptr<VkDescriptorSet>& setPtr);
+        bool build(std::shared_ptr<VkDescriptorSet> &setPtr);
 
         void overwrite(VkDescriptorSet &set);
 
     private:
-        DescriptorSetLayout &setLayout;
+        std::shared_ptr<DescriptorSetLayout> setLayout;
         DescriptorPool &pool;
-        std::vector<VkWriteDescriptorSet> writes;
+        std::vector<std::shared_ptr<VkWriteDescriptorSet>> writes;
     };
 
 }  // namespace 

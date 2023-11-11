@@ -28,11 +28,11 @@ namespace Kaamoo {
         device.createImageWithInfo(createInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 
         device.transitionImageLayout(image, createInfo.format, createInfo.initialLayout,
-                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
         device.copyBufferToImage(stagingBuffer->getBuffer(), image, static_cast<uint32_t>(texWidth),
                                  static_cast<uint32_t>(texHeight), 1);
         device.transitionImageLayout(image, createInfo.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
 
 
     }
@@ -66,8 +66,8 @@ namespace Kaamoo {
         defaultCreateInfo.flags = 0;
     }
 
-    void Image::createTextureImageView(VkImageViewCreateInfo imageViewCreateInfo) {
-        if (vkCreateImageView(device.device(), &imageViewCreateInfo, nullptr, &imageView) != VK_SUCCESS) {
+    void Image::createImageView(VkImageViewCreateInfo createInfo) {
+        if (vkCreateImageView(device.device(), &createInfo, nullptr, &imageView) != VK_SUCCESS) {
             throw std::runtime_error("failed to create image view");
         }
     }
@@ -82,6 +82,7 @@ namespace Kaamoo {
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+        
     }
 
     void Image::createTextureImage(std::string path) {
@@ -90,18 +91,26 @@ namespace Kaamoo {
         createTextureImage(path, createInfo);
     }
 
-    void Image::createTextureImageView() {
+    void Image::createImageView() {
         VkImageViewCreateInfo createInfo{};
         setDefaultImageViewCreateInfo(createInfo);
-        createTextureImageView(createInfo);
+        createImageView(createInfo);
     }
 
-    VkDescriptorImageInfo Image::descriptorInfo(Sampler &sampler) {
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.sampler = sampler.getSampler();
-        imageInfo.imageView = imageView;
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    std::shared_ptr<VkDescriptorImageInfo> Image::descriptorInfo(Sampler &sampler) {
+        auto imageInfo =  std::make_shared<VkDescriptorImageInfo>();
+        imageInfo->sampler = sampler.getSampler();
+        imageInfo->imageView = imageView;
+        imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         return imageInfo;
+    }
+
+    void Image::createImage(VkImageCreateInfo createInfo) {
+        device.createImageWithInfo(createInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+    }
+
+    const VkImageView *Image::getImageView() const {
+        return &imageView;
     }
 
 
