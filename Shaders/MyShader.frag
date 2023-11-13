@@ -65,15 +65,17 @@ void main(){
     lightFragPos/=lightFragPos.w;
     float fragDepth = 0;
 
-    vec2 tmpUV = (lightFragPos.xy)/2+0.5;
+    vec3 tmpUV = (lightFragPos.xyz)/2+0.5;
     float depth=1;
-    if (all(greaterThanEqual(tmpUV, vec2(0.0, 0.0))) && all(lessThanEqual(tmpUV, vec2(1.0, 1.0)))) {
-        depth = texture(shadowSampler, tmpUV).x;
+    float shadowMask = 0;
+    if (all(greaterThanEqual(tmpUV, vec3(0.0, 0,0))) && all(lessThanEqual(tmpUV, vec3(1,1.0, 1.0)))) {
+        depth = texture(shadowSampler, tmpUV.xy).x;
         fragDepth=lightFragPos.z;
+        shadowMask=clamp(0, 1, (fragDepth-depth)*10);
         //    outColor = vec4(1 - (1-fragDepth)*20);  
         //    outColor = vec4(depth-fragDepth);  
     }
-    float shadowMask = clamp(0, 1, (fragDepth-depth)*7);
     vec4 lightingResult=vec4(fragColor*texColor*(totalDiffuse+ambientLightColor+totalSpecular), 1);
     outColor = lightingResult*(1-shadowMask);
+//    outColor = vec4(lightFragPos.z);
 }

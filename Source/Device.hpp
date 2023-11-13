@@ -82,7 +82,7 @@ namespace Kaamoo {
                 VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
         
         void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
-                                   VkImageAspectFlags aspectFlag=VK_IMAGE_ASPECT_COLOR_BIT);
+                                   VkImageAspectFlags aspectFlag= VK_IMAGE_ASPECT_COLOR_BIT);
 
         void createImageWithInfo(
                 const VkImageCreateInfo &imageInfo,

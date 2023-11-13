@@ -42,6 +42,7 @@ namespace Kaamoo {
 
 
         auto currentTime = std::chrono::high_resolution_clock::now();
+        float totalTime = 0;
         GlobalUbo ubo{};
         ubo.lightNum = LightNum;
         while (!myWindow.shouldClose()) {
@@ -49,6 +50,7 @@ namespace Kaamoo {
 
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+            totalTime += frameTime;
             currentTime = newTime;
 
             cameraController.moveInPlaneXZ(myWindow.getGLFWwindow(), frameTime, viewerObject);
@@ -76,49 +78,21 @@ namespace Kaamoo {
                 updateLight(frameInfo);
                 glm::mat4 lightProjectionMatrix =
                         shadowSystem->getClipMatrix() *
-                        glm::perspective(glm::radians(90.0f), (float) Application::WIDTH / (float) Application::HEIGHT,
+                        glm::perspective(glm::radians(60.0f), (float) Application::WIDTH / (float) Application::HEIGHT,
                                          0.1f,
-                                         20.0f);
-                ubo.lightProjectionViewMatrix = lightProjectionMatrix *
-                                                shadowSystem->calculateViewMatrixForRotation(
-                                                        ubo.pointLights[0].position, glm::vec3(30, 0, 0));
-
-                VkImageMemoryBarrier barrier{};
-                barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                barrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                barrier.image = renderer.getShadowImage()->getImage();
-
-                VkImageSubresourceRange subresourceRange{};
-                subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-                subresourceRange.baseMipLevel = 0;
-                subresourceRange.levelCount = 1;
-                subresourceRange.baseArrayLayer = 0;
-                subresourceRange.layerCount = 1;
-                barrier.subresourceRange = subresourceRange;
-
-                VkPipelineStageFlagBits srcStage, dstStage;
-
-                barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-                barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-                srcStage = static_cast<VkPipelineStageFlagBits>(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
-                                                                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-                dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                                         10.0f);
+                ubo.lightProjectionViewMatrix =
+                        lightProjectionMatrix *
+                        shadowSystem->calculateViewMatrixForRotation(
+                                ubo.pointLights[0].position, glm::vec3(glm::radians(45.f), totalTime, 0));
+//                auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
 
                 renderer.beginShadowRenderPass(commandBuffer);
                 shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 shadowSystem->renderShadow(frameInfo);
                 renderer.endShadowRenderPass(commandBuffer);
 
-                vkCmdPipelineBarrier(commandBuffer,
-                                     srcStage, dstStage,
-                                     0,
-                                     0, nullptr,
-                                     0, nullptr,
-                                     1, &barrier);
+                renderer.setShadowMapSynchronization(commandBuffer);
 
                 //Q:为什么没有将beginFrame与beginSwapChainRenderPass结合在一起？
                 //A:为了在这里添加一些其他的pass，例如offscreen shadow pass
@@ -197,7 +171,7 @@ namespace Kaamoo {
                 const int materialId = object["materialId"].GetInt();
 
                 auto gameObject = GameObject::createGameObject(materialId);
-                std::shared_ptr<Model> model = Model::createModelFromFile(device, BaseModelsPath + modelName);
+                std::shared_ptr <Model> model = Model::createModelFromFile(device, BaseModelsPath + modelName);
                 gameObject.model = model;
                 gameObject.transform.translation = translation;
                 gameObject.transform.scale = scale;
@@ -208,7 +182,7 @@ namespace Kaamoo {
         }
 
 
-        std::vector<glm::vec3> lightColors{
+        std::vector <glm::vec3> lightColors{
                 {1.f, .1f, .1f},
 //                {.1f, .1f, 1.f},
 //                {.1f, 1.f, .1f},
@@ -221,11 +195,11 @@ namespace Kaamoo {
             LightNum++;
             auto pointLight = GameObject::makePointLight(2, 0.1f, lightColors[i]);
             pointLight.setMaterialId(0);
-            pointLight.transform.translation = {0.5f, -0.5f, -1};
-            auto rotateLight = glm::rotate(glm::mat4{1.f},
-                                           (float) i * glm::two_pi<float>() / static_cast<float>(lightColors.size()),
-                                           glm::vec3(0, -1.f, 0));
-            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-0.5, -1, -0.5, 1));
+//            auto rotateLight = glm::rotate(glm::mat4{1.f},
+//                                           (float) i * glm::two_pi<float>() / static_cast<float>(lightColors.size()),
+//                                           glm::vec3(0, -1.f, 0));
+//            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(0, -1, 1, 1));
+            pointLight.transform.translation = glm::vec4(0, -1, 1, 1);
             gameObjects.emplace(pointLight.getId(), std::move(pointLight));
         }
 

@@ -28,6 +28,8 @@ namespace Kaamoo {
         void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
         void endShadowRenderPass(VkCommandBuffer commandBuffer);
+        
+        void setShadowMapSynchronization(VkCommandBuffer commandBuffer);
 
         [[nodiscard]] std::shared_ptr<VkDescriptorImageInfo> getShadowImageInfo() const {
             return shadowImage->descriptorInfo(*shadowSampler);
