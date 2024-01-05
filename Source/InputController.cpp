@@ -1,10 +1,34 @@
 ﻿//
 // Created by asus on 2023/9/19.
 //
+#include <iostream>
 #include "KeyboardMovementController.h"
 
 namespace Kaamoo {
-    void KeyboardController::moveInPlaneXZ(GLFWwindow *window, float dt, GameObject &gameObject) {
+    void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
+        // 在这里处理鼠标拖动事件
+//        std::cout << "Mouse moved to: (" << xpos << ", " << ypos << ")" << std::endl;
+    }
+
+    void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+        if (action == GLFW_PRESS) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                std::cout << "Left mouse button pressed" << std::endl;
+            } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                std::cout << "Right mouse button pressed" << std::endl;
+            }
+            // Add more conditions for other mouse buttons as needed
+        } else if (action == GLFW_RELEASE) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                std::cout << "Left mouse button released" << std::endl;
+            } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                std::cout << "Right mouse button released" << std::endl;
+            }
+            // Add more conditions for other mouse buttons as needed
+        }
+    }
+
+    void KeyboardController::moveCamera(float dt, GameObject &gameObject) {
         glm::vec3 rotation{0};
         if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y += 1;
         if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y -= 1;
@@ -32,6 +56,13 @@ namespace Kaamoo {
         if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
             gameObject.transform.translation += glm::normalize(moveDir) * moveSpeed * dt;
         }
+    }
+
+    KeyboardController::KeyboardController(GLFWwindow *window) {
+        this->window = window;
+        glfwSetCursorPosCallback(window, cursor_position_callback);
+        glfwSetMouseButtonCallback(window, mouse_button_callback);
+        glfwMakeContextCurrent(window);
     }
 
 

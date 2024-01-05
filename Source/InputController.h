@@ -6,6 +6,7 @@
 namespace Kaamoo{
     class KeyboardController{
     public:
+        explicit KeyboardController(GLFWwindow *window);
         struct KeyMappings{
             int moveLeft = GLFW_KEY_A;
             int moveRight = GLFW_KEY_D;
@@ -30,8 +31,9 @@ namespace Kaamoo{
         float moveSpeed{3.f};
         float lookSpeed{1.5f};
         
-        void moveInPlaneXZ(GLFWwindow* glfWwindow,float dt,GameObject& gameObject);
+        void moveCamera(float dt, GameObject &gameObject);
         
-        void changeIteration(GLFWwindow* glfWwindow,std::vector<GameObject>&);
+    private:
+        GLFWwindow *window;
     };
 }
