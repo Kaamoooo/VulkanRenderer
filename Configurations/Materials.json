@@ -9,11 +9,14 @@
   },
   {
     "id": 1,
-    "pipelineCategory": "Opaque",
-    "vertexShader": "MyShader.vert.spv",
-    "fragmentShader": "MyShader.frag.spv",
+    "pipelineCategory": "TessellationGeometry",
+    "vertexShader": "Grass/Grass.vert.spv",
+    "fragmentShader": "Grass/Grass.frag.spv",
+    "tessellationControlShader": "Grass/Grass.tesc.spv",
+    "tessellationEvaluationShader": "Grass/Grass.tese.spv",
+    "geometryShader": "Grass/Grass.geom.spv",
     "texture": [
-      "water.jpg"
+      "Grass.jpg"
     ]
   },
   {
@@ -38,6 +41,16 @@
     "vertexShader": "ShadowDisplay.vert.spv",
     "fragmentShader": "ShadowDisplay.frag.spv",
     "texture": [
+    ]
+  },
+  {
+    "id": 5,
+    "pipelineCategory": "Opaque",
+    "vertexShader": "MyShader.vert.spv",
+    "fragmentShader": "Grass/Ground.frag.spv",
+    "texture": [
+      "Ground.jpg",
+      "Ground068_1K-JPG_NormalGL.jpg"
     ]
   }
 ]

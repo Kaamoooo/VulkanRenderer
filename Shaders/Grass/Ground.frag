@@ -1,9 +1,9 @@
 #version 450
-#include "UBO.glsl"
+#include "../UBO.glsl"
 
 layout(location=0) in vec3 fragColor;
 layout(location=1) in vec4 worldPos;
-layout(location=2) in vec4 worldNormal;
+layout(location=2) in vec4 worldNormal0;
 layout(location = 3) in vec2 uv;
 
 
@@ -16,11 +16,15 @@ layout(push_constant) uniform PushConstantData{
 
 
 layout(set=1, binding=0) uniform sampler2D texSampler;
-layout(set=1, binding=1) uniform sampler2D shadowSampler;
+layout(set=1, binding=1) uniform sampler2D normalSampler;
+layout(set=1, binding=2) uniform sampler2D shadowSampler;
 
 void main(){
     vec3 texColor = texture(texSampler, uv).xyz;
-
+    vec3 normalMapColor = texture(normalSampler, uv).xyz;
+    vec3 normal = normalize(normalMapColor * 2.0 - 1.0);
+    vec4 worldNormal = normalize(push.normalMatrix*vec4(normal, 0));
+    
     vec3 ambientLightColor = ubo.ambientLightColor.xyz*ubo.ambientLightColor.w;
     vec3 totalDiffuse=vec3(0, 0, 0);
     vec3 totalSpecular = vec3(0, 0, 0);

@@ -2,40 +2,70 @@
 // Created by asus on 2023/9/19.
 //
 #include <iostream>
-#include "KeyboardMovementController.h"
+#include "InputController.h"
 
 namespace Kaamoo {
-    void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
-        // 在这里处理鼠标拖动事件
-//        std::cout << "Mouse moved to: (" << xpos << ", " << ypos << ")" << std::endl;
-    }
+    bool mousePressed{false};
+    bool mouseMoved{false};
+    int width, height;
+    glm::vec2 lastPos{0};
+    glm::vec2 curPos{0};
+    glm::vec2 deltaPos{0};
 
-    void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
-        if (action == GLFW_PRESS) {
-            if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                std::cout << "Left mouse button pressed" << std::endl;
-            } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-                std::cout << "Right mouse button pressed" << std::endl;
-            }
-            // Add more conditions for other mouse buttons as needed
-        } else if (action == GLFW_RELEASE) {
-            if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                std::cout << "Left mouse button released" << std::endl;
-            } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-                std::cout << "Right mouse button released" << std::endl;
-            }
-            // Add more conditions for other mouse buttons as needed
+    void cursor_position_callback(GLFWwindow *, double xpos, double ypos) {
+        if (mousePressed) {
+            mouseMoved= true;
+            lastPos = curPos;
+            curPos = glm::vec2{xpos / width, ypos / height};
+            deltaPos = curPos - lastPos;
+
+            std::cout << "deltaPos: " << deltaPos.x << ", " << deltaPos.y << std::endl;
         }
     }
 
-    void KeyboardController::moveCamera(float dt, GameObject &gameObject) {
-        glm::vec3 rotation{0};
-        if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y += 1;
-        if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y -= 1;
-        if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotation.x -= 1;
-        if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) rotation.x += 1;
+    void mouse_button_callback(GLFWwindow *, int button, int action, int mods) {
+        if (action == GLFW_PRESS) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                mousePressed = true;
+                if (glm::dot(deltaPos, deltaPos) > std::numeric_limits<float>::epsilon()) {
+                    deltaPos = glm::normalize(curPos - lastPos);
+                    mouseMoved = true;
+                } else {
+                    mouseMoved = false;
+                }
+            }
+        } else if (action == GLFW_RELEASE) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                mousePressed = false;
+                lastPos = glm::vec2{0};
+                curPos = glm::vec2{0};
+                deltaPos = glm::vec2{0};
+            }
+        }
+    }
 
-        //防止没有按下按键时，对0归一化导致错误 
+    void InputController::moveCamera(float dt, GameObject &gameObject) {
+        glm::vec3 rotation{0};
+
+        if (moveObject!= nullptr){
+            if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) moveObject->Translate({-mouseSensitivity, 0, 0});
+            if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) moveObject->Translate({mouseSensitivity, 0, 0});
+            if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) moveObject->Translate({0, 0,mouseSensitivity});
+            if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) moveObject->Translate({0, 0,-mouseSensitivity});
+        }
+        
+//        if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y += 1;
+//        if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y -= 1;
+//        if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) rotation.x -= 1;
+//        if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) rotation.x += 1;
+
+        if (mousePressed && mouseMoved) {
+            rotation.x += deltaPos.y;
+            rotation.y -= deltaPos.x;
+            mouseMoved = false;
+        }
+
+        //防止没有按下按键时，对0归一化导致错误   
         if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
             gameObject.transform.rotation += glm::normalize(rotation) * lookSpeed * dt;
         }
@@ -58,8 +88,9 @@ namespace Kaamoo {
         }
     }
 
-    KeyboardController::KeyboardController(GLFWwindow *window) {
+    InputController::InputController(GLFWwindow *window) {
         this->window = window;
+        glfwGetWindowSize(window, &width, &height);
         glfwSetCursorPosCallback(window, cursor_position_callback);
         glfwSetMouseButtonCallback(window, mouse_button_callback);
         glfwMakeContextCurrent(window);

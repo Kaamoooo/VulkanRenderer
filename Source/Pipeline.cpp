@@ -10,37 +10,47 @@ namespace Kaamoo {
 
     Pipeline::~Pipeline() {
         for (auto &shaderModule: material.getShaderModulePointers()) {
-            if (*shaderModule != nullptr) {
-                vkDestroyShaderModule(device.device(), *shaderModule, nullptr);
-                *shaderModule= nullptr;
+            if (*(shaderModule->shaderModule) != nullptr) {
+                vkDestroyShaderModule(device.device(), *(shaderModule->shaderModule), nullptr);
+                *shaderModule->shaderModule = nullptr;
+                shaderModule = nullptr;
             }
         }
         vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
     }
 
     void Pipeline::createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo) {
-        uint32_t shaderStageCount = 2;
+        uint32_t shaderStageCount = material.getShaderModulePointers().size();
 
         VkPipelineShaderStageCreateInfo shaderStageCreateInfo[shaderStageCount];
 
         for (int i = 0; i < material.getShaderModulePointers().size(); i++) {
             shaderStageCreateInfo[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            switch (i) {
-                case 0:
+            auto &shaderCategory = material.getShaderModulePointers()[i]->shaderCategory;
+            switch (shaderCategory) {
+                case ShaderCategory::vertex:
                     shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_VERTEX_BIT;
                     break;
-                case 1:
+                case ShaderCategory::fragment:
                     shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
                     break;
-                default:
+                case ShaderCategory::tessellationControl:
+                    shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+                    break;
+                case ShaderCategory::tessellationEvaluation:
+                    shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+                    break;
+                case geometry:
+                    shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_GEOMETRY_BIT;
                     break;
             }
-            shaderStageCreateInfo[i].module = *material.getShaderModulePointers()[i];
+            shaderStageCreateInfo[i].module = *material.getShaderModulePointers()[i]->shaderModule;
             shaderStageCreateInfo[i].pName = "main";
             shaderStageCreateInfo[i].flags = 0;
             shaderStageCreateInfo[i].pNext = nullptr;
             shaderStageCreateInfo[i].pSpecializationInfo = nullptr;
         }
+        
 
 //        VkPipelineViewportStateCreateInfo viewportInfo{};
 //        viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -72,6 +82,7 @@ namespace Kaamoo {
         pipelineCreateInfo.pDepthStencilState = &pipelineConfigureInfo.depthStencilInfo;
         //指定动态状态
         pipelineCreateInfo.pDynamicState = &pipelineConfigureInfo.dynamicStateCreateInfo;
+        pipelineCreateInfo.pTessellationState = &pipelineConfigureInfo.tessellationStateCreateInfo;
 
         pipelineCreateInfo.layout = pipelineConfigureInfo.pipelineLayout;
         pipelineCreateInfo.renderPass = pipelineConfigureInfo.renderPass;
@@ -107,6 +118,7 @@ namespace Kaamoo {
         configureInfo.viewportStateCreateInfo.scissorCount = 1;
         configureInfo.viewportStateCreateInfo.pScissors = nullptr;
 
+        configureInfo.tessellationStateCreateInfo = {};
 
         configureInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         configureInfo.rasterizationInfo.depthClampEnable = VK_FALSE;

@@ -20,9 +20,8 @@ namespace Kaamoo {
     };
 
     RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, Material &material)
-            : device{device}, material{material} {
-        createPipelineLayout();
-        createPipeline(renderPass);
+            : device{device}, material{material},renderPass{renderPass} {
+
     }
 
     RenderSystem::~RenderSystem() {
@@ -112,7 +111,7 @@ namespace Kaamoo {
             }else if (material.getPipelineCategory()=="Light") {
                 PointLightPushConstant pointLightPushConstant{};
                 pointLightPushConstant.position = glm::vec4(obj.transform.translation, 1.f);
-                pointLightPushConstant.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
+                pointLightPushConstant.color = glm::vec4(obj.color, obj.lightComponent->lightIntensity);
                 pointLightPushConstant.radius = obj.transform.scale.x;
                 vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
@@ -132,6 +131,11 @@ namespace Kaamoo {
                 pair.second.model->draw(frameInfo.commandBuffer);
             }
         }
+    }
+
+    void RenderSystem::Init() {
+        createPipelineLayout();
+        createPipeline(renderPass);
     }
 
 }

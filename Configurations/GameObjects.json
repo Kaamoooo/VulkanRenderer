@@ -9,12 +9,21 @@
     "materialId": 2
   },
   {
-    "model": "quad.obj",
+    "model": "Ground.obj",
     "transform": {
       "translation": [0,0,0],
-      "scale": [2.5,1,2.5],
-      "rotation": [0,0,0]
+      "scale": [1,1,1],
+      "rotation": [0,45,0]
     },
     "materialId": 1
+  },
+  {
+    "model": "quad.obj",
+    "transform": {
+      "translation": [1,0,0],
+      "scale": [2,1,2],
+      "rotation": [0,0,0]
+    },
+    "materialId": 5
   }
 ]

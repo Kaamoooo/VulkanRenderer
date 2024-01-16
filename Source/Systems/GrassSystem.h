@@ -1,16 +1,21 @@
-﻿//
-// Created by asus on 2023/12/23.
-//
+﻿#pragma  once
 
-#ifndef VULKANTESTCLION_GRASSSYSTEM_H
-#define VULKANTESTCLION_GRASSSYSTEM_H
+#include "RenderSystem.h"
+
+namespace Kaamoo {
+    class GrassSystem : public RenderSystem {
+    public:
+        GrassSystem(Device &device, VkRenderPass renderPass, Material &material) ;
+
+    private:
+        void createPipelineLayout() override;
+
+        void createPipeline(VkRenderPass renderPass) override;
+
+        void render(FrameInfo &frameInfo) override;
+      
+        GameObject *moveObject= nullptr;
+    };
+}
 
 
-
-class GrassSystem {
-
-};
-
-
-
-#endif //VULKANTESTCLION_GRASSSYSTEM_H

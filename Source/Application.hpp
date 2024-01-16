@@ -10,7 +10,7 @@
 #include "GameObject.h"
 #include "Systems/RenderSystem.h"
 #include "Systems/PointLightSystem.h"
-#include "KeyboardMovementController.h"
+#include "InputController.h"
 #include <chrono>
 #include "Descriptor.h"
 #include "Image.h"

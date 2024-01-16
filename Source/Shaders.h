@@ -13,7 +13,7 @@ namespace Kaamoo {
     public:
         explicit Shaders(Device &device): device(device){};
 
-        void createShaderModule(const std::string& shaderName);
+        std::shared_ptr<VkShaderModule> createShaderModule(const std::string& shaderName);
 
         std::shared_ptr<VkShaderModule> getShaderModulePointer(const std::string& shaderName);
 

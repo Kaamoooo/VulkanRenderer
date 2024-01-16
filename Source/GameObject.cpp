@@ -1,15 +1,16 @@
 ﻿#include "GameObject.h"
 
 namespace Kaamoo {
-    
-    GameObject GameObject::makePointLight(float intensity, float radius, glm::vec3 color) {
-        static int lightNum=0;
+
+    GameObject GameObject::makeLight(float intensity, float radius, glm::vec3 color, int lightCategory= 0) {
+        static int lightNum = 0;
         GameObject gameObject = GameObject::createGameObject();
         gameObject.color = color;
         gameObject.transform.scale.x = radius;
-        gameObject.pointLightComponent = std::make_unique<PointLightComponent>();
-        gameObject.pointLightComponent->lightIntensity = intensity;
-        gameObject.pointLightComponent->lightIndex=lightNum;
+        gameObject.lightComponent = std::make_unique<LightComponent>();
+        gameObject.lightComponent->lightIntensity = intensity;
+        gameObject.lightComponent->lightIndex = lightNum;
+        gameObject.lightComponent->lightCategory = lightCategory;
         lightNum++;
         return gameObject;
     }
@@ -18,7 +19,11 @@ namespace Kaamoo {
         GameObject::materialId = materialId;
     }
 
-    glm::mat4 TransformComponent::mat4() {
+    void GameObject::Translate(glm::vec3 translation) {
+        transform.translation += translation;
+    }
+
+    glm::mat4 TransformComponent::mat4() const {
 
         auto transform = glm::translate(glm::mat4{1.f}, translation);
 

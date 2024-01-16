@@ -1,5 +1,5 @@
 #version 450
-#include "UBO.glsl"
+#include "../UBO.glsl"
 
 layout(location=0) in vec3 fragColor;
 layout(location=1) in vec4 worldPos;
@@ -11,15 +11,14 @@ layout (location=0) out vec4 outColor;
 
 layout(push_constant) uniform PushConstantData{
     mat4 modelMatrix;
-    mat4 normalMatrix;
+    mat4 vaseModelMatrix;
 } push;
-
 
 layout(set=1, binding=0) uniform sampler2D texSampler;
 layout(set=1, binding=1) uniform sampler2D shadowSampler;
 
 void main(){
-    vec3 texColor = texture(texSampler, uv).xyz;
+    vec3 texColor = fragColor;
 
     vec3 ambientLightColor = ubo.ambientLightColor.xyz*ubo.ambientLightColor.w;
     vec3 totalDiffuse=vec3(0, 0, 0);
@@ -30,27 +29,34 @@ void main(){
 
     for (int i=0;i<ubo.lightNum;i++){
         Light light = ubo.lights[i];
-        
+
         float lightDistance = distance(worldPos.xyz, light.position.xyz);
-        float c0=1,c1=0.2,c2=0.002;
+        float c0=1, c1=0.2, c2=0.2;
         float d = lightDistance;
-        
+
         //point light
-        float attenuation = min(1,1/(c0+c1*d+c2*d*d));
+        float attenuation = min(1, 1/(c0+c1*d+c2*d*d))-0.3;
         vec3 directionToLight = normalize(light.position-worldPos).xyz;
-        
-        //directrional light
-        if(light.lightCategory==1){
+
+        //directional light
+        if (light.lightCategory==1){
             attenuation=1;
             directionToLight = normalize(-light.direction.xyz);
         }
-        
+
         vec3 lightColorWithAttenuation = light.color.xyz*light.color.w*attenuation;
 
-        vec3 diffuse = max(0, dot(worldNormal.xyz, directionToLight))*lightColorWithAttenuation;
+        vec3 tempNormal = normalize(vec3(0, -2, 0));
+        tempNormal = worldNormal.xyz;
+
+        float diffuseWeight0 = max(0, dot(tempNormal.xyz, directionToLight));
+        float diffuseWeight1 = max(0, dot(-tempNormal.xyz, directionToLight));
+        vec3 diffuse =max(diffuseWeight0, diffuseWeight1) *lightColorWithAttenuation;
 
         vec3 halfVector = normalize(viewDirection + directionToLight);
-        float blinn = dot(halfVector, worldNormal.xyz);
+        float blinn0 = dot(halfVector, tempNormal.xyz)*0.5;
+        float blinn1 = dot(halfVector, -tempNormal.xyz)*0.5;
+        float blinn = max(blinn0, blinn1);
         blinn = clamp(blinn, 0, 1);
         blinn = pow(blinn, 32.0);
 
@@ -66,14 +72,12 @@ void main(){
     vec3 tmpUV = (lightFragPos.xyz)/2+0.5;
     float depth=1;
     float shadowMask = 0;
-    if (all(greaterThanEqual(tmpUV, vec3(0.0, 0,0))) && all(lessThanEqual(tmpUV, vec3(1,1.0, 1.0)))) {
+    if (all(greaterThanEqual(tmpUV, vec3(0.0, 0, 0))) && all(lessThanEqual(tmpUV, vec3(1, 1.0, 1.0)))) {
         depth = texture(shadowSampler, tmpUV.xy).x;
         fragDepth=lightFragPos.z;
         shadowMask=clamp(0, 1, (fragDepth-depth)*10);
-        //    outColor = vec4(1 - (1-fragDepth)*20);  
-        //    outColor = vec4(depth-fragDepth);  
     }
     vec4 lightingResult=vec4(fragColor*texColor*(totalDiffuse+ambientLightColor+totalSpecular), 1);
     outColor = lightingResult*(1-shadowMask);
-//    outColor = vec4(lightFragPos.z);
+
 }

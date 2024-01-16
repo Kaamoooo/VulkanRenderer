@@ -12,9 +12,9 @@
 namespace Kaamoo {
     class RenderSystem {
     public:
-        
-
         RenderSystem(Device &device, VkRenderPass renderPass, Material &material);
+        
+        void Init();
 
         ~RenderSystem();
 
@@ -22,7 +22,7 @@ namespace Kaamoo {
 
         RenderSystem &operator=(const RenderSystem &) = delete;
 
-        void render(FrameInfo &frameInfo);
+        virtual void render(FrameInfo &frameInfo);
 
         template<class T>
         void UpdateGlobalUboBuffer(T &globalUbo, uint32_t frameIndex) {
@@ -30,10 +30,11 @@ namespace Kaamoo {
             material.getBufferPointers()[0]->flushIndex(frameIndex);
         };
 
-    private:
-        void createPipelineLayout();
 
-        void createPipeline(VkRenderPass renderPass);
+    protected:
+        virtual void createPipeline(VkRenderPass renderPass);
+
+        virtual void createPipelineLayout();
 
         //手动编译Shader，此时读取编译后的文件
         //路径是从可执行文件开始的，并非从根目录
@@ -41,6 +42,7 @@ namespace Kaamoo {
         std::unique_ptr<Pipeline> pipeline;
         VkPipelineLayout pipelineLayout;
         Material &material;
+        VkRenderPass renderPass;
     };
 
 

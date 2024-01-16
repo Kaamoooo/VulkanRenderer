@@ -25,10 +25,10 @@ namespace Kaamoo {
         return buffer;
     }
 
-    void Shaders::createShaderModule(const std::string& shaderName) {
+    std::shared_ptr<VkShaderModule> Shaders::createShaderModule(const std::string& shaderName) {
         //judge whether there exists the same shader to create
         auto count = shaderModuleMap.count(shaderName);
-        if (count > 0)return;
+        if (count > 0)return shaderModuleMap.at(shaderName);
 
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -43,6 +43,7 @@ namespace Kaamoo {
         }
         shaderModuleMap.emplace(shaderName, shaderModule);
         std::cout << shaderName << " code size: " << code.size() << std::endl;
+        return shaderModule;
     }
 
     std::shared_ptr<VkShaderModule> Shaders::getShaderModulePointer(const std::string& shaderName) {

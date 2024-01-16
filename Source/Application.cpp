@@ -2,6 +2,7 @@
 #include "Sampler.h"
 #include "Shaders.h"
 #include "Systems/ShadowSystem.h"
+#include "Systems/GrassSystem.h"
 #include <numeric>
 #include <rapidjson/document.h>
 #include <mmcobj.h>
@@ -19,13 +20,21 @@ namespace Kaamoo {
         std::shared_ptr<ShadowSystem> shadowSystem;
 
         for (auto &material: materials) {
-            if (material.second.getPipelineCategory() == "Shadow") {
+            auto pipelineCategory = material.second.getPipelineCategory();
+            if (pipelineCategory == "Shadow") {
                 shadowSystem = std::make_shared<ShadowSystem>(device, renderer.getShadowRenderPass(),
                                                               material.second);
+                continue;
+            } else if (pipelineCategory == "TessellationGeometry") {
+                auto renderSystem =
+                        std::make_shared<GrassSystem>(device, renderer.getSwapChainRenderPass(), material.second);
+                renderSystem->Init();
+                renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
                 continue;
             }
             auto renderSystem =
                     std::make_shared<RenderSystem>(device, renderer.getSwapChainRenderPass(), material.second);
+            renderSystem->Init();
             renderSystems.push_back(renderSystem);
         }
 
@@ -37,7 +46,14 @@ namespace Kaamoo {
         auto viewerObject = GameObject::createGameObject();
         viewerObject.transform.translation.z = -2.5f;
         viewerObject.transform.translation.y = -0.5f;
-        KeyboardController cameraController{};
+        InputController cameraController{myWindow.getGLFWwindow()};
+        
+        for(auto& pair : gameObjects){
+            if(pair.second.getName()=="smooth_vase.obj"){
+                cameraController.SetMoveObject(&pair.second);
+            }
+        }
+        
 #pragma endregion
 
 
@@ -48,18 +64,19 @@ namespace Kaamoo {
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
 
+#pragma region Do Some Preparation Works
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             totalTime += frameTime;
             currentTime = newTime;
 
-            cameraController.moveInPlaneXZ(myWindow.getGLFWwindow(), frameTime, viewerObject);
+            cameraController.moveCamera(frameTime, viewerObject);
             camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
             float aspectRatio = renderer.getAspectRatio();
             camera.setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
-
-
+#pragma endregion
+            
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
                 FrameInfo frameInfo{
@@ -74,6 +91,7 @@ namespace Kaamoo {
 
                 ubo.viewMatrix = camera.getViewMatrix();
                 ubo.projectionMatrix = camera.getProjectionMatrix();
+                ubo.curTime=totalTime;
 
                 updateLight(frameInfo);
                 glm::mat4 lightProjectionMatrix =
@@ -84,8 +102,9 @@ namespace Kaamoo {
                 ubo.lightProjectionViewMatrix =
                         lightProjectionMatrix *
                         shadowSystem->calculateViewMatrixForRotation(
-                                ubo.pointLights[0].position, glm::vec3(glm::radians(45.f), totalTime, 0));
+                                ubo.lights[0].position, glm::vec3(glm::radians(45.f), totalTime, 0));
 //                auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
+
 
                 renderer.beginShadowRenderPass(commandBuffer);
                 shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -145,6 +164,7 @@ namespace Kaamoo {
         rapidjson::Document gameObjectsDocument;
         gameObjectsDocument.Parse(gameObjectsJsonString.c_str());
 
+        //Load from Json file
         if (gameObjectsDocument.IsArray()) {
             for (rapidjson::SizeType i = 0; i < gameObjectsDocument.Size(); i++) {
                 const rapidjson::Value &object = gameObjectsDocument[i];
@@ -172,6 +192,7 @@ namespace Kaamoo {
 
                 auto gameObject = GameObject::createGameObject(materialId);
                 std::shared_ptr <Model> model = Model::createModelFromFile(device, BaseModelsPath + modelName);
+                gameObject.setName(modelName);
                 gameObject.model = model;
                 gameObject.transform.translation = translation;
                 gameObject.transform.scale = scale;
@@ -182,8 +203,11 @@ namespace Kaamoo {
         }
 
 
-        std::vector <glm::vec3> lightColors{
-                {1.f, .1f, .1f},
+        //Load lights as GameObjects too
+
+        //Create Point Lights
+        std::vector <glm::vec3> pointLightColors{
+                {.2f, .2f, .2f},
 //                {.1f, .1f, 1.f},
 //                {.1f, 1.f, .1f},
 //                {1.f, 1.f, .1f},
@@ -191,21 +215,29 @@ namespace Kaamoo {
 //                {1.f, 1.f, 1.f}
         };
 
-        for (int i = 0; i < lightColors.size(); ++i) {
+        for (int i = 0; i < pointLightColors.size(); ++i) {
             LightNum++;
-            auto pointLight = GameObject::makePointLight(2, 0.1f, lightColors[i]);
+            auto pointLight = GameObject::makeLight(1, 0.1f, pointLightColors[i], 0);
             pointLight.setMaterialId(0);
 //            auto rotateLight = glm::rotate(glm::mat4{1.f},
-//                                           (float) i * glm::two_pi<float>() / static_cast<float>(lightColors.size()),
+//                                           (float) i * glm::two_pi<float>() / static_cast<float>(pointLightColors.size()),
 //                                           glm::vec3(0, -1.f, 0));
 //            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(0, -1, 1, 1));
-            pointLight.transform.translation = glm::vec4(0, -1, 1, 1);
+            pointLight.transform.translation = glm::vec4(0, -1.5f, 1, 1);
             gameObjects.emplace(pointLight.getId(), std::move(pointLight));
         }
 
+        //create Directional Light
+        LightNum++;
+        auto directionalLight = GameObject::makeLight(0.2f, 0.1f, glm::vec3{1.f, 1.f, 1.f}, 1);
+        directionalLight.setMaterialId(0);
+        directionalLight.transform.translation = glm::vec4(-1, -2, 0, 1);
+        directionalLight.transform.rotation = glm::vec4(1, 2, 0.5, 1);
+        gameObjects.emplace(directionalLight.getId(), std::move(directionalLight));
+
         //shadow display sub window
-        auto shadowDisplayGameObj = GameObject::createGameObject(4);
-        gameObjects.emplace(shadowDisplayGameObj.getId(), std::move(shadowDisplayGameObj));
+//        auto shadowDisplayGameObj = GameObject::createGameObject(4);
+//        gameObjects.emplace(shadowDisplayGameObj.getId(), std::move(shadowDisplayGameObj));
     }
 
     void Application::loadMaterials() {
@@ -252,18 +284,49 @@ namespace Kaamoo {
                 const int id = object["id"].GetInt();
 
                 const std::string pipelineCategoryString = object["pipelineCategory"].GetString();
+
+#pragma region Read And Create Shaders
                 const std::string vertexShaderName = object["vertexShader"].GetString();
                 const std::string fragmentShaderName = object["fragmentShader"].GetString();
-                auto textureNames = object["texture"].GetArray();
 
                 shaders.createShaderModule(vertexShaderName);
                 shaders.createShaderModule(fragmentShaderName);
-                std::vector<std::shared_ptr<VkShaderModule>> shaderModulePointers{
-                        shaders.getShaderModulePointer(vertexShaderName),
-                        shaders.getShaderModulePointer(fragmentShaderName)
+                std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
+                        std::make_shared<ShaderModule>(shaders.getShaderModulePointer(vertexShaderName),
+                                                       ShaderCategory::vertex),
+                        std::make_shared<ShaderModule>(shaders.getShaderModulePointer(fragmentShaderName),
+                                                       ShaderCategory::fragment)
                 };
 
+                const bool tessEnabled = object.HasMember("tessellationControlShader");
+                if (tessEnabled) {
+                    const std::string tessellationControlShaderName = object["tessellationControlShader"].GetString();
+                    const std::string tessellationEvaluationShaderName = object["tessellationEvaluationShader"].GetString();
+                    shaderModulePointers.emplace_back(
+                            std::make_shared<ShaderModule>(
+                                    shaders.getShaderModulePointer(tessellationControlShaderName),
+                                    ShaderCategory::tessellationControl));
+                    shaderModulePointers.emplace_back(
+                            std::make_shared<ShaderModule>(
+                                    shaders.getShaderModulePointer(tessellationEvaluationShaderName),
+                                    ShaderCategory::tessellationEvaluation)
+                    );
+                }
 
+                const bool geomEnabled = object.HasMember("geometryShader");
+                if (geomEnabled) {
+                    const std::string geometryShaderName = object["geometryShader"].GetString();
+                    shaderModulePointers.emplace_back(
+                            std::make_shared<ShaderModule>(
+                                    shaders.getShaderModulePointer(geometryShaderName),
+                                    ShaderCategory::geometry)
+                    );
+                }
+
+#pragma endregion
+                
+                auto textureNames = object["texture"].GetArray();
+                
                 std::vector<std::shared_ptr<Image>> imagePointers{};
                 std::vector<std::shared_ptr<Sampler>> samplerPointers{};
                 std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{
@@ -286,7 +349,8 @@ namespace Kaamoo {
                 if (pipelineCategoryString == "Shadow") {
                     descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                                           VK_SHADER_STAGE_ALL_GRAPHICS);
-                } else if (pipelineCategoryString == "Overlay" || pipelineCategoryString == "Opaque") {
+                } else if (pipelineCategoryString == "Overlay" || pipelineCategoryString == "Opaque" ||
+                           pipelineCategoryString == "TessellationGeometry") {
                     descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++,
                                                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                                                           VK_SHADER_STAGE_ALL_GRAPHICS);
@@ -328,7 +392,8 @@ namespace Kaamoo {
                     bufferPointers.push_back(shadowUboBuffer);
                     auto shadowUboBufferInfo = shadowUboBuffer->descriptorInfo();
                     descriptorWriter.writeBuffer(writerBindingPoint++, shadowUboBufferInfo);
-                } else if (pipelineCategoryString == "Overlay" || pipelineCategoryString == "Opaque") {
+                } else if (pipelineCategoryString == "Overlay" || pipelineCategoryString == "Opaque" ||
+                           pipelineCategoryString == "TessellationGeometry") {
                     imagePointers.push_back(renderer.getShadowImage());
                     samplerPointers.push_back(renderer.getShadowSampler());
                     auto imageInfo = renderer.getShadowImageInfo();
@@ -345,26 +410,35 @@ namespace Kaamoo {
 
                 Material material(id, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
                                   imagePointers, samplerPointers, bufferPointers, pipelineCategoryString);
+
                 materials.emplace(id, std::move(material));
             }
         }
     }
 
     void Application::updateLight(FrameInfo &frameInfo) {
+        //Optimization required
         for (auto &gameObjPair: gameObjects) {
             auto &obj = gameObjPair.second;
-            if (obj.pointLightComponent != nullptr) {
-                int lightIndex = obj.pointLightComponent->lightIndex;
+            if (obj.lightComponent != nullptr) {
+                int lightIndex = obj.lightComponent->lightIndex;
 
-                assert(lightIndex < MAX_LIGHT_NUM && "点光源数目过多");
+                assert(lightIndex < MAX_LIGHT_NUM && "光源数目过多");
 
-                auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
-                obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1));
+                Light light{};
+                light.position = glm::vec4(obj.transform.translation, 1.f);
+                light.rotation = glm::vec4(obj.transform.rotation, 1.f);
+                light.color = glm::vec4(obj.color, obj.lightComponent->lightIntensity);
 
-                PointLight pointLight{};
-                pointLight.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
-                pointLight.position = glm::vec4(obj.transform.translation, 1.f);
-                frameInfo.globalUbo.pointLights[lightIndex] = pointLight;
+                if (obj.lightComponent->lightCategory == LightCategory::POINT_LIGHT) {
+                    auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
+                    obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1));
+                    light.lightCategory=LightCategory::POINT_LIGHT;
+                }else {
+                    light.lightCategory=LightCategory::DIRECTIONAL_LIGHT;
+                }
+
+                frameInfo.globalUbo.lights[lightIndex] = light;
             }
         }
     }

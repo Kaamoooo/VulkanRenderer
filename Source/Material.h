@@ -14,13 +14,30 @@
 
 namespace Kaamoo {
 
+    enum ShaderCategory {
+        vertex,
+        fragment,
+        tessellationControl,
+        tessellationEvaluation,
+        geometry
+    };
+    typedef struct ShaderModule {
+        std::shared_ptr<VkShaderModule> shaderModule;
+        ShaderCategory shaderCategory;
+
+        ShaderModule(std::shared_ptr<VkShaderModule> shaderModule, ShaderCategory shaderCategory) {
+            this->shaderModule = std::move(shaderModule);
+            this->shaderCategory = shaderCategory;
+        }
+    } ShaderModule;
+    
     class Material {
     public:
         using id_t = unsigned int;
         using Map = std::unordered_map<id_t, Material>;
 
         Material(id_t id,
-                 std::vector<std::shared_ptr<VkShaderModule>> shaderModules,
+                 std::vector<std::shared_ptr<ShaderModule>> shaderModules,
                  std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts,
                  std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSets,
                  std::vector<std::shared_ptr<Image>> imagePointers,
@@ -35,8 +52,9 @@ namespace Kaamoo {
                 samplerPointers(std::move(samplerPointers)),
                 bufferPointers(std::move(bufferPointers)),
                 pipelineCategory(pipelineCategory) {};
+ 
 
-        [[nodiscard]] std::vector<std::shared_ptr<VkShaderModule>> getShaderModulePointers() const {
+        [[nodiscard]] std::vector<std::shared_ptr<ShaderModule>> getShaderModulePointers() const {
             return shaderModules;
         }
 
@@ -48,15 +66,9 @@ namespace Kaamoo {
             return descriptorSets;
         }
 
-        [[nodiscard]] const std::vector<std::shared_ptr<VkShaderModule>> &getShaderModules() const {
-            return shaderModules;
-        }
-
         [[nodiscard]] const std::vector<std::shared_ptr<Buffer>> &getBufferPointers() const {
             return bufferPointers;
         }
-
-        Material(Material &&) = default;
 
         id_t getMaterialId() const {
             return materialId;
@@ -68,7 +80,7 @@ namespace Kaamoo {
 
     private:
         id_t materialId;
-        std::vector<std::shared_ptr<VkShaderModule>> shaderModules;
+        std::vector<std::shared_ptr<ShaderModule>> shaderModules;
         std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers;
         std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSets;
         std::vector<std::shared_ptr<Image>> imagePointers;

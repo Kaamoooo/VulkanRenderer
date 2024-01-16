@@ -62,7 +62,7 @@ namespace Kaamoo {
         std::map<float, GameObject::id_t> sorted;
         for(auto& kv:frameInfo.gameObjects){
             auto& obj=kv.second;
-            if (obj.pointLightComponent== nullptr) continue;
+            if (obj.lightComponent == nullptr) continue;
             
             auto offset = frameInfo.camera.getPosition() - obj.transform.translation;
             float disSquared = glm::dot(offset,offset);
@@ -77,7 +77,7 @@ namespace Kaamoo {
 
             PointLightPushConstant pointLightPushConstant{};
             pointLightPushConstant.position = glm::vec4(obj.transform.translation, 1.f);
-            pointLightPushConstant.color = glm::vec4(obj.color, obj.pointLightComponent->lightIntensity);
+            pointLightPushConstant.color = glm::vec4(obj.color, obj.lightComponent->lightIntensity);
             pointLightPushConstant.radius = obj.transform.scale.x;
 
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
