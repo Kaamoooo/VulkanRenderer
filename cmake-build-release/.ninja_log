@@ -4,12 +4,9 @@
 21	1643	7172450757203056	CMakeFiles/VulkanTestClion.dir/Source/Pipeline.cpp.obj	c2c450c2b82dc397
 96	1575	7172450756512901	CMakeFiles/VulkanTestClion.dir/Source/GameObject.cpp.obj	7d3cd4c1bb57f2b6
 76	996	7172450750684136	CMakeFiles/VulkanTestClion.dir/Source/Camera.cpp.obj	8c6e1b38293a3198
-53	1270	7172450753472209	CMakeFiles/VulkanTestClion.dir/Source/Renderer.cpp.obj	480630eb15ee2a90
 38	1428	7172450755042574	CMakeFiles/VulkanTestClion.dir/Source/Model.cpp.obj	280808f91110cd56
-87	1590	7172450756672935	CMakeFiles/VulkanTestClion.dir/Source/KeyboardController.cpp.obj	e6e4e7e9507683eb
 6	1226	7172462827204658	CMakeFiles/VulkanTestClion.dir/Source/main.cpp.obj	3d9d6452f7e31e93
-64	1877	7172450759553585	CMakeFiles/VulkanTestClion.dir/Source/RenderSystem.cpp.obj	76c24eea8d8ee816
 46	1849	7172450759273519	CMakeFiles/VulkanTestClion.dir/Source/SwapChain.cpp.obj	147d342b9f3dcd0f
 1	2049	7172450761273974	CMakeFiles/VulkanTestClion.dir/Source/Device.cpp.obj	66581bcd233f44d1
 1382	1915	7172462834032810	VulkanTestClion.exe	7213ebe5f9555c32
-7	239	7329670182260446	build.ninja	b6eece59d1a715c3
+7	239	7329849460597435	build.ninja	b6eece59d1a715c3
