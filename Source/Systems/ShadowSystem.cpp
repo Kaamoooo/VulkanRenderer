@@ -2,7 +2,8 @@
 
 #include <utility>
 #include "../FrameInfo.h"
-#include "../Application.hpp"
+#include "../Application.h"
+#include "../Components/MeshRendererComponent.hpp"
 
 namespace Kaamoo {
 
@@ -108,8 +109,11 @@ namespace Kaamoo {
         for (auto &pair: frameInfo.gameObjects) {
             auto &obj = pair.second;
 
+            MeshRendererComponent* meshRendererComponent;
+            if(!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
+            
             ShadowPushConstant push{};
-            push.modelMatrix = obj.transform.mat4();
+            push.modelMatrix = obj.transform->mat4();
 
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -117,9 +121,9 @@ namespace Kaamoo {
                                sizeof(ShadowPushConstant),
                                &push);
             //too much draw call here, but currently I have no better ideas about how to batch all models together
-            if (obj.model != nullptr) {
-                obj.model->bind(frameInfo.commandBuffer);
-                obj.model->draw(frameInfo.commandBuffer);
+            if (meshRendererComponent->GetModelPtr() != nullptr) {
+                meshRendererComponent->GetModelPtr()->bind(frameInfo.commandBuffer);
+                meshRendererComponent->GetModelPtr()->draw(frameInfo.commandBuffer);
 //                break;
             }
         }

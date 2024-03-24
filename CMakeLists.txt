@@ -12,7 +12,7 @@ file(GLOB_RECURSE SOURCES
         ${PROJECT_SOURCE_DIR}/Source/*.cpp
         ${PROJECT_SOURCE_DIR}/Source/Systems/*.cpp
         )
-add_executable(${PROJECT_NAME} ${SOURCES} Source/Systems/ShadowSystem.h Source/Systems/GrassSystem.h Source/InputController.cpp)
+add_executable(${PROJECT_NAME} ${SOURCES} Source/Systems/ShadowSystem.h Source/Systems/GrassSystem.h Source/InputController.cpp Source/Utils/JsonUtils.hpp Source/Components/Component.hpp Source/Components/Component.hpp Source/Components/TransformComponent.hpp Source/Components/Component.hpp Source/Utils/Utils.hpp Source/Utils/Utils.hpp Source/Components/MeshRendererComponent.hpp Source/Components/LightComponent.hpp)
 
 target_link_libraries(${PROJECT_NAME} "E:\\Vulkan\\SDK\\Lib\\vulkan-1.lib")
 target_link_libraries(${PROJECT_NAME} "E:\\Vulkan\\glfw-3.3.8.bin.WIN64\\lib-mingw-w64\\libglfw3.a")

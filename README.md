@@ -2,8 +2,9 @@
 
 ![image-20240106022548339](./README.assets/image-20240106022548339.png)
 
-
 ## 进度
+
+---------------2023----------------
 
 9.17 完成了基本的3D单物体渲染以及Transform变换
 
@@ -33,4 +34,8 @@
 
 11.12 初步完成阴影效果，还有待优化的点：点光源全角度阴影
 
+---------------2024----------------
+
 1.1 完成动态生成与可交互草
+
+3.24 Modify GameObject architecture, using components to replace hard-coded member variables.

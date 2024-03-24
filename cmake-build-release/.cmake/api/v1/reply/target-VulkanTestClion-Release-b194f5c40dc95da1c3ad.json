@@ -194,7 +194,13 @@
 			"sourceIndexes" : 
 			[
 				21,
-				22
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28
 			]
 		}
 	],
@@ -334,6 +340,36 @@
 		{
 			"backtrace" : 1,
 			"path" : "Source/Systems/GrassSystem.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/Utils/JsonUtils.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/Components/Component.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/Components/TransformComponent.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/Utils/Utils.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/Components/MeshRendererComponent.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/Components/LightComponent.hpp",
 			"sourceGroupIndex" : 1
 		}
 	],

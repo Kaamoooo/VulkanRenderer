@@ -1,53 +1,25 @@
-﻿#include "GameObject.h"
+﻿#include "GameObject.hpp"
+#include "Components/LightComponent.hpp"
+#include "Components/MeshRendererComponent.hpp"
 
 namespace Kaamoo {
 
     GameObject GameObject::makeLight(float intensity, float radius, glm::vec3 color, int lightCategory= 0) {
         static int lightNum = 0;
-        GameObject gameObject = GameObject::createGameObject();
-        gameObject.color = color;
-        gameObject.transform.scale.x = radius;
-        gameObject.lightComponent = std::make_unique<LightComponent>();
-        gameObject.lightComponent->lightIntensity = intensity;
-        gameObject.lightComponent->lightIndex = lightNum;
-        gameObject.lightComponent->lightCategory = lightCategory;
+        GameObject& gameObject = GameObject::createGameObject();
+        
+        auto* meshRendererComponent=new MeshRendererComponent(nullptr,0);
+        gameObject.TryAddComponent(meshRendererComponent);
+        auto* lightComponent = new LightComponent();
+        gameObject.TryAddComponent(lightComponent);
+        
+        gameObject.transform->scale.x = radius;
+        lightComponent->color = color;
+        lightComponent->lightIntensity = intensity;
+        lightComponent->lightIndex = lightNum;
+        lightComponent->lightCategory = lightCategory;
         lightNum++;
-        return gameObject;
-    }
-
-    void GameObject::setMaterialId(GameObject::id_t materialId) {
-        GameObject::materialId = materialId;
-    }
-
-    void GameObject::Translate(glm::vec3 translation) {
-        transform.translation += translation;
-    }
-
-    glm::mat4 TransformComponent::mat4() const {
-
-        auto transform = glm::translate(glm::mat4{1.f}, translation);
-
-        transform = glm::rotate(transform, rotation.y, {0, 1, 0});
-        transform = glm::rotate(transform, rotation.x, {1, 0, 0});
-        transform = glm::rotate(transform, rotation.z, {0, 0, 1});
-
-        transform = glm::scale(transform, scale);
-        return transform;
-    }
-
-    glm::mat3 TransformComponent::normalMatrix() {
-        glm::mat3 invScaleMatrix = glm::mat4{1.f};
-        const glm::vec3 invScale = 1.0f / scale;
-        invScaleMatrix[0][0] = invScale.x;
-        invScaleMatrix[1][1] = invScale.y;
-        invScaleMatrix[2][2] = invScale.z;
-
-        auto rotationMatrix = glm::mat4(1.0f);
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.y, {0, 1, 0});
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.x, {1, 0, 0});
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.z, {0, 0, 1});
-
-        return glm::mat3(rotationMatrix) * invScaleMatrix;
+        return std::move(gameObject);
     }
 
 }

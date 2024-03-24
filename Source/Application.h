@@ -2,20 +2,21 @@
 
 #include <memory>
 #include <glm/gtc/constants.hpp>
+#include <chrono>
 #include "MyWindow.hpp"
 #include "Pipeline.hpp"
 #include "Renderers/Renderer.h"
 #include "Device.hpp"
 #include "Model.hpp"
-#include "GameObject.h"
+#include "GameObject.hpp"
 #include "Systems/RenderSystem.h"
 #include "Systems/PointLightSystem.h"
 #include "InputController.h"
-#include <chrono>
 #include "Descriptor.h"
 #include "Image.h"
 #include "Material.h"
 #include "Shaders.h"
+#include "Utils/JsonUtils.hpp"
 
 namespace Kaamoo {
     class Application {
@@ -35,7 +36,7 @@ namespace Kaamoo {
         void loadGameObjects();
         void loadMaterials();
         void updateLight(FrameInfo &frameInfo);
-        std::string readJsonFile(const std::string &path);
+        
         MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         Device device{myWindow};
         Renderer renderer{myWindow, device};

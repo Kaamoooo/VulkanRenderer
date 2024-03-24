@@ -1,8 +1,10 @@
-﻿#include "Application.hpp"
+﻿#include "Application.h"
 #include "Sampler.h"
 #include "Shaders.h"
 #include "Systems/ShadowSystem.h"
 #include "Systems/GrassSystem.h"
+#include "Components/MeshRendererComponent.hpp"
+#include "Components/LightComponent.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
 #include <mmcobj.h>
@@ -43,17 +45,19 @@ namespace Kaamoo {
         Camera camera{};
         camera.setViewTarget(glm::vec3{-1.f, -2.f, 20.f}, glm::vec3{0, 0, 2.5f});
 
-        auto viewerObject = GameObject::createGameObject();
-        viewerObject.transform.translation.z = -2.5f;
-        viewerObject.transform.translation.y = -0.5f;
+        auto &viewerObject = GameObject::createGameObject();
+        TransformComponent* transformComponent;
+        viewerObject.TryGetComponent<TransformComponent>(transformComponent);
+        transformComponent->translation.z = -2.5f;
+        transformComponent->translation.y = -0.5f;
         InputController cameraController{myWindow.getGLFWwindow()};
-        
-        for(auto& pair : gameObjects){
-            if(pair.second.getName()=="smooth_vase.obj"){
+
+        for (auto &pair: gameObjects) {
+            if (pair.second.getName() == "smooth_vase.obj") {
                 cameraController.SetMoveObject(&pair.second);
             }
         }
-        
+
 #pragma endregion
 
 
@@ -70,13 +74,15 @@ namespace Kaamoo {
             totalTime += frameTime;
             currentTime = newTime;
 
+            //Todo: Make camera as a component as well
+            //Todo: Shadow will disappear when resize the window
             cameraController.moveCamera(frameTime, viewerObject);
-            camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+            camera.setViewYXZ(viewerObject.transform->translation, viewerObject.transform->rotation);
 
             float aspectRatio = renderer.getAspectRatio();
             camera.setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
 #pragma endregion
-            
+
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
                 FrameInfo frameInfo{
@@ -91,7 +97,7 @@ namespace Kaamoo {
 
                 ubo.viewMatrix = camera.getViewMatrix();
                 ubo.projectionMatrix = camera.getProjectionMatrix();
-                ubo.curTime=totalTime;
+                ubo.curTime = totalTime;
 
                 updateLight(frameInfo);
                 glm::mat4 lightProjectionMatrix =
@@ -142,29 +148,12 @@ namespace Kaamoo {
         loadMaterials();
     }
 
-    std::string Application::readJsonFile(const std::string &path) {
-        std::ifstream jsonFile(path);
-        if (!jsonFile.is_open()) {
-            throw std::runtime_error("Failed to open: " + path);
-        }
-        jsonFile.seekg(0, std::ios::end);
-        std::streampos length = jsonFile.tellg();
-        jsonFile.seekg(0, std::ios::beg);
-
-        std::string jsonString;
-        jsonString.resize(static_cast<size_t>(length));
-        jsonFile.read(&jsonString[0], length);
-        jsonFile.close();
-        return jsonString;
-    }
-
     void Application::loadGameObjects() {
-        std::string gameObjectsJsonString = readJsonFile(BaseConfigurationPath + "GameObjects.json");
+        std::string gameObjectsJsonString = JsonUtils::ReadJsonFile(BaseConfigurationPath + "GameObjects.json");
 
         rapidjson::Document gameObjectsDocument;
         gameObjectsDocument.Parse(gameObjectsJsonString.c_str());
 
-        //Load from Json file
         if (gameObjectsDocument.IsArray()) {
             for (rapidjson::SizeType i = 0; i < gameObjectsDocument.Size(); i++) {
                 const rapidjson::Value &object = gameObjectsDocument[i];
@@ -188,15 +177,19 @@ namespace Kaamoo {
                                    rotationArray[1].GetFloat(),
                                    rotationArray[2].GetFloat()};
 
+                //Todo:In the configuration file all objects have material IDs and models, which may not be appropriate.
                 const int materialId = object["materialId"].GetInt();
-
-                auto gameObject = GameObject::createGameObject(materialId);
-                std::shared_ptr <Model> model = Model::createModelFromFile(device, BaseModelsPath + modelName);
+                
+                
+                auto& gameObject = GameObject::createGameObject();
+                std::shared_ptr<Model> model = Model::createModelFromFile(device, BaseModelsPath + modelName);
+                
+                auto* meshRendererComponent = new MeshRendererComponent(model,materialId);
+                gameObject.TryAddComponent(meshRendererComponent);
                 gameObject.setName(modelName);
-                gameObject.model = model;
-                gameObject.transform.translation = translation;
-                gameObject.transform.scale = scale;
-                gameObject.transform.rotation = rotation;
+                gameObject.transform->translation = translation;
+                gameObject.transform->scale = scale;
+                gameObject.transform->rotation = rotation;
 
                 gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
@@ -206,7 +199,7 @@ namespace Kaamoo {
         //Load lights as GameObjects too
 
         //Create Point Lights
-        std::vector <glm::vec3> pointLightColors{
+        std::vector<glm::vec3> pointLightColors{
                 {.2f, .2f, .2f},
 //                {.1f, .1f, 1.f},
 //                {.1f, 1.f, .1f},
@@ -218,21 +211,19 @@ namespace Kaamoo {
         for (int i = 0; i < pointLightColors.size(); ++i) {
             LightNum++;
             auto pointLight = GameObject::makeLight(1, 0.1f, pointLightColors[i], 0);
-            pointLight.setMaterialId(0);
 //            auto rotateLight = glm::rotate(glm::mat4{1.f},
 //                                           (float) i * glm::two_pi<float>() / static_cast<float>(pointLightColors.size()),
 //                                           glm::vec3(0, -1.f, 0));
 //            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(0, -1, 1, 1));
-            pointLight.transform.translation = glm::vec4(0, -1.5f, 1, 1);
+            pointLight.transform->translation = glm::vec4(0, -1.5f, 1, 1);
             gameObjects.emplace(pointLight.getId(), std::move(pointLight));
         }
 
         //create Directional Light
         LightNum++;
         auto directionalLight = GameObject::makeLight(0.2f, 0.1f, glm::vec3{1.f, 1.f, 1.f}, 1);
-        directionalLight.setMaterialId(0);
-        directionalLight.transform.translation = glm::vec4(-1, -2, 0, 1);
-        directionalLight.transform.rotation = glm::vec4(1, 2, 0.5, 1);
+        directionalLight.transform->translation = glm::vec4(-1, -2, 0, 1);
+        directionalLight.transform->rotation = glm::vec4(1, 2, 0.5, 1);
         gameObjects.emplace(directionalLight.getId(), std::move(directionalLight));
 
         //shadow display sub window
@@ -271,7 +262,7 @@ namespace Kaamoo {
                 .build(globalDescriptorSetPointer);
 
         //read json
-        std::string materialsString = readJsonFile(BaseConfigurationPath + "Materials.json");
+        std::string materialsString = JsonUtils::ReadJsonFile(BaseConfigurationPath + "Materials.json");
 
         rapidjson::Document materialsDocument;
         materialsDocument.Parse(materialsString.c_str());
@@ -324,9 +315,9 @@ namespace Kaamoo {
                 }
 
 #pragma endregion
-                
+
                 auto textureNames = object["texture"].GetArray();
-                
+
                 std::vector<std::shared_ptr<Image>> imagePointers{};
                 std::vector<std::shared_ptr<Sampler>> samplerPointers{};
                 std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{
@@ -420,22 +411,23 @@ namespace Kaamoo {
         //Optimization required
         for (auto &gameObjPair: gameObjects) {
             auto &obj = gameObjPair.second;
-            if (obj.lightComponent != nullptr) {
-                int lightIndex = obj.lightComponent->lightIndex;
+            LightComponent* lightComponent;
+            if (obj.TryGetComponent(lightComponent)){
+                int lightIndex = lightComponent->lightIndex;
 
                 assert(lightIndex < MAX_LIGHT_NUM && "光源数目过多");
 
                 Light light{};
-                light.position = glm::vec4(obj.transform.translation, 1.f);
-                light.rotation = glm::vec4(obj.transform.rotation, 1.f);
-                light.color = glm::vec4(obj.color, obj.lightComponent->lightIntensity);
+                light.position = glm::vec4(obj.transform->translation, 1.f);
+                light.rotation = glm::vec4(obj.transform->rotation, 1.f);
+                light.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
 
-                if (obj.lightComponent->lightCategory == LightCategory::POINT_LIGHT) {
+                if (lightComponent->lightCategory == LightCategory::POINT_LIGHT) {
                     auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
-                    obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1));
-                    light.lightCategory=LightCategory::POINT_LIGHT;
-                }else {
-                    light.lightCategory=LightCategory::DIRECTIONAL_LIGHT;
+                    obj.transform->translation = glm::vec3(rotateLight * glm::vec4(obj.transform->translation, 1));
+                    light.lightCategory = LightCategory::POINT_LIGHT;
+                } else {
+                    light.lightCategory = LightCategory::DIRECTIONAL_LIGHT;
                 }
 
                 frameInfo.globalUbo.lights[lightIndex] = light;

@@ -3,6 +3,7 @@
 //
 
 #include "GrassSystem.h"
+#include "../Components/MeshRendererComponent.hpp"
 
 namespace Kaamoo {
 
@@ -96,18 +97,19 @@ namespace Kaamoo {
             if (moveObject == nullptr && obj.getName() == "smooth_vase.obj") {
                 moveObject = &obj;
             }
-            if (obj.getMaterialId() != material.getMaterialId())continue;
-            if (moveObject != nullptr) {
-                push.vaseModelMatrix = moveObject->transform.mat4();
-            }
-            push.modelMatrix = pair.second.transform.mat4();
+            MeshRendererComponent *meshRendererComponent;
+            if (!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
+            if (meshRendererComponent->GetMaterialID() != material.getMaterialId())continue;
+            if (moveObject != nullptr)
+                push.vaseModelMatrix = moveObject->transform->mat4();
+            push.modelMatrix = pair.second.transform->mat4();
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_ALL_GRAPHICS,
                                0,
                                sizeof(SimplePushConstantData),
                                &push);
-            pair.second.model->bind(frameInfo.commandBuffer);
-            pair.second.model->draw(frameInfo.commandBuffer);
+            meshRendererComponent->GetModelPtr()->bind(frameInfo.commandBuffer);
+            meshRendererComponent->GetModelPtr()->draw(frameInfo.commandBuffer);
         }
     }
 

@@ -2,6 +2,8 @@
 
 #include <utility>
 #include "../FrameInfo.h"
+#include "../Components/MeshRendererComponent.hpp"
+#include "../Components/LightComponent.hpp"
 
 namespace Kaamoo {
 
@@ -104,31 +106,37 @@ namespace Kaamoo {
 
         for (auto &pair: frameInfo.gameObjects) {
             auto &obj = pair.second;
-            if (obj.getMaterialId() != material.getMaterialId())continue;
+            MeshRendererComponent* meshRendererComponent;
+            if(!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
+            if (meshRendererComponent->GetMaterialID() != material.getMaterialId())continue;
             
             if (material.getPipelineCategory()=="Overlay"){
                 vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
             }else if (material.getPipelineCategory()=="Light") {
                 PointLightPushConstant pointLightPushConstant{};
-                pointLightPushConstant.position = glm::vec4(obj.transform.translation, 1.f);
-                pointLightPushConstant.color = glm::vec4(obj.color, obj.lightComponent->lightIntensity);
-                pointLightPushConstant.radius = obj.transform.scale.x;
+                
+                LightComponent* lightComponent;
+                if (!obj.TryGetComponent(lightComponent)) continue;
+                
+                pointLightPushConstant.position = glm::vec4(obj.transform->translation, 1.f);
+                pointLightPushConstant.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
+                pointLightPushConstant.radius = obj.transform->scale.x;
                 vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                    sizeof(PointLightPushConstant), &pointLightPushConstant);
                 vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
             } else if (material.getPipelineCategory()=="Opaque") {
                 SimplePushConstantData push{};
-                push.modelMatrix = pair.second.transform.mat4();
-                push.normalMatrix = pair.second.transform.normalMatrix();
+                push.modelMatrix = pair.second.transform->mat4();
+                push.normalMatrix = pair.second.transform->normalMatrix();
 
                 vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                    0,
                                    sizeof(SimplePushConstantData),
                                    &push);
-                pair.second.model->bind(frameInfo.commandBuffer);
-                pair.second.model->draw(frameInfo.commandBuffer);
+                meshRendererComponent->GetModelPtr()->bind(frameInfo.commandBuffer);
+                meshRendererComponent->GetModelPtr()->draw(frameInfo.commandBuffer);
             }
         }
     }

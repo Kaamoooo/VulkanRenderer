@@ -7,7 +7,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include "Renderer.h"
 #include "../Image.h"
-#include "../Application.hpp"
+#include "../Application.h"
 
 
 namespace Kaamoo {

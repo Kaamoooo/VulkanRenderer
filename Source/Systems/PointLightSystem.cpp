@@ -1,6 +1,7 @@
 ﻿#include <map>
 #include "PointLightSystem.h"
 #include "../FrameInfo.h"
+#include "../Components/LightComponent.hpp"
 
 //deprecated, I combined pointLightSystem into regular render system in that they are based on game objects.
 namespace Kaamoo {
@@ -59,12 +60,14 @@ namespace Kaamoo {
     }
 
     void PointLightSystem::render(FrameInfo &frameInfo) {
-        std::map<float, GameObject::id_t> sorted;
+        std::map<float, id_t> sorted;
         for(auto& kv:frameInfo.gameObjects){
             auto& obj=kv.second;
-            if (obj.lightComponent == nullptr) continue;
             
-            auto offset = frameInfo.camera.getPosition() - obj.transform.translation;
+            LightComponent* lightComponent;
+            if (!obj.TryGetComponent(lightComponent)) continue;
+            
+            auto offset = frameInfo.camera.getPosition() - obj.transform->translation;
             float disSquared = glm::dot(offset,offset);
             sorted[disSquared]=obj.getId();
         }
@@ -75,10 +78,13 @@ namespace Kaamoo {
             
             auto &obj = frameInfo.gameObjects.at(it->second);
 
+            LightComponent* lightComponent;
+            if (!obj.TryGetComponent(lightComponent)) continue;
+
             PointLightPushConstant pointLightPushConstant{};
-            pointLightPushConstant.position = glm::vec4(obj.transform.translation, 1.f);
-            pointLightPushConstant.color = glm::vec4(obj.color, obj.lightComponent->lightIntensity);
-            pointLightPushConstant.radius = obj.transform.scale.x;
+            pointLightPushConstant.position = glm::vec4(obj.transform->translation, 1.f);
+            pointLightPushConstant.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
+            pointLightPushConstant.radius = obj.transform->scale.x;
 
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,

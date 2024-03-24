@@ -5,7 +5,7 @@
 #include "../Pipeline.hpp"
 #include "../Device.hpp"
 #include "../Model.hpp"
-#include "../GameObject.h"
+#include "../GameObject.hpp"
 #include "../Camera.h"
 #include "../FrameInfo.h"
 
