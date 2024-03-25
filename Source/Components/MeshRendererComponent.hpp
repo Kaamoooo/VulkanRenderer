@@ -11,7 +11,7 @@
 namespace Kaamoo {
     class MeshRendererComponent : public Component {
     public:
-        MeshRendererComponent(std::shared_ptr<Model> model, id_t materialID) : model(std::move(model)), materialId(materialID) {
+        MeshRendererComponent(std::shared_ptr<Model> model, id_t materialID) : model(model), materialId(materialID) {
             name = "MeshRendererComponent";
         }
 

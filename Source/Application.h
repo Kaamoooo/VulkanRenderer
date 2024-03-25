@@ -14,8 +14,8 @@
 #include "InputController.h"
 #include "Descriptor.h"
 #include "Image.h"
-#include "Material.h"
-#include "Shaders.h"
+#include "Material.hpp"
+#include "ShaderBuilder.h"
 #include "Utils/JsonUtils.hpp"
 
 namespace Kaamoo {

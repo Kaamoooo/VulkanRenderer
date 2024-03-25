@@ -39,3 +39,5 @@
 1.1 完成动态生成与可交互草
 
 3.24 Modify GameObject architecture, using components to replace hard-coded member variables.
+
+3.25 Fixed the problem when exiting the programme memory is not correctly released.

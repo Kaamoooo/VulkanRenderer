@@ -118,8 +118,7 @@
 				16,
 				17,
 				18,
-				19,
-				20
+				19
 			]
 		}
 	],
@@ -185,22 +184,21 @@
 				16,
 				17,
 				18,
-				19,
-				20
+				19
 			]
 		},
 		{
 			"name" : "Header Files",
 			"sourceIndexes" : 
 			[
+				20,
 				21,
 				22,
 				23,
 				24,
 				25,
 				26,
-				27,
-				28
+				27
 			]
 		}
 	],
@@ -252,12 +250,6 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "Source/InputController.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "Source/Material.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{

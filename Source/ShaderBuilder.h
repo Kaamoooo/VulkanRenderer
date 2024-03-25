@@ -9,9 +9,9 @@
 
 namespace Kaamoo {
 
-    class Shaders {
+    class ShaderBuilder {
     public:
-        explicit Shaders(Device &device): device(device){};
+        explicit ShaderBuilder(Device &device): device(device){};
 
         std::shared_ptr<VkShaderModule> createShaderModule(const std::string& shaderName);
 

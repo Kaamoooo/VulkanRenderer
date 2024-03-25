@@ -1,5 +1,5 @@
 ﻿#include "Pipeline.hpp"
-#include "Material.h"
+#include "Material.hpp"
 
 namespace Kaamoo {
     Pipeline::Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, Material &material)

@@ -4,10 +4,10 @@
 
 #include <fstream>
 #include <iostream>
-#include "Shaders.h"
+#include "ShaderBuilder.h"
 
 namespace Kaamoo {
-    std::vector<char> Shaders::readFile(const std::string &filepath) {
+    std::vector<char> ShaderBuilder::readFile(const std::string &filepath) {
         std::ifstream inputFileStream{filepath, std::ios::ate | std::ios::binary};
 
         if (!inputFileStream.is_open()) {
@@ -25,7 +25,7 @@ namespace Kaamoo {
         return buffer;
     }
 
-    std::shared_ptr<VkShaderModule> Shaders::createShaderModule(const std::string& shaderName) {
+    std::shared_ptr<VkShaderModule> ShaderBuilder::createShaderModule(const std::string& shaderName) {
         //judge whether there exists the same shader to create
         auto count = shaderModuleMap.count(shaderName);
         if (count > 0)return shaderModuleMap.at(shaderName);
@@ -46,7 +46,7 @@ namespace Kaamoo {
         return shaderModule;
     }
 
-    std::shared_ptr<VkShaderModule> Shaders::getShaderModulePointer(const std::string& shaderName) {
+    std::shared_ptr<VkShaderModule> ShaderBuilder::getShaderModulePointer(const std::string& shaderName) {
         auto count = shaderModuleMap.count(shaderName);
         if (count <= 0) {
             createShaderModule(shaderName);

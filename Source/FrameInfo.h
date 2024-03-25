@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include <vulkan/vulkan.h>
 #include "GameObject.hpp"
-#include "Material.h"
+#include "Material.hpp"
 
 namespace Kaamoo {
 

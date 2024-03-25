@@ -7,6 +7,7 @@ namespace Kaamoo{
     public:
         virtual std::string GetName(){return name;}
 
+        virtual ~Component()=default;
     protected:
         std::string name="Component";
     };

@@ -2,7 +2,7 @@
 
 #include <memory>
 #include "Model.hpp"
-#include "Material.h"
+#include "Material.hpp"
 #include "Components/Component.hpp"
 #include "Utils/Utils.hpp"
 #include "Components/TransformComponent.hpp"
@@ -19,6 +19,12 @@ namespace Kaamoo {
 
         TransformComponent* transform;
 
+        ~GameObject(){
+            for(auto& component: components){
+                delete component;
+            }
+        }
+        
         static GameObject &createGameObject(std::string name = "GameObject") {
             static id_t currentID = 0;
             auto *gameObject = new GameObject(currentID++, std::move(name));

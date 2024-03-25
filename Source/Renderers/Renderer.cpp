@@ -210,7 +210,7 @@ namespace Kaamoo {
         commandBufferAllocateInfo.pNext = nullptr;
         commandBufferAllocateInfo.commandPool = device.getCommandPool();
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocateInfo.commandBufferCount = 3;
+        commandBufferAllocateInfo.commandBufferCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
 
         commandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
         if (vkAllocateCommandBuffers(device.device(), &commandBufferAllocateInfo, commandBuffers.data()) !=

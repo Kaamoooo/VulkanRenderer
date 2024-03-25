@@ -8,7 +8,7 @@
 
 #include "Device.hpp"
 #include "Model.hpp"
-#include "Material.h"
+#include "Material.hpp"
 
 namespace Kaamoo {
 

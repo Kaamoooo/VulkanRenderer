@@ -53,6 +53,9 @@ namespace Kaamoo {
                 bufferPointers(std::move(bufferPointers)),
                 pipelineCategory(pipelineCategory) {};
  
+        [[nodiscard]] std::vector<std::shared_ptr<Image>> getImagePointers() const {
+            return imagePointers;
+        }
 
         [[nodiscard]] std::vector<std::shared_ptr<ShaderModule>> getShaderModulePointers() const {
             return shaderModules;

@@ -56,10 +56,10 @@ namespace Kaamoo {
 
 //        VkBuffer vertexBuffer;
         std::unique_ptr<Buffer> vertexBuffer;
-        uint32_t vertexCount;
+        uint32_t vertexCount{};
 
         bool hasIndexBuffer = false;
         std::unique_ptr<Buffer> indexBuffer;
-        uint32_t indexCount;
+        uint32_t indexCount{};
     };
 }
