@@ -36,7 +36,7 @@
 
 ---------------2024----------------
 
-1.1 完成动态生成与可交互草
+1.1 Completed dynamic generated and interactive grass.
 
 3.24 Modify GameObject architecture, using components to replace hard-coded member variables.
 
