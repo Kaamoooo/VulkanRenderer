@@ -1,4 +1,7 @@
-﻿#include <string>
+﻿#ifndef MESH_RENDERER_COMPONENT_INCLUDED
+#define MESH_RENDERER_COMPONENT_INCLUDED
+
+#include <string>
 #include <glm/vec3.hpp>
 #include <glm/fwd.hpp>
 #include <glm/detail/type_mat3x3.hpp>
@@ -25,3 +28,5 @@ namespace Kaamoo {
 
     };
 }
+
+#endif

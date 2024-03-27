@@ -38,6 +38,8 @@
 
 1.1 Completed dynamic generated and interactive grass.
 
-3.24 Modify GameObject architecture, using components to replace hard-coded member variables.
+3.24 Modified GameObject architecture, using components to replace hard-coded member variables.
 
 3.25 Fixed the problem when exiting the programme memory is not correctly released.
+
+3.27 Optimized run loop code structure, made camera as a component.

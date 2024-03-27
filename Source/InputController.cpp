@@ -2,7 +2,7 @@
 // Created by asus on 2023/9/19.
 //
 #include <iostream>
-#include "InputController.h"
+#include "InputController.hpp"
 
 namespace Kaamoo {
     bool mousePressed{false};
@@ -46,13 +46,6 @@ namespace Kaamoo {
 
     void InputController::moveCamera(float dt, GameObject &gameObject) {
         glm::vec3 rotation{0};
-
-        if (moveObject!= nullptr){
-            if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) moveObject->transform->Translate({-mouseSensitivity, 0, 0});
-            if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) moveObject->transform->Translate({mouseSensitivity, 0, 0});
-            if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) moveObject->transform->Translate({0, 0,mouseSensitivity});
-            if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) moveObject->transform->Translate({0, 0,-mouseSensitivity});
-        }
         
 //        if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) rotation.y += 1;
 //        if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) rotation.y -= 1;
@@ -94,6 +87,16 @@ namespace Kaamoo {
         glfwSetCursorPosCallback(window, cursor_position_callback);
         glfwSetMouseButtonCallback(window, mouse_button_callback);
         glfwMakeContextCurrent(window);
+    }
+
+    void InputController::moveGameObject(float dt, GameObject* moveObject) {
+
+        if (moveObject!= nullptr){
+            if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS) moveObject->transform->Translate({-mouseSensitivity, 0, 0});
+            if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS) moveObject->transform->Translate({mouseSensitivity, 0, 0});
+            if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS) moveObject->transform->Translate({0, 0,mouseSensitivity});
+            if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS) moveObject->transform->Translate({0, 0,-mouseSensitivity});
+        }
     }
 
 

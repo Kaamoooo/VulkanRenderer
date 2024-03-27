@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-#include "Camera.h"
 #include <vulkan/vulkan.h>
 #include "GameObject.hpp"
 #include "Material.hpp"
+#include "Components/CameraComponent.hpp"
 
 namespace Kaamoo {
 
@@ -37,7 +37,7 @@ namespace Kaamoo {
         int frameIndex;
         float frameTime;
         VkCommandBuffer commandBuffer;
-        Camera &camera;
+        CameraComponent* cameraComponent;
         GameObject::Map &gameObjects;
         Material::Map &materials;
         GlobalUbo& globalUbo;

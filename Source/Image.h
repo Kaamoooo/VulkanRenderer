@@ -37,14 +37,12 @@ namespace Kaamoo {
 
         void createImage(VkImageCreateInfo createInfo);
 
+        const VkImageView *getImageView() const;
+
     private:
         Device &device;
         VkImage image;
         VkImageView imageView;
-    public:
-        const VkImageView *getImageView() const;
-
-    private:
         VkDeviceMemory imageMemory{};
         int texWidth, texHeight, texChannels;
 

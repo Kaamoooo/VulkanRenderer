@@ -3,8 +3,6 @@
 #include "ShaderBuilder.h"
 #include "Systems/ShadowSystem.h"
 #include "Systems/GrassSystem.h"
-#include "Components/MeshRendererComponent.hpp"
-#include "Components/LightComponent.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
 #include <mmcobj.h>
@@ -15,6 +13,16 @@ namespace Kaamoo {
     const std::string BaseTexturePath = "../Textures/";
     const int MATERIAL_NUMBER = 16;
     int LightNum = 0;
+
+    Application::Application() {
+        globalPool = DescriptorPool::Builder(device).setMaxSets(
+                SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                                                               SwapChain::MAX_FRAMES_IN_FLIGHT *
+                                                                               MATERIAL_NUMBER).addPoolSize(
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).build();
+        loadGameObjects();
+        loadMaterials();
+    }
 
     void Application::run() {
 
@@ -39,26 +47,7 @@ namespace Kaamoo {
             renderSystems.push_back(renderSystem);
         }
 
-
-#pragma region 设置camera相关参数
-        Camera camera{};
-        camera.setViewTarget(glm::vec3{-1.f, -2.f, 20.f}, glm::vec3{0, 0, 2.5f});
-
-        auto &viewerObject = GameObject::createGameObject();
-        TransformComponent *transformComponent;
-        viewerObject.TryGetComponent<TransformComponent>(transformComponent);
-        transformComponent->translation.z = -2.5f;
-        transformComponent->translation.y = -0.5f;
-        InputController cameraController{myWindow.getGLFWwindow()};
-
-        for (auto &pair: gameObjects) {
-            if (pair.second.getName() == "smooth_vase.obj") {
-                cameraController.SetMoveObject(&pair.second);
-            }
-        }
-
-#pragma endregion
-
+        InputController inputController{myWindow.getGLFWwindow()};
 
         auto currentTime = std::chrono::high_resolution_clock::now();
         float totalTime = 0;
@@ -67,30 +56,23 @@ namespace Kaamoo {
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
 
-#pragma region Do Some Preparation Works
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             totalTime += frameTime;
             currentTime = newTime;
 
-            //Todo: Make camera as a component as well
-            //Todo: Shadow will disappear when resize the window
-            cameraController.moveCamera(frameTime, viewerObject);
-            camera.setViewYXZ(viewerObject.transform->translation, viewerObject.transform->rotation);
-
-            float aspectRatio = renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
-#pragma endregion
-
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, gameObjects, materials, ubo};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, nullptr, gameObjects, materials, ubo};
 
-                ubo.viewMatrix = camera.getViewMatrix();
-                ubo.projectionMatrix = camera.getProjectionMatrix();
                 ubo.curTime = totalTime;
 
+                updateCamera(frameInfo, inputController);
+                updateGameObjectMovement(frameInfo, inputController);
+                //Todo: all directional shadow map.
                 updateLight(frameInfo);
+
+
                 glm::mat4 lightProjectionMatrix = shadowSystem->getClipMatrix() * glm::perspective(glm::radians(60.0f),
                                                                                                    (float) Application::WIDTH /
                                                                                                    (float) Application::HEIGHT,
@@ -110,8 +92,6 @@ namespace Kaamoo {
 
                 renderer.setShadowMapSynchronization(commandBuffer);
 
-                //Q:为什么没有将beginFrame与beginSwapChainRenderPass结合在一起？
-                //A:为了在这里添加一些其他的pass，例如offscreen shadow pass
                 renderer.beginSwapChainRenderPass(commandBuffer);
                 for (const auto &item: renderSystems) {
                     item->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -125,16 +105,6 @@ namespace Kaamoo {
 
         }
         vkDeviceWaitIdle(device.device());
-    }
-
-    Application::Application() {
-        globalPool = DescriptorPool::Builder(device).setMaxSets(
-                SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                                                               SwapChain::MAX_FRAMES_IN_FLIGHT *
-                                                                               MATERIAL_NUMBER).addPoolSize(
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).build();
-        loadGameObjects();
-        loadMaterials();
     }
 
     void Application::loadGameObjects() {
@@ -182,22 +152,12 @@ namespace Kaamoo {
 
 
         //Load lights as GameObjects too
+        std::vector<glm::vec3> pointLightColors{{.2f, .2f, .2f}};
 
-        //Create Point Lights
-        std::vector<glm::vec3> pointLightColors{{.2f, .2f, .2f},
-//                {.1f, .1f, 1.f},
-//                {.1f, 1.f, .1f},
-//                {1.f, 1.f, .1f},
-//                {.1f, 1.f, 1.f},
-//                {1.f, 1.f, 1.f}
-        };
-
-        for (auto pointLightColor : pointLightColors) {
+        for (auto pointLightColor: pointLightColors) {
             LightNum++;
             auto pointLight = GameObject::makeLight(1, 0.1f, pointLightColor, 0);
-//            auto rotateLight = glm::rotate(glm::mat4{1.f},
-//                                           (float) i * glm::two_pi<float>() / static_cast<float>(pointLightColors.size()),
-//                                           glm::vec3(0, -1.f, 0));
+//            auto rotateLight = glm::rotate(glm::mat4{1.f},(float) i * glm::two_pi<float>() / static_cast<float>(pointLightColors.size()),glm::vec3(0, -1.f, 0));
 //            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(0, -1, 1, 1));
             pointLight.transform->translation = glm::vec4(0, -1.5f, 1, 1);
             gameObjects.emplace(pointLight.getId(), std::move(pointLight));
@@ -210,9 +170,13 @@ namespace Kaamoo {
         directionalLight.transform->rotation = glm::vec4(1, 2, 0.5, 1);
         gameObjects.emplace(directionalLight.getId(), std::move(directionalLight));
 
-        //shadow display sub window
-//        auto shadowDisplayGameObj = GameObject::createGameObject(4);
-//        gameObjects.emplace(shadowDisplayGameObj.getId(), std::move(shadowDisplayGameObj));
+        auto &cameraObject = GameObject::createGameObject("Camera");
+        auto cameraComponent = new CameraComponent();
+        cameraObject.TryAddComponent(cameraComponent);
+        cameraComponent->setViewTarget(glm::vec3{-1.f, -2.f, 20.f}, glm::vec3{0, 0, 2.5f}, glm::vec3{0, -1, 0});
+        cameraObject.transform->translation.z = -2.5f;
+        cameraObject.transform->translation.y = -0.5f;
+        gameObjects.emplace(cameraObject.getId(), std::move(cameraObject));
     }
 
     void Application::loadMaterials() {
@@ -230,7 +194,7 @@ namespace Kaamoo {
                 addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL_GRAPHICS).
                 build();
 
-        std::shared_ptr <VkDescriptorSet> globalDescriptorSetPointer = std::make_shared<VkDescriptorSet>();
+        std::shared_ptr<VkDescriptorSet> globalDescriptorSetPointer = std::make_shared<VkDescriptorSet>();
         auto bufferInfo = globalUboBufferPtr->descriptorInfo();
         DescriptorWriter(globalDescriptorSetLayoutPointer, *globalPool).
                 writeBuffer(0, bufferInfo).
@@ -241,11 +205,11 @@ namespace Kaamoo {
         rapidjson::Document materialsDocument;
         materialsDocument.Parse(materialsString.c_str());
         ShaderBuilder shaderBuilder(device);
-        
+
         if (materialsDocument.IsArray()) {
             for (rapidjson::SizeType i = 0; i < materialsDocument.Size(); i++) {
                 const rapidjson::Value &object = materialsDocument[i];
-        
+
                 const int id = object["id"].GetInt();
                 const std::string pipelineCategoryString = object["pipelineCategory"].GetString();
 
@@ -254,7 +218,7 @@ namespace Kaamoo {
 
                 shaderBuilder.createShaderModule(vertexShaderName);
                 shaderBuilder.createShaderModule(fragmentShaderName);
-                std::vector <std::shared_ptr<ShaderModule>> shaderModulePointers{
+                std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
                         std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(vertexShaderName),
                                                        ShaderCategory::vertex),
                         std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(fragmentShaderName),
@@ -282,10 +246,11 @@ namespace Kaamoo {
 
                 auto textureNames = object["texture"].GetArray();
 
-                std::vector <std::shared_ptr<Image>> imagePointers{};
-                std::vector <std::shared_ptr<Sampler>> samplerPointers{};
-                std::vector <std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{globalDescriptorSetPointer};
-                std::vector <std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{globalDescriptorSetLayoutPointer};
+                std::vector<std::shared_ptr<Image>> imagePointers{};
+                std::vector<std::shared_ptr<Sampler>> samplerPointers{};
+                std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{globalDescriptorSetPointer};
+                std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{
+                        globalDescriptorSetLayoutPointer};
 
                 //Bind Descriptors
                 //binding points: textures, uniform buffers
@@ -313,7 +278,7 @@ namespace Kaamoo {
 
                 //Write Descriptors
                 int writerBindingPoint = 0;
-                std::vector <std::shared_ptr<VkDescriptorImageInfo>> imageInfos;
+                std::vector<std::shared_ptr<VkDescriptorImageInfo>> imageInfos;
                 for (auto &textureNameGenericValue: textureNames) {
                     std::string textureName = textureNameGenericValue.GetString();
                     auto image = std::make_shared<Image>(device);
@@ -328,7 +293,7 @@ namespace Kaamoo {
                     samplerPointers.emplace_back(sampler);
                 }
 
-                std::vector <std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
+                std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
                 if (pipelineCategoryString == "Shadow") {
                     auto shadowUboBuffer = std::make_shared<Buffer>(device, sizeof(ShadowUbo),
                                                                     SwapChain::MAX_FRAMES_IN_FLIGHT,
@@ -347,7 +312,7 @@ namespace Kaamoo {
                     descriptorWriter.writeImage(writerBindingPoint++, imageInfo);
                 }
 
-                std::shared_ptr <VkDescriptorSet> materialDescriptorSetPointer = std::make_shared<VkDescriptorSet>();
+                std::shared_ptr<VkDescriptorSet> materialDescriptorSetPointer = std::make_shared<VkDescriptorSet>();
                 descriptorWriter.build(materialDescriptorSetPointer);
 
                 descriptorSetLayoutPointers.push_back(materialDescriptorSetLayoutPointer);
@@ -390,4 +355,44 @@ namespace Kaamoo {
         }
     }
 
+    void Application::updateCamera(Kaamoo::FrameInfo &frameInfo, InputController inputController) {
+        static GameObject *cameraObj = nullptr;
+        static CameraComponent *cameraComponent = nullptr;
+        if (cameraObj == nullptr) {
+            for (auto &gameObjPair: gameObjects) {
+                auto &obj = gameObjPair.second;
+                if (obj.TryGetComponent(cameraComponent)) {
+                    cameraObj = &obj;
+                    frameInfo.cameraComponent = cameraComponent;
+                    break;
+                }
+            }
+        }
+
+        if (cameraObj != nullptr) {
+            float aspectRatio = renderer.getAspectRatio();
+            inputController.moveCamera(frameInfo.frameTime, *cameraObj);
+            frameInfo.globalUbo.viewMatrix = cameraComponent->getViewMatrix();
+            frameInfo.globalUbo.projectionMatrix = cameraComponent->getProjectionMatrix();
+            cameraComponent->setViewYXZ(cameraObj->transform->translation, cameraObj->transform->rotation);
+            cameraComponent->setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
+        }
+    }
+
+    void Application::updateGameObjectMovement(Kaamoo::FrameInfo &frameInfo, InputController inputController) {
+        static GameObject *moveObjPtr = nullptr;
+
+        if (moveObjPtr == nullptr) {
+            for (auto &pair: gameObjects) {
+                //Todo: Maybe the input system can be optimized.
+                if (pair.second.getName() == "smooth_vase.obj") {
+                    moveObjPtr = &pair.second;
+                }
+            }
+        }
+
+        if (moveObjPtr != nullptr){
+            inputController.moveGameObject(frameInfo.frameTime, moveObjPtr);
+        }
+    }
 }

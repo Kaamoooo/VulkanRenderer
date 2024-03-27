@@ -249,7 +249,6 @@ namespace Kaamoo {
         //create shadow sampler
         shadowSampler = std::make_shared<Sampler>(device);
         shadowSampler->createTextureSampler();
-
         
         //create shadow pass
         VkAttachmentDescription attachmentDescriptions[2];

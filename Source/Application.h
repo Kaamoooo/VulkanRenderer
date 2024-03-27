@@ -11,7 +11,7 @@
 #include "GameObject.hpp"
 #include "Systems/RenderSystem.h"
 #include "Systems/PointLightSystem.h"
-#include "InputController.h"
+#include "InputController.hpp"
 #include "Descriptor.h"
 #include "Image.h"
 #include "Material.hpp"
@@ -36,6 +36,8 @@ namespace Kaamoo {
         void loadGameObjects();
         void loadMaterials();
         void updateLight(FrameInfo &frameInfo);
+        void updateCamera(Kaamoo::FrameInfo &frameInfo, InputController inputController);
+        void updateGameObjectMovement(Kaamoo::FrameInfo &frameInfo, InputController inputController);
         
         MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         Device device{myWindow};

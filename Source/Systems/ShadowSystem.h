@@ -6,7 +6,6 @@
 #include "../Device.hpp"
 #include "../Model.hpp"
 #include "../GameObject.hpp"
-#include "../Camera.h"
 #include "../FrameInfo.h"
 
 namespace Kaamoo {

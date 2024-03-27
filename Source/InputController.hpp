@@ -36,14 +36,10 @@ namespace Kaamoo {
 
         void moveCamera(float dt, GameObject &gameObject);
         
-        void SetMoveObject(GameObject* obj){
-            moveObject = obj;
-        }
+        void moveGameObject(float dt, GameObject* gameObject);
+        
 
     private:
         GLFWwindow *window;
-        
-        GameObject* moveObject;
-
     };
 }

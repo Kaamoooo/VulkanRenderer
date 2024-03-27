@@ -67,7 +67,7 @@ namespace Kaamoo {
             LightComponent* lightComponent;
             if (!obj.TryGetComponent(lightComponent)) continue;
             
-            auto offset = frameInfo.camera.getPosition() - obj.transform->translation;
+            auto offset = frameInfo.cameraComponent->getPosition() - obj.transform->translation;
             float disSquared = glm::dot(offset,offset);
             sorted[disSquared]=obj.getId();
         }
