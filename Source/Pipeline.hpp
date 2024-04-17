@@ -11,6 +11,14 @@
 #include "Material.hpp"
 
 namespace Kaamoo {
+    const struct PipelineCategory{
+        std::string Opaque="Opaque";
+        std::string TessellationGeometry="TessellationGeometry";
+        std::string SkyBox = "SkyBox";
+        std::string Transparent="Transparent";
+        std::string Shadow="Shadow";
+        std::string Overlay="Overlay";
+    } PipelineCategory;
 
     struct PipelineConfigureInfo {
         PipelineConfigureInfo() = default;

@@ -1,6 +1,5 @@
 #include "Device.hpp"
 
-
 #include <cstring>
 #include <iostream>
 #include <set>
@@ -152,7 +151,7 @@ namespace Kaamoo {
         VkPhysicalDeviceFeatures deviceFeatures = {};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
         deviceFeatures.geometryShader = VK_TRUE;
-        deviceFeatures.tessellationShader= VK_TRUE;
+        deviceFeatures.tessellationShader = VK_TRUE;
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -534,9 +533,8 @@ namespace Kaamoo {
         }
     }
 
-    void
-    Device::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
-                                  VkImageAspectFlags aspectFlag) {
+    void Device::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
+                                       VkImageSubresourceRange subresourceRange) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkImageMemoryBarrier barrier{};
@@ -546,12 +544,6 @@ namespace Kaamoo {
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.image = image;
-        VkImageSubresourceRange subresourceRange{};
-        subresourceRange.aspectMask = aspectFlag;
-        subresourceRange.baseMipLevel = 0;
-        subresourceRange.levelCount = 1;
-        subresourceRange.baseArrayLayer = 0;
-        subresourceRange.layerCount = 1;
         barrier.subresourceRange = subresourceRange;
 
         VkPipelineStageFlagBits srcStage, dstStage;

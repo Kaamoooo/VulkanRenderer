@@ -6,12 +6,11 @@
 #include <glm/detail/type_mat4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include "Renderer.h"
-#include "../Image.h"
-#include "../Application.h"
+#include "Image.h"
+#include "Application.h"
 
 
 namespace Kaamoo {
-
 
     Renderer::Renderer(MyWindow &window, Device &device1) : myWindow{window}, device{device1} {
 
@@ -185,7 +184,6 @@ namespace Kaamoo {
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     }
 
-
     void Renderer::endShadowRenderPass(VkCommandBuffer commandBuffer) {
         assert(isFrameStarted && "Cannot call endShadowRenderPass while frame is not in progress");
         assert(commandBuffer == getCurrentCommandBuffer() &&
@@ -193,7 +191,6 @@ namespace Kaamoo {
 
         vkCmdEndRenderPass(commandBuffer);
     }
-
 
     void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) {
         assert(isFrameStarted && "Cannot call endShadowRenderPass while frame is not in progress");
@@ -219,25 +216,30 @@ namespace Kaamoo {
         }
     }
 
-    void Renderer::loadShadow() {
-        freeShadowResources();
-
-        //create shadow image
-        shadowImage = std::make_unique<Image>(device);
+    void Renderer::createShadowImage() {
+        shadowImage = std::make_shared<Image>(device);
         VkImageCreateInfo imageCreateInfo{};
         Image::setDefaultImageCreateInfo(imageCreateInfo);
         VkExtent3D shadowMapExtent{};
         shadowMapExtent.height = swapChain->getSwapChainExtent().height;
         shadowMapExtent.width = swapChain->getSwapChainExtent().width;
         shadowMapExtent.depth = 1;
+        if (isCubeMap) {
+            imageCreateInfo.arrayLayers = 6;
+            imageCreateInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+        }
         imageCreateInfo.format = VK_FORMAT_D32_SFLOAT;
         imageCreateInfo.extent = shadowMapExtent;
         imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         shadowImage->createImage(imageCreateInfo);
 
         //create shadow image view
-        auto imageViewCreateInfo=std::make_shared<VkImageViewCreateInfo>();
+        auto imageViewCreateInfo = std::make_shared<VkImageViewCreateInfo>();
         shadowImage->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+        if (isCubeMap) {
+            imageViewCreateInfo->subresourceRange.layerCount = 6;
+            imageViewCreateInfo->viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        }
         imageViewCreateInfo->format = VK_FORMAT_D32_SFLOAT;
         imageViewCreateInfo->components.r = VK_COMPONENT_SWIZZLE_R;
         imageViewCreateInfo->components.g = VK_COMPONENT_SWIZZLE_G;
@@ -249,7 +251,13 @@ namespace Kaamoo {
         //create shadow sampler
         shadowSampler = std::make_shared<Sampler>(device);
         shadowSampler->createTextureSampler();
-        
+    }
+
+    void Renderer::loadShadow() {
+        freeShadowResources();
+
+        createShadowImage();
+
         //create shadow pass
         VkAttachmentDescription attachmentDescriptions[2];
         attachmentDescriptions[0].format = VK_FORMAT_D32_SFLOAT;
@@ -310,7 +318,7 @@ namespace Kaamoo {
         }
     }
 
-    const std::shared_ptr<Image> & Renderer::getShadowImage() const {
+    const std::shared_ptr<Image> &Renderer::getShadowImage() const {
         return shadowImage;
     }
 
@@ -331,6 +339,9 @@ namespace Kaamoo {
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         subresourceRange.baseMipLevel = 0;
         subresourceRange.levelCount = 1;
+        if (isCubeMap) {
+            subresourceRange.levelCount = 6;
+        }
         subresourceRange.baseArrayLayer = 0;
         subresourceRange.layerCount = 1;
         barrier.subresourceRange = subresourceRange;
@@ -344,7 +355,6 @@ namespace Kaamoo {
                                                         VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
         dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-        
 
         vkCmdPipelineBarrier(commandBuffer,
                              srcStage, dstStage,

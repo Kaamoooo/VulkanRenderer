@@ -25,5 +25,14 @@
       "rotation": [0,0,0]
     },
     "materialId": 5
+  },
+  {
+    "model": "cube.obj",
+    "transform": {
+      "translation": [0,0,0],
+      "scale": [2,2,2],
+      "rotation": [0,0,0]
+    },
+    "materialId": 6
   }
 ]

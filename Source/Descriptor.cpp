@@ -156,7 +156,7 @@ namespace Kaamoo {
     }
 
     DescriptorWriter &DescriptorWriter::writeImage(
-            uint32_t binding, std::shared_ptr<VkDescriptorImageInfo> imageInfo) {
+            uint32_t binding, const std::shared_ptr<VkDescriptorImageInfo>& imageInfo) {
 
         auto &bindingDescription = setLayout->bindings[binding];
 

@@ -11,15 +11,18 @@
 #include "Sampler.h"
 
 namespace Kaamoo {
+    const struct ImageCategory{
+        std::string Default="Default";
+        std::string CubeMap="CubeMap";
+    } ImageType;
     class Image {
     public:
-        Image(Device &device);
+        explicit Image(Device &device, std::string imageCategory = ImageType.Default);
 
         ~Image();
 
-        void createTextureImage(std::string path);
+        void createTextureImage(const std::string& path);
 
-        void createTextureImage(std::string path, VkImageCreateInfo createInfo);
 
         void createImageView();
 
@@ -45,7 +48,12 @@ namespace Kaamoo {
         VkImageView imageView;
         VkDeviceMemory imageMemory{};
         int texWidth, texHeight, texChannels;
+        
+        std::string imageType;
+        
+        void createDefaultImage(const std::string& path, VkImageCreateInfo createInfo);
 
+        void createCubeMapImage(const std::string &path, VkImageCreateInfo createInfo);
     };
 
 

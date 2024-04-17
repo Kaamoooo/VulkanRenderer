@@ -4,6 +4,9 @@
 
 // std lib headers
 #include <string>
+
+#pragma once
+
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -31,6 +34,7 @@ namespace Kaamoo {
 #else
         const bool enableValidationLayers = true;
 #endif
+
         Device(MyWindow &window);
 
         ~Device();
@@ -47,7 +51,7 @@ namespace Kaamoo {
         VkCommandPool getCommandPool() { return commandPool; }
 
         VkDevice device() { return device_; }
-        
+
 
         VkSurfaceKHR surface() { return surface_; }
 
@@ -80,9 +84,9 @@ namespace Kaamoo {
 
         void copyBufferToImage(
                 VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
-        
+
         void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
-                                   VkImageAspectFlags aspectFlag= VK_IMAGE_ASPECT_COLOR_BIT);
+                                   VkImageSubresourceRange subresourceRange);
 
         void createImageWithInfo(
                 const VkImageCreateInfo &imageInfo,

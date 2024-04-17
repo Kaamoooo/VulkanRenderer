@@ -43,3 +43,5 @@
 3.25 Fixed the problem when exiting the programme memory is not correctly released.
 
 3.27 Optimized run loop code structure, made camera as a component.
+
+4.17 Supported cube map. Added sky box.

@@ -46,7 +46,6 @@ namespace Kaamoo {
             VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout");
         }
-
     }
 
     void GrassSystem::createPipeline(VkRenderPass renderPass) {

@@ -1,10 +1,11 @@
 ﻿#include <stdexcept>
 #include <memory>
+#include <utility>
 #include "Image.h"
 #include "Buffer.h"
 
 namespace Kaamoo {
-    void Image::createTextureImage(std::string path, VkImageCreateInfo createInfo) {
+    void Image::createDefaultImage(const std::string &path, VkImageCreateInfo createInfo) {
         stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
@@ -27,19 +28,72 @@ namespace Kaamoo {
 
         device.createImageWithInfo(createInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 
+
+        VkImageSubresourceRange subresourceRange{};
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresourceRange.baseMipLevel = 0;
+        subresourceRange.levelCount = 1;
+        subresourceRange.baseArrayLayer = 0;
+        subresourceRange.layerCount = 1;
         device.transitionImageLayout(image, createInfo.format, createInfo.initialLayout,
-                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
         device.copyBufferToImage(stagingBuffer->getBuffer(), image, static_cast<uint32_t>(texWidth),
                                  static_cast<uint32_t>(texHeight), 1);
         device.transitionImageLayout(image, createInfo.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
 
     }
 
+    void Image::createCubeMapImage(const std::string &path, VkImageCreateInfo createInfo) {
+        const std::string cubeMapSuffix[6] = {"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"};
+        stbi_uc *cubeMapPixels[6];
+        for (int i = 0; i < 6; i++) {
+            std::string cubeMapPath = path + "/" + cubeMapSuffix[i];
+            cubeMapPixels[i] = stbi_load(cubeMapPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        }
+        VkDeviceSize imageSize = texWidth * texHeight * 4 * 6;
 
-    Image::Image(Device &device) : device{device} {
+        std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>(device, imageSize, 1,
+                                                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                                                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        stagingBuffer->map();
+        VkDeviceSize layerSize = imageSize / 6;
+        for (int i = 0; i < 6; ++i) {
+            stagingBuffer->writeToBuffer(cubeMapPixels[i], layerSize, layerSize * i);
+        }
+        stagingBuffer->unmap();
+
+        for (int i = 0; i < 6; i++) {
+            stbi_image_free(cubeMapPixels[i]);
+        }
+
+        createInfo.extent.width = texWidth;
+        createInfo.extent.height = texHeight;
+        createInfo.arrayLayers = 6;
+        createInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+        createInfo.imageType = VK_IMAGE_TYPE_2D;
+
+        device.createImageWithInfo(createInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+
+        VkImageSubresourceRange subresourceRange{};
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresourceRange.baseMipLevel = 0;
+        subresourceRange.levelCount = 1;
+        subresourceRange.baseArrayLayer = 0;
+        subresourceRange.layerCount = 6;
+        device.transitionImageLayout(image, createInfo.format, createInfo.initialLayout,
+                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+        device.copyBufferToImage(stagingBuffer->getBuffer(), image, static_cast<uint32_t>(texWidth),
+                                 static_cast<uint32_t>(texHeight), 6);
+        device.transitionImageLayout(image, createInfo.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+
+
     }
+
+    Image::Image(Device &device, std::string imageCategory) : device{device}, imageType(imageCategory) {}
 
     Image::~Image() {
         vkDestroyImage(device.device(), image, nullptr);
@@ -82,23 +136,33 @@ namespace Kaamoo {
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        
+
     }
 
-    void Image::createTextureImage(std::string path) {
+    void Image::createTextureImage(const std::string &path) {
         VkImageCreateInfo createInfo{};
         setDefaultImageCreateInfo(createInfo);
-        createTextureImage(path, createInfo);
+        if (imageType == ImageType.CubeMap) {
+            createInfo.arrayLayers = 6;
+            createInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+            createCubeMapImage(path, createInfo);
+        } else {
+            createDefaultImage(path, createInfo);
+        }
     }
 
     void Image::createImageView() {
         VkImageViewCreateInfo createInfo{};
         setDefaultImageViewCreateInfo(createInfo);
+        if (imageType == ImageType.CubeMap) {
+            createInfo.subresourceRange.layerCount = 6;
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        }
         createImageView(createInfo);
     }
 
     std::shared_ptr<VkDescriptorImageInfo> Image::descriptorInfo(Sampler &sampler) {
-        auto imageInfo =  std::make_shared<VkDescriptorImageInfo>();
+        auto imageInfo = std::make_shared<VkDescriptorImageInfo>();
         imageInfo->sampler = sampler.getSampler();
         imageInfo->imageView = imageView;
         imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

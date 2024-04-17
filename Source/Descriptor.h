@@ -103,7 +103,7 @@ namespace Kaamoo {
 
         DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo bufferInfo);
 
-        DescriptorWriter &writeImage(uint32_t binding, std::shared_ptr<VkDescriptorImageInfo> imageInfo);
+        DescriptorWriter &writeImage(uint32_t binding, const std::shared_ptr<VkDescriptorImageInfo>& imageInfo);
 
         bool build(std::shared_ptr<VkDescriptorSet> &setPtr);
 

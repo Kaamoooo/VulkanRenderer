@@ -1,8 +1,9 @@
 ﻿#include "Application.h"
 #include "Sampler.h"
 #include "ShaderBuilder.h"
-#include "Systems/ShadowSystem.h"
-#include "Systems/GrassSystem.h"
+#include "RenderSystems/ShadowSystem.h"
+#include "RenderSystems/GrassSystem.h"
+#include "RenderSystems/SkyBoxSystem.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
 #include <mmcobj.h>
@@ -37,6 +38,12 @@ namespace Kaamoo {
             } else if (pipelineCategory == "TessellationGeometry") {
                 auto renderSystem = std::make_shared<GrassSystem>(device, renderer.getSwapChainRenderPass(),
                                                                   material.second);
+                renderSystem->Init();
+                renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
+                continue;
+            } else if (pipelineCategory == PipelineCategory.SkyBox) {
+                auto renderSystem = std::make_shared<SkyBoxSystem>(device, renderer.getSwapChainRenderPass(),
+                                                                   material.second);
                 renderSystem->Init();
                 renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
                 continue;
@@ -262,11 +269,12 @@ namespace Kaamoo {
                                                           VK_SHADER_STAGE_ALL_GRAPHICS);
                 }
 
-                if (pipelineCategoryString == "Shadow") {
+                if (pipelineCategoryString == PipelineCategory.Shadow) {
                     descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                                           VK_SHADER_STAGE_ALL_GRAPHICS);
-                } else if (pipelineCategoryString == "Overlay" || pipelineCategoryString == "Opaque" ||
-                           pipelineCategoryString == "TessellationGeometry") {
+                } else if (pipelineCategoryString == PipelineCategory.Overlay ||
+                           pipelineCategoryString == PipelineCategory.Opaque ||
+                           pipelineCategoryString == PipelineCategory.TessellationGeometry) {
                     descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++,
                                                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                                                           VK_SHADER_STAGE_ALL_GRAPHICS);
@@ -278,10 +286,16 @@ namespace Kaamoo {
 
                 //Write Descriptors
                 int writerBindingPoint = 0;
+                std::shared_ptr<Image> image;
                 std::vector<std::shared_ptr<VkDescriptorImageInfo>> imageInfos;
                 for (auto &textureNameGenericValue: textureNames) {
                     std::string textureName = textureNameGenericValue.GetString();
-                    auto image = std::make_shared<Image>(device);
+
+                    if (pipelineCategoryString == PipelineCategory.SkyBox)
+                        image = std::make_shared<Image>(device, ImageType.CubeMap);
+                    else
+                        image = std::make_shared<Image>(device, ImageType.Default);
+
                     image->createTextureImage(BaseTexturePath + textureName);
                     image->createImageView();
                     auto sampler = std::make_shared<Sampler>(device);
@@ -373,6 +387,7 @@ namespace Kaamoo {
             float aspectRatio = renderer.getAspectRatio();
             inputController.moveCamera(frameInfo.frameTime, *cameraObj);
             frameInfo.globalUbo.viewMatrix = cameraComponent->getViewMatrix();
+            frameInfo.globalUbo.inverseViewMatrix = cameraComponent->getInverseViewMatrix();
             frameInfo.globalUbo.projectionMatrix = cameraComponent->getProjectionMatrix();
             cameraComponent->setViewYXZ(cameraObj->transform->translation, cameraObj->transform->rotation);
             cameraComponent->setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
@@ -391,7 +406,7 @@ namespace Kaamoo {
             }
         }
 
-        if (moveObjPtr != nullptr){
+        if (moveObjPtr != nullptr) {
             inputController.moveGameObject(frameInfo.frameTime, moveObjPtr);
         }
     }

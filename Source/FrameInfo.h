@@ -8,6 +8,7 @@
 namespace Kaamoo {
 
 #define MAX_LIGHT_NUM 10
+#define MAX_SHADOW_NUM 3
 
     enum LightCategory {
         POINT_LIGHT = 0,

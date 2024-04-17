@@ -30,7 +30,7 @@ namespace Kaamoo {
             this->shaderCategory = shaderCategory;
         }
     } ShaderModule;
-    
+
     class Material {
     public:
         using id_t = unsigned int;
@@ -52,7 +52,7 @@ namespace Kaamoo {
                 samplerPointers(std::move(samplerPointers)),
                 bufferPointers(std::move(bufferPointers)),
                 pipelineCategory(pipelineCategory) {};
- 
+
         [[nodiscard]] std::vector<std::shared_ptr<Image>> getImagePointers() const {
             return imagePointers;
         }
@@ -93,4 +93,3 @@ namespace Kaamoo {
     };
 
 } // Kaamoo
-

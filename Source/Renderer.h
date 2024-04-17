@@ -1,10 +1,10 @@
 ﻿#pragma once
 
 #include <cassert>
-#include "../MyWindow.hpp"
-#include "../SwapChain.hpp"
-#include "../Device.hpp"
-#include "../Image.h"
+#include "MyWindow.hpp"
+#include "SwapChain.hpp"
+#include "Device.hpp"
+#include "Image.h"
 
 namespace Kaamoo {
     class Renderer {
@@ -28,7 +28,7 @@ namespace Kaamoo {
         void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
         void endShadowRenderPass(VkCommandBuffer commandBuffer);
-        
+
         void setShadowMapSynchronization(VkCommandBuffer commandBuffer);
 
         [[nodiscard]] std::shared_ptr<VkDescriptorImageInfo> getShadowImageInfo() const {
@@ -59,6 +59,10 @@ namespace Kaamoo {
             return swapChain->extentAspectRatio();
         }
 
+        const std::shared_ptr<Image> &getShadowImage() const;
+
+        const std::shared_ptr<Sampler> &getShadowSampler() const;
+        
     private:
         void createCommandBuffers();
 
@@ -70,24 +74,19 @@ namespace Kaamoo {
 
         void loadShadow();
 
+        void createShadowImage();
+
         MyWindow &myWindow;
         Device &device;
         std::unique_ptr<SwapChain> swapChain;
         std::vector<VkCommandBuffer> commandBuffers;
 
-    private:
-
         uint32_t currentImageIndex;
         int currentFrameIndex = 0;
         bool isFrameStarted = false;
 
+        bool isCubeMap= false;
         std::shared_ptr<Image> shadowImage;
-    public:
-        const std::shared_ptr<Image> & getShadowImage() const;
-
-        const std::shared_ptr<Sampler> &getShadowSampler() const;
-
-    private:
         std::shared_ptr<Sampler> shadowSampler;
         VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;
         VkRenderPass shadowRenderPass = VK_NULL_HANDLE;

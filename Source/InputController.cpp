@@ -19,7 +19,7 @@ namespace Kaamoo {
             curPos = glm::vec2{xpos / width, ypos / height};
             deltaPos = curPos - lastPos;
 
-            std::cout << "deltaPos: " << deltaPos.x << ", " << deltaPos.y << std::endl;
+//            std::cout << "deltaPos: " << deltaPos.x << ", " << deltaPos.y << std::endl;
         }
     }
 
