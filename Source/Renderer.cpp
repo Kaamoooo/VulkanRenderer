@@ -287,8 +287,18 @@ namespace Kaamoo {
         subpassDescription[0].pPreserveAttachments = nullptr;
 
         VkRenderPassCreateInfo renderPassCreateInfo{};
+
+        VkRenderPassMultiviewCreateInfo multiviewCreateInfo{};
+        multiviewCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+        multiviewCreateInfo.subpassCount = 1;
+        //All 6 faces of the cube map
+        uint32_t viewMask = 0b00111111;
+        multiviewCreateInfo.pViewMasks = &viewMask;
+        multiviewCreateInfo.correlationMaskCount = 0;
+        multiviewCreateInfo.pCorrelationMasks = nullptr;
+        
         renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassCreateInfo.pNext = nullptr;
+        renderPassCreateInfo.pNext = &multiviewCreateInfo;
         renderPassCreateInfo.attachmentCount = 1;
         renderPassCreateInfo.pAttachments = attachmentDescriptions;
         renderPassCreateInfo.subpassCount = 1;
@@ -339,11 +349,8 @@ namespace Kaamoo {
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         subresourceRange.baseMipLevel = 0;
         subresourceRange.levelCount = 1;
-        if (isCubeMap) {
-            subresourceRange.levelCount = 6;
-        }
         subresourceRange.baseArrayLayer = 0;
-        subresourceRange.layerCount = 1;
+        subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
         barrier.subresourceRange = subresourceRange;
 
         VkPipelineStageFlagBits srcStage, dstStage;

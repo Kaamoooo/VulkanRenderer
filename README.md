@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240106022548339](./README.assets/image-20240106022548339.png)
+<img src="./README.assets/image-20240424145416560.png" alt="image-20240424145416560" style="zoom:50%;" />
 
 ## 进度
 
@@ -45,3 +45,5 @@
 3.27 Optimized run loop code structure, made camera as a component.
 
 4.17 Supported cube map. Added sky box.
+
+4.24 Completed point light omni-directional shadow map with cube map.

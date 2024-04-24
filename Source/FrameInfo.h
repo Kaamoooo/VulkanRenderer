@@ -32,6 +32,9 @@ namespace Kaamoo {
         alignas(16) int lightNum;
         alignas(16) glm::mat4 lightProjectionViewMatrix;
         alignas(16) float curTime;
+        alignas(16) glm::mat4 shadowViewMatrix[6];
+        alignas(16) glm::mat4 shadowProjMatrix;
+        
     };
 
     struct FrameInfo {

@@ -79,16 +79,23 @@ namespace Kaamoo {
                 //Todo: all directional shadow map.
                 updateLight(frameInfo);
 
-
-                glm::mat4 lightProjectionMatrix = shadowSystem->getClipMatrix() * glm::perspective(glm::radians(60.0f),
-                                                                                                   (float) Application::WIDTH /
-                                                                                                   (float) Application::HEIGHT,
-                                                                                                   0.1f, 10.0f);
-                ubo.lightProjectionViewMatrix = lightProjectionMatrix *
-                                                shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
-                                                                                             glm::vec3(
-                                                                                                     glm::radians(45.f),
-                                                                                                     totalTime, 0));
+                ubo.shadowViewMatrix[0] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                                       glm::vec3(0, 90, 180));
+                ubo.shadowViewMatrix[1] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                                       glm::vec3(0, -90, 180));
+                ubo.shadowViewMatrix[2] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                                       glm::vec3(-90, 0, 0));
+                ubo.shadowViewMatrix[3] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                                       glm::vec3(90, 0, 0));
+                ubo.shadowViewMatrix[4] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                                       glm::vec3(180, 0, 0));
+                ubo.shadowViewMatrix[5] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                                       glm::vec3(0, 0, 180));
+                ubo.shadowProjMatrix = shadowSystem->getClipMatrix() * glm::perspective(glm::radians(90.0f),
+                                                                                        (float) Application::WIDTH /
+                                                                                        (float) Application::HEIGHT,
+                                                                                        0.1f, 5.0f);
+                ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
 //                auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
 
 
@@ -270,11 +277,14 @@ namespace Kaamoo {
                 }
 
                 if (pipelineCategoryString == PipelineCategory.Shadow) {
-                    descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++,
+                                                          VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+//                                                          VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
                                                           VK_SHADER_STAGE_ALL_GRAPHICS);
                 } else if (pipelineCategoryString == PipelineCategory.Overlay ||
                            pipelineCategoryString == PipelineCategory.Opaque ||
-                           pipelineCategoryString == PipelineCategory.TessellationGeometry) {
+                           pipelineCategoryString == PipelineCategory.TessellationGeometry ||
+                           pipelineCategoryString == PipelineCategory.SkyBox) {
                     descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++,
                                                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                                                           VK_SHADER_STAGE_ALL_GRAPHICS);
@@ -317,8 +327,10 @@ namespace Kaamoo {
                     bufferPointers.push_back(shadowUboBuffer);
                     auto shadowUboBufferInfo = shadowUboBuffer->descriptorInfo();
                     descriptorWriter.writeBuffer(writerBindingPoint++, shadowUboBufferInfo);
-                } else if (pipelineCategoryString == "Overlay" || pipelineCategoryString == "Opaque" ||
-                           pipelineCategoryString == "TessellationGeometry") {
+                } else if (pipelineCategoryString == PipelineCategory.Overlay ||
+                           pipelineCategoryString == PipelineCategory.Opaque ||
+                           pipelineCategoryString == PipelineCategory.TessellationGeometry ||
+                           pipelineCategoryString == PipelineCategory.SkyBox) {
                     imagePointers.push_back(renderer.getShadowImage());
                     samplerPointers.push_back(renderer.getShadowSampler());
                     auto imageInfo = renderer.getShadowImageInfo();
@@ -352,17 +364,18 @@ namespace Kaamoo {
                 assert(lightIndex < MAX_LIGHT_NUM && "光源数目过多");
 
                 Light light{};
-                light.position = glm::vec4(obj.transform->translation, 1.f);
-                light.rotation = glm::vec4(obj.transform->rotation, 1.f);
-                light.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
 
                 if (lightComponent->lightCategory == LightCategory::POINT_LIGHT) {
-                    auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
+                    auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, 1.f, 0));
                     obj.transform->translation = glm::vec3(rotateLight * glm::vec4(obj.transform->translation, 1));
                     light.lightCategory = LightCategory::POINT_LIGHT;
                 } else {
                     light.lightCategory = LightCategory::DIRECTIONAL_LIGHT;
                 }
+                
+                light.position = glm::vec4(obj.transform->translation, 1.f);
+                light.rotation = glm::vec4(obj.transform->rotation, 1.f);
+                light.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
 
                 frameInfo.globalUbo.lights[lightIndex] = light;
             }

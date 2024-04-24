@@ -17,7 +17,8 @@ layout(push_constant) uniform PushConstantData{
 
 layout(set=1, binding=0) uniform sampler2D texSampler;
 layout(set=1, binding=1) uniform sampler2D normalSampler;
-layout(set=1, binding=2) uniform sampler2D shadowSampler;
+//layout(set=1, binding=2) uniform sampler2D shadowSampler;
+layout(set=1, binding=2) uniform samplerCube shadowSampler;
 
 void main(){
     vec3 texColor = texture(texSampler, uv).xyz;
@@ -61,23 +62,16 @@ void main(){
         totalSpecular+=lightColorWithAttenuation*blinn;
         totalDiffuse+=diffuse;
     }
+    
+    vec3 cubeMapDirection = worldPos.xyz-ubo.lights[0].position.xyz;
+    cubeMapDirection.y = -cubeMapDirection.y;
+    int cubeMapIndex = getCubeMapIndex(cubeMapDirection);
 
-
-    vec4 lightFragPos = ubo.lightProjectionViewMatrix*worldPos;
-    lightFragPos/=lightFragPos.w;
-    float fragDepth = 0;
-
-    vec3 tmpUV = (lightFragPos.xyz)/2+0.5;
-    float depth=1;
-    float shadowMask = 0;
-    if (all(greaterThanEqual(tmpUV, vec3(0.0, 0,0))) && all(lessThanEqual(tmpUV, vec3(1,1.0, 1.0)))) {
-        depth = texture(shadowSampler, tmpUV.xy).x;
-        fragDepth=lightFragPos.z;
-        shadowMask=clamp(0, 1, (fragDepth-depth)*10);
-        //    outColor = vec4(1 - (1-fragDepth)*20);  
-        //    outColor = vec4(depth-fragDepth);  
-    }
+    vec4 lightFragPos = ubo.shadowProjMatrix*ubo.shadowViewMatrix[3]*worldPos;
+    float depth = texture(shadowSampler, cubeMapDirection).x;
+    float fragDepth = lightFragPos.z/lightFragPos.w;
+    float shadowMask =clamp(0, 1, (fragDepth-depth)*10);
     vec4 lightingResult=vec4(fragColor*texColor*(totalDiffuse+ambientLightColor+totalSpecular), 1);
     outColor = lightingResult*(1-shadowMask);
-//    outColor = vec4(lightFragPos.z);
+    
 }

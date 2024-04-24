@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_multiview : enable
 #include "UBO.glsl"
 
 layout(location = 0) in vec3 position;
@@ -13,13 +14,13 @@ layout(location = 3) out vec2 outUV;
 
 layout(push_constant) uniform PushConstantData{
     mat4 modelMatrix;
-} push; 
+} push;
 
 layout(set=1, binding=0) uniform ShadowUbo{
     mat4 projectionViewMatrix;
 } shadowUbo;
 
 void main(){
-    vec4 position = vec4(position,1);
-    gl_Position = ubo.lightProjectionViewMatrix*push.modelMatrix*position;
+    vec4 position = vec4(position, 1);
+    gl_Position = ubo.shadowProjMatrix*ubo.shadowViewMatrix[gl_ViewIndex]*push.modelMatrix*position;
 }

@@ -21,8 +21,8 @@
     "model": "quad.obj",
     "transform": {
       "translation": [1,0,0],
-      "scale": [2,1,2],
-      "rotation": [0,0,0]
+      "scale": [2,2,2],
+      "rotation": [0,45,0]
     },
     "materialId": 5
   },
@@ -34,5 +34,14 @@
       "rotation": [0,0,0]
     },
     "materialId": 6
+  },
+  {
+    "model": "cube.obj",
+    "transform": {
+      "translation": [1.5,-0.5,0],
+      "scale": [0.1,0.3,0.1],
+      "rotation": [0,0,0]
+    },
+    "materialId": 2
   }
 ]

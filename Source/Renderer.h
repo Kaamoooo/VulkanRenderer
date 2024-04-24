@@ -62,7 +62,7 @@ namespace Kaamoo {
         const std::shared_ptr<Image> &getShadowImage() const;
 
         const std::shared_ptr<Sampler> &getShadowSampler() const;
-        
+
     private:
         void createCommandBuffers();
 
@@ -85,7 +85,7 @@ namespace Kaamoo {
         int currentFrameIndex = 0;
         bool isFrameStarted = false;
 
-        bool isCubeMap= false;
+        bool isCubeMap = true;
         std::shared_ptr<Image> shadowImage;
         std::shared_ptr<Sampler> shadowSampler;
         VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;

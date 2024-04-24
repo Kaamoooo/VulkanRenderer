@@ -109,12 +109,11 @@ namespace Kaamoo {
         for (auto &pair: frameInfo.gameObjects) {
             auto &obj = pair.second;
 
-            MeshRendererComponent* meshRendererComponent;
-            if(!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
-            
+            MeshRendererComponent *meshRendererComponent;
+            if (!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
+
             ShadowPushConstant push{};
             push.modelMatrix = obj.transform->mat4();
-
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                0,
