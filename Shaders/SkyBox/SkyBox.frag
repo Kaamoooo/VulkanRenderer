@@ -11,4 +11,5 @@ void main(){
     vec3 cubeMapUV = inUV;
     cubeMapUV.y*=-1;
     outColor = texture(cubeMapTexture, cubeMapUV);
+    outColor = vec4(cubeMapUV, 1.0);
 }

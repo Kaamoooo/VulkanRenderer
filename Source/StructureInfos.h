@@ -1,14 +1,15 @@
-﻿#pragma once
+﻿#ifndef STRUCTURE_INFOS_INCLUDED
+#define STRUCTURE_INFOS_INCLUDED
 
 #include <vulkan/vulkan.h>
 #include "GameObject.hpp"
 #include "Material.hpp"
-#include "Components/CameraComponent.hpp"
 
 namespace Kaamoo {
 
 #define MAX_LIGHT_NUM 10
 #define MAX_SHADOW_NUM 3
+    class GameObject;
 
     enum LightCategory {
         POINT_LIGHT = 0,
@@ -34,20 +35,24 @@ namespace Kaamoo {
         alignas(16) float curTime;
         alignas(16) glm::mat4 shadowViewMatrix[6];
         alignas(16) glm::mat4 shadowProjMatrix;
-        
     };
 
     struct FrameInfo {
         int frameIndex;
         float frameTime;
         VkCommandBuffer commandBuffer;
-        CameraComponent* cameraComponent;
-        GameObject::Map &gameObjects;
+        std::unordered_map<id_t, GameObject> &gameObjects;
         Material::Map &materials;
         GlobalUbo& globalUbo;
+    };
+    
+    struct RendererInfo{
+        float aspectRatio;
     };
     
     struct ShadowUbo{
         glm::mat4 viewProjectionMatrix;
     };
 }
+
+#endif

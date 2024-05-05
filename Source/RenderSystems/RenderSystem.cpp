@@ -1,7 +1,7 @@
 ﻿#include "RenderSystem.h"
 
 #include <utility>
-#include "../FrameInfo.h"
+#include "../StructureInfos.h"
 #include "../Components/MeshRendererComponent.hpp"
 #include "../Components/LightComponent.hpp"
 

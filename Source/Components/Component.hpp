@@ -1,16 +1,25 @@
-﻿#ifndef COMPONENT_INCLUDED
-#define COMPONENT_INCLUDED
+﻿#pragma once
 
 #include <string>
-namespace Kaamoo{
-    class Component{
-    public:
-        virtual std::string GetName(){return name;}
+#include "../StructureInfos.h"
 
-        virtual ~Component()=default;
+namespace Kaamoo {
+    
+    struct ComponentUpdateInfo {
+        GameObject *gameObject;
+        FrameInfo *frameInfo;
+        RendererInfo *rendererInfo;
+    };
+
+    class Component {
+    public:
+        virtual std::string GetName() { return name; }
+
+        virtual ~Component() = default;
+
+        virtual void Update(const ComponentUpdateInfo &updateInfo) {};
+
     protected:
-        std::string name="Component";
+        std::string name = "Component";
     };
 }
-
-#endif

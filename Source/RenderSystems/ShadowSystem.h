@@ -6,7 +6,7 @@
 #include "../Device.hpp"
 #include "../Model.hpp"
 #include "../GameObject.hpp"
-#include "../FrameInfo.h"
+#include "../StructureInfos.h"
 
 namespace Kaamoo {
     class ShadowSystem {
@@ -30,10 +30,6 @@ namespace Kaamoo {
             material.getBufferPointers()[0]->flushIndex(frameIndex);
         };
         
-        glm::mat4 getClipMatrix() const {
-            return  clipMatrix;
-        }
-
         glm::mat4 calculateViewMatrixForRotation(glm::vec3 position, glm::vec3 rotation) {
             glm::mat4 mat{1.0};
             float rx = glm::radians(rotation.x);
@@ -53,13 +49,6 @@ namespace Kaamoo {
         void createPipelineLayout();
 
         void createPipeline(VkRenderPass renderPass);
-
-        glm::mat4 clipMatrix = glm::mat4{
-                1, 0, 0, 0,
-                0, -1, 0, 0,
-                0, 0, 0.5f, 0,
-                0, 0, 0.5f, 1
-        };
         
         //手动编译Shader，此时读取编译后的文件
         //路径是从可执行文件开始的，并非从根目录

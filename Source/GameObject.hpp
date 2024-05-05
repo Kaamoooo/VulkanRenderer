@@ -1,9 +1,7 @@
-﻿#pragma once
+﻿#ifndef GAME_OBJECT_INCLUDED
+#define GAME_OBJECT_INCLUDED
 
 #include <memory>
-#include "Model.hpp"
-#include "Material.hpp"
-#include "Components/Component.hpp"
 #include "Utils/Utils.hpp"
 #include "Components/TransformComponent.hpp"
 #include "Components/LightComponent.hpp"
@@ -14,6 +12,7 @@
 #include <utility>
 
 namespace Kaamoo {
+//    class Component;
 
     class GameObject {
     public:
@@ -91,6 +90,12 @@ namespace Kaamoo {
             }
             return false;
         }
+        
+        void Update(const ComponentUpdateInfo& updateInfo){
+            for(auto& component: components){
+                component->Update(updateInfo);
+            }
+        }
 
     private:
         std::vector<Component*> components;
@@ -102,3 +107,5 @@ namespace Kaamoo {
         GameObject(id_t id, std::string name = "GameObject") : id{id}, name{std::move(name)} {};
     };
 }
+
+#endif

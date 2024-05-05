@@ -11,12 +11,21 @@
 #include "GameObject.hpp"
 #include "RenderSystems/RenderSystem.h"
 #include "RenderSystems/PointLightSystem.h"
-#include "InputController.hpp"
 #include "Descriptor.h"
 #include "Image.h"
 #include "Material.hpp"
 #include "ShaderBuilder.h"
 #include "Utils/JsonUtils.hpp"
+
+
+#include "Sampler.h"
+#include "ShaderBuilder.h"
+#include "RenderSystems/ShadowSystem.h"
+#include "RenderSystems/GrassSystem.h"
+#include "RenderSystems/SkyBoxSystem.hpp"
+#include "Components/CameraComponent.hpp"
+#include "Components/Input/CameraMovementComponent.hpp"
+#include "Components/Input/ObjectMovementComponent.hpp"
 
 namespace Kaamoo {
     class Application {
@@ -36,8 +45,7 @@ namespace Kaamoo {
         void loadGameObjects();
         void loadMaterials();
         void updateLight(FrameInfo &frameInfo);
-        void updateCamera(Kaamoo::FrameInfo &frameInfo, InputController inputController);
-        void updateGameObjectMovement(Kaamoo::FrameInfo &frameInfo, InputController inputController);
+        void UpdateComponents(FrameInfo &frameInfo);
         
         MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         Device device{myWindow};

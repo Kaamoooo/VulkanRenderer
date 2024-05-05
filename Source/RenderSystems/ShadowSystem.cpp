@@ -1,7 +1,7 @@
 ﻿#include "ShadowSystem.h"
 
 #include <utility>
-#include "../FrameInfo.h"
+#include "../StructureInfos.h"
 #include "../Application.h"
 #include "../Components/MeshRendererComponent.hpp"
 

@@ -1,6 +1,6 @@
 ﻿#include <map>
 #include "PointLightSystem.h"
-#include "../FrameInfo.h"
+#include "../StructureInfos.h"
 #include "../Components/LightComponent.hpp"
 
 //deprecated, I combined pointLightSystem into regular render system in that they are based on game objects.
@@ -67,9 +67,9 @@ namespace Kaamoo {
             LightComponent* lightComponent;
             if (!obj.TryGetComponent(lightComponent)) continue;
             
-            auto offset = frameInfo.cameraComponent->getPosition() - obj.transform->translation;
-            float disSquared = glm::dot(offset,offset);
-            sorted[disSquared]=obj.getId();
+//            auto offset = frameInfo.cameraComponent->getPosition() - obj.transform->translation;
+//            float disSquared = glm::dot(offset,offset);
+//            sorted[disSquared]=obj.getId();
         }
         
         pipeline->bind(frameInfo.commandBuffer);

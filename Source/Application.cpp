@@ -1,9 +1,4 @@
 ﻿#include "Application.h"
-#include "Sampler.h"
-#include "ShaderBuilder.h"
-#include "RenderSystems/ShadowSystem.h"
-#include "RenderSystems/GrassSystem.h"
-#include "RenderSystems/SkyBoxSystem.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
 #include <mmcobj.h>
@@ -54,7 +49,7 @@ namespace Kaamoo {
             renderSystems.push_back(renderSystem);
         }
 
-        InputController inputController{myWindow.getGLFWwindow()};
+//        InputController inputController{myWindow.getGLFWwindow()};
 
         auto currentTime = std::chrono::high_resolution_clock::now();
         float totalTime = 0;
@@ -70,13 +65,13 @@ namespace Kaamoo {
 
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, nullptr, gameObjects, materials, ubo};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, gameObjects, materials, ubo};
 
                 ubo.curTime = totalTime;
 
-                updateCamera(frameInfo, inputController);
-                updateGameObjectMovement(frameInfo, inputController);
-                //Todo: all directional shadow map.
+                UpdateComponents(frameInfo);
+//                updateCamera(frameInfo, inputController);
+//                updateGameObjectMovement(frameInfo, inputController);
                 updateLight(frameInfo);
 
                 ubo.shadowViewMatrix[0] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
@@ -91,10 +86,10 @@ namespace Kaamoo {
                                                                                        glm::vec3(180, 0, 0));
                 ubo.shadowViewMatrix[5] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
                                                                                        glm::vec3(0, 0, 180));
-                ubo.shadowProjMatrix = shadowSystem->getClipMatrix() * glm::perspective(glm::radians(90.0f),
-                                                                                        (float) Application::WIDTH /
-                                                                                        (float) Application::HEIGHT,
-                                                                                        0.1f, 5.0f);
+                ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f),
+                                                                                            (float) Application::WIDTH /
+                                                                                            (float) Application::HEIGHT,
+                                                                                            0.1f, 5.0f);
                 ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
 //                auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
 
@@ -151,6 +146,13 @@ namespace Kaamoo {
 
 
                 auto &gameObject = GameObject::createGameObject();
+
+                //Todo: Create component from a json file
+                //Todo: Make camera, light into json file. Not all game objects have models.
+                if (modelName=="smooth_vase.obj"){
+                    gameObject.TryAddComponent(new ObjectMovementComponent(myWindow.getGLFWwindow()));
+                }
+                
                 std::shared_ptr<Model> model = Model::createModelFromFile(device, BaseModelsPath + modelName);
 
                 auto *meshRendererComponent = new MeshRendererComponent(model, materialId);
@@ -184,12 +186,15 @@ namespace Kaamoo {
         directionalLight.transform->rotation = glm::vec4(1, 2, 0.5, 1);
         gameObjects.emplace(directionalLight.getId(), std::move(directionalLight));
 
+        //Create Camera
         auto &cameraObject = GameObject::createGameObject("Camera");
         auto cameraComponent = new CameraComponent();
+        auto cameraMovementComponent = new CameraMovementComponent(myWindow.getGLFWwindow());
         cameraObject.TryAddComponent(cameraComponent);
-        cameraComponent->setViewTarget(glm::vec3{-1.f, -2.f, 20.f}, glm::vec3{0, 0, 2.5f}, glm::vec3{0, -1, 0});
-        cameraObject.transform->translation.z = -2.5f;
-        cameraObject.transform->translation.y = -0.5f;
+        cameraObject.TryAddComponent(cameraMovementComponent);
+        cameraObject.transform->translation.z = -4;
+        cameraObject.transform->translation.y = -1;
+//        cameraComponent->setViewTarget(cameraObject.transform->translation, glm::vec3{1, 0, 1}, glm::vec3{0, 1, 0});
         gameObjects.emplace(cameraObject.getId(), std::move(cameraObject));
     }
 
@@ -354,7 +359,7 @@ namespace Kaamoo {
     }
 
     void Application::updateLight(FrameInfo &frameInfo) {
-        //Optimization required
+        //Todo:Optimization required
         for (auto &gameObjPair: gameObjects) {
             auto &obj = gameObjPair.second;
             LightComponent *lightComponent;
@@ -372,7 +377,7 @@ namespace Kaamoo {
                 } else {
                     light.lightCategory = LightCategory::DIRECTIONAL_LIGHT;
                 }
-                
+
                 light.position = glm::vec4(obj.transform->translation, 1.f);
                 light.rotation = glm::vec4(obj.transform->rotation, 1.f);
                 light.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
@@ -381,46 +386,16 @@ namespace Kaamoo {
             }
         }
     }
+    
 
-    void Application::updateCamera(Kaamoo::FrameInfo &frameInfo, InputController inputController) {
-        static GameObject *cameraObj = nullptr;
-        static CameraComponent *cameraComponent = nullptr;
-        if (cameraObj == nullptr) {
-            for (auto &gameObjPair: gameObjects) {
-                auto &obj = gameObjPair.second;
-                if (obj.TryGetComponent(cameraComponent)) {
-                    cameraObj = &obj;
-                    frameInfo.cameraComponent = cameraComponent;
-                    break;
-                }
-            }
-        }
-
-        if (cameraObj != nullptr) {
-            float aspectRatio = renderer.getAspectRatio();
-            inputController.moveCamera(frameInfo.frameTime, *cameraObj);
-            frameInfo.globalUbo.viewMatrix = cameraComponent->getViewMatrix();
-            frameInfo.globalUbo.inverseViewMatrix = cameraComponent->getInverseViewMatrix();
-            frameInfo.globalUbo.projectionMatrix = cameraComponent->getProjectionMatrix();
-            cameraComponent->setViewYXZ(cameraObj->transform->translation, cameraObj->transform->rotation);
-            cameraComponent->setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
-        }
-    }
-
-    void Application::updateGameObjectMovement(Kaamoo::FrameInfo &frameInfo, InputController inputController) {
-        static GameObject *moveObjPtr = nullptr;
-
-        if (moveObjPtr == nullptr) {
-            for (auto &pair: gameObjects) {
-                //Todo: Maybe the input system can be optimized.
-                if (pair.second.getName() == "smooth_vase.obj") {
-                    moveObjPtr = &pair.second;
-                }
-            }
-        }
-
-        if (moveObjPtr != nullptr) {
-            inputController.moveGameObject(frameInfo.frameTime, moveObjPtr);
+    void Application::UpdateComponents(FrameInfo &frameInfo) {
+        ComponentUpdateInfo updateInfo{};
+        updateInfo.frameInfo = &frameInfo;
+        RendererInfo rendererInfo{renderer.getAspectRatio()};
+        updateInfo.rendererInfo = &rendererInfo;
+        for (auto &pair: gameObjects) {
+            updateInfo.gameObject = &pair.second;
+            pair.second.Update(updateInfo);
         }
     }
 }

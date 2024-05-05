@@ -6,7 +6,7 @@
 #include "../Device.hpp"
 #include "../Model.hpp"
 #include "../GameObject.hpp"
-#include "../FrameInfo.h"
+#include "../StructureInfos.h"
 
 namespace Kaamoo {
     class PointLightSystem {
