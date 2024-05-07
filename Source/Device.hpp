@@ -47,7 +47,7 @@ namespace Kaamoo {
         Device(Device &&) = delete;
 
         Device &operator=(Device &&) = delete;
-
+        
         VkCommandPool getCommandPool() { return commandPool; }
 
         VkDevice device() { return device_; }
@@ -95,6 +95,10 @@ namespace Kaamoo {
                 VkDeviceMemory &imageMemory);
 
         VkPhysicalDeviceProperties properties;
+        
+        static Device* getDeviceSingleton() { return deviceSingleton; }
+        
+        MyWindow& getWindow() { return window; }
 
     private:
         void createInstance();
@@ -136,6 +140,8 @@ namespace Kaamoo {
         VkSurfaceKHR surface_;
         VkQueue graphicsQueue_;
         VkQueue presentQueue_;
+        
+        inline static Device* deviceSingleton;
 
         const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
         const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,VK_KHR_MULTIVIEW_EXTENSION_NAME};

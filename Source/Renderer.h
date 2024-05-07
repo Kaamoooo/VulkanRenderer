@@ -90,6 +90,8 @@ namespace Kaamoo {
         std::shared_ptr<Sampler> shadowSampler;
         VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;
         VkRenderPass shadowRenderPass = VK_NULL_HANDLE;
+        
+        const int ShadowMapResolution = 1024;
     };
 
 

@@ -192,7 +192,8 @@
 				6,
 				7,
 				8,
-				9
+				9,
+				25
 			]
 		}
 	],
@@ -339,6 +340,11 @@
 			"compileGroupIndex" : 0,
 			"path" : "Source/main.cpp",
 			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Source/ComponentFactory.hpp",
+			"sourceGroupIndex" : 1
 		}
 	],
 	"type" : "EXECUTABLE"

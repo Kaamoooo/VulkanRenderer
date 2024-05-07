@@ -37,7 +37,7 @@ namespace Kaamoo {
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             recreateSwapChain();
-            loadShadow();
+//            loadShadow();
             return nullptr;
         }
 
@@ -70,7 +70,7 @@ namespace Kaamoo {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || myWindow.isWindowResized()) {
             myWindow.resetWindowResizedFlag();
             recreateSwapChain();
-            loadShadow();
+//            loadShadow();
         } else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image");
         }
@@ -158,7 +158,9 @@ namespace Kaamoo {
         renderPassBeginInfo.framebuffer = shadowFrameBuffer;
 
         renderPassBeginInfo.renderArea.offset = {0, 0};
-        renderPassBeginInfo.renderArea.extent = swapChain->getSwapChainExtent();
+//        renderPassBeginInfo.renderArea.extent = swapChain->getSwapChainExtent();
+        renderPassBeginInfo.renderArea.extent.width = ShadowMapResolution;
+        renderPassBeginInfo.renderArea.extent.height = ShadowMapResolution;
 
         VkClearValue clearValue{};
         clearValue.depthStencil.depth = 1;
@@ -171,15 +173,18 @@ namespace Kaamoo {
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(myWindow.getExtent().width);
-        viewport.height = static_cast<float>(myWindow.getExtent().height);
+//        viewport.width = static_cast<float>(myWindow.getExtent().width);
+//        viewport.height = static_cast<float>(myWindow.getExtent().height);
+        viewport.width = static_cast<float>(ShadowMapResolution);
+        viewport.height = static_cast<float>(ShadowMapResolution);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
         VkRect2D scissor{};
         scissor.offset = {0, 0};
-        scissor.extent = swapChain->getSwapChainExtent();
-
+//        scissor.extent = swapChain->getSwapChainExtent();
+        scissor.extent.width = ShadowMapResolution;
+        scissor.extent.height = ShadowMapResolution;
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     }
@@ -221,8 +226,11 @@ namespace Kaamoo {
         VkImageCreateInfo imageCreateInfo{};
         Image::setDefaultImageCreateInfo(imageCreateInfo);
         VkExtent3D shadowMapExtent{};
-        shadowMapExtent.height = swapChain->getSwapChainExtent().height;
-        shadowMapExtent.width = swapChain->getSwapChainExtent().width;
+//        shadowMapExtent.height = swapChain->getSwapChainExtent().height;
+//        shadowMapExtent.width = swapChain->getSwapChainExtent().width;
+        shadowMapExtent.height = ShadowMapResolution;
+        shadowMapExtent.width = ShadowMapResolution;
+
         shadowMapExtent.depth = 1;
         if (isCubeMap) {
             imageCreateInfo.arrayLayers = 6;
@@ -296,7 +304,7 @@ namespace Kaamoo {
         multiviewCreateInfo.pViewMasks = &viewMask;
         multiviewCreateInfo.correlationMaskCount = 0;
         multiviewCreateInfo.pCorrelationMasks = nullptr;
-        
+
         renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassCreateInfo.pNext = &multiviewCreateInfo;
         renderPassCreateInfo.attachmentCount = 1;
@@ -318,8 +326,12 @@ namespace Kaamoo {
         framebufferCreateInfo.renderPass = shadowRenderPass;
         framebufferCreateInfo.attachmentCount = 1;
         framebufferCreateInfo.pAttachments = shadowImage->getImageView();
-        framebufferCreateInfo.width = swapChain->getSwapChainExtent().width;
-        framebufferCreateInfo.height = swapChain->getSwapChainExtent().height;
+//        framebufferCreateInfo.width = swapChain->getSwapChainExtent().width;
+//        framebufferCreateInfo.height = swapChain->getSwapChainExtent().height;
+
+        framebufferCreateInfo.width = ShadowMapResolution;
+        framebufferCreateInfo.height = ShadowMapResolution;
+
         framebufferCreateInfo.layers = 1;
         framebufferCreateInfo.flags = 0;
 

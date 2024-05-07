@@ -1,47 +1,74 @@
 [
   {
-    "model": "smooth_vase.obj",
+    "name": "Vase",
     "transform": {
       "translation": [0,0,0],
       "scale": [2.5,2.5,2.5],
       "rotation": [0,0,0]
     },
-    "materialId": 2
+    "componentIds":[0,1]
   },
   {
-    "model": "Ground.obj",
+    "name": "Ground",
     "transform": {
       "translation": [0,0,0],
       "scale": [1,1,1],
       "rotation": [0,45,0]
     },
-    "materialId": 1
+    "componentIds":[2]
   },
   {
-    "model": "quad.obj",
+    "name": "Quad",
     "transform": {
       "translation": [1,0,0],
       "scale": [2,2,2],
       "rotation": [0,45,0]
     },
-    "materialId": 5
+    "componentIds":[3]
   },
   {
-    "model": "cube.obj",
+    "name": "Cube",
     "transform": {
       "translation": [0,0,0],
       "scale": [2,2,2],
       "rotation": [0,0,0]
     },
-    "materialId": 6
+    "componentIds":[4]
   },
   {
-    "model": "cube.obj",
+    "name": "Cube",
     "transform": {
       "translation": [1.5,-0.5,0],
       "scale": [0.1,0.3,0.1],
       "rotation": [0,0,0]
     },
-    "materialId": 2
+    "componentIds":[5]
+  },
+  {
+    "name": "PointLight",
+    "transform": {
+      "translation": [0, -1.5, 1],
+      "scale": [0.1,1,1],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[6,7]
+  },
+  {
+    "name": "DirectionalLight",
+    "transform": {
+      "translation": [-1, -2, 0],
+      "scale": [0.1,1,1],
+      "rotation": [1,2,0.5]
+    },
+    "componentIds":[7,8]
+  },
+  {
+    "name": "MainCamera",
+    "transform": {
+      "translation": [0, -1, -4],
+      "scale": [0.1,1,1],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[9,10]
   }
 ]

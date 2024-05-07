@@ -53,6 +53,7 @@ namespace Kaamoo {
         pickPhysicalDevice();
         createLogicalDevice();
         createCommandPool();
+        deviceSingleton = this;
     }
 
     Device::~Device() {

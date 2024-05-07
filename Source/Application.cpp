@@ -1,15 +1,10 @@
 ﻿#include "Application.h"
+#include "ComponentFactory.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
 #include <mmcobj.h>
 
 namespace Kaamoo {
-    const std::string BaseConfigurationPath = "../Configurations/";
-    const std::string BaseModelsPath = "../Models/";
-    const std::string BaseTexturePath = "../Textures/";
-    const int MATERIAL_NUMBER = 16;
-    int LightNum = 0;
-
     Application::Application() {
         globalPool = DescriptorPool::Builder(device).setMaxSets(
                 SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -54,7 +49,7 @@ namespace Kaamoo {
         auto currentTime = std::chrono::high_resolution_clock::now();
         float totalTime = 0;
         GlobalUbo ubo{};
-        ubo.lightNum = LightNum;
+        ubo.lightNum = LightComponent::lightNum;
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
 
@@ -87,9 +82,7 @@ namespace Kaamoo {
                 ubo.shadowViewMatrix[5] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
                                                                                        glm::vec3(0, 0, 180));
                 ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f),
-                                                                                            (float) Application::WIDTH /
-                                                                                            (float) Application::HEIGHT,
-                                                                                            0.1f, 5.0f);
+                                                                                            1.0f,0.1f, 5.0f);
                 ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
 //                auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
 
@@ -117,16 +110,26 @@ namespace Kaamoo {
     }
 
     void Application::loadGameObjects() {
-        std::string gameObjectsJsonString = JsonUtils::ReadJsonFile(BaseConfigurationPath + "GameObjects.json");
+        std::string gameObjectsJsonString = JsonUtils::ReadJsonFile(BaseConfigurationPath + GameObjectsFileName);
+        std::string componentsJsonString = JsonUtils::ReadJsonFile(BaseConfigurationPath + ComponentsFileName);
 
         rapidjson::Document gameObjectsDocument;
+        rapidjson::Document componentsDocument;
         gameObjectsDocument.Parse(gameObjectsJsonString.c_str());
+        componentsDocument.Parse(componentsJsonString.c_str());
 
+        std::unordered_map<int, rapidjson::Value> componentsMap;
+        if (componentsDocument.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < componentsDocument.Size(); i++) {
+                rapidjson::Value componentValue = std::move(componentsDocument[i]);
+                componentsMap[componentValue["id"].GetInt()] = componentValue;
+            }
+        }
+
+        auto *componentFactory = new ComponentFactory();
         if (gameObjectsDocument.IsArray()) {
             for (rapidjson::SizeType i = 0; i < gameObjectsDocument.Size(); i++) {
                 const rapidjson::Value &object = gameObjectsDocument[i];
-
-                const std::string modelName = object["model"].GetString();
 
                 const rapidjson::Value &transformObject = object["transform"];
 
@@ -141,23 +144,20 @@ namespace Kaamoo {
                 glm::vec3 rotation{rotationArray[0].GetFloat(), rotationArray[1].GetFloat(),
                                    rotationArray[2].GetFloat()};
 
-                //Todo:In the configuration file all objects have material IDs and models, which may not be appropriate.
-                const int materialId = object["materialId"].GetInt();
-
-
                 auto &gameObject = GameObject::createGameObject();
 
-                //Todo: Create component from a json file
-                //Todo: Make camera, light into json file. Not all game objects have models.
-                if (modelName=="smooth_vase.obj"){
-                    gameObject.TryAddComponent(new ObjectMovementComponent(myWindow.getGLFWwindow()));
+                if (object.HasMember("componentIds")) {
+                    auto componentIdsArray = object["componentIds"].GetArray();
+                    for (rapidjson::SizeType j = 0; j < componentIdsArray.Size(); j++) {
+                        const rapidjson::Value &arrayId = componentIdsArray[j];
+                        const int componentId = arrayId.GetInt();
+                        auto componentPtr = componentFactory->CreateComponent(componentsMap, componentId);
+                        if (componentPtr) {
+                            gameObject.TryAddComponent(componentPtr);
+                        }
+                    }
                 }
-                
-                std::shared_ptr<Model> model = Model::createModelFromFile(device, BaseModelsPath + modelName);
-
-                auto *meshRendererComponent = new MeshRendererComponent(model, materialId);
-                gameObject.TryAddComponent(meshRendererComponent);
-                gameObject.setName(modelName);
+                gameObject.setName(object["name"].GetString());
                 gameObject.transform->translation = translation;
                 gameObject.transform->scale = scale;
                 gameObject.transform->rotation = rotation;
@@ -166,36 +166,6 @@ namespace Kaamoo {
             }
         }
 
-
-        //Load lights as GameObjects too
-        std::vector<glm::vec3> pointLightColors{{.2f, .2f, .2f}};
-
-        for (auto pointLightColor: pointLightColors) {
-            LightNum++;
-            auto pointLight = GameObject::makeLight(1, 0.1f, pointLightColor, 0);
-//            auto rotateLight = glm::rotate(glm::mat4{1.f},(float) i * glm::two_pi<float>() / static_cast<float>(pointLightColors.size()),glm::vec3(0, -1.f, 0));
-//            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(0, -1, 1, 1));
-            pointLight.transform->translation = glm::vec4(0, -1.5f, 1, 1);
-            gameObjects.emplace(pointLight.getId(), std::move(pointLight));
-        }
-
-        //create Directional Light
-        LightNum++;
-        auto directionalLight = GameObject::makeLight(0.2f, 0.1f, glm::vec3{1.f, 1.f, 1.f}, 1);
-        directionalLight.transform->translation = glm::vec4(-1, -2, 0, 1);
-        directionalLight.transform->rotation = glm::vec4(1, 2, 0.5, 1);
-        gameObjects.emplace(directionalLight.getId(), std::move(directionalLight));
-
-        //Create Camera
-        auto &cameraObject = GameObject::createGameObject("Camera");
-        auto cameraComponent = new CameraComponent();
-        auto cameraMovementComponent = new CameraMovementComponent(myWindow.getGLFWwindow());
-        cameraObject.TryAddComponent(cameraComponent);
-        cameraObject.TryAddComponent(cameraMovementComponent);
-        cameraObject.transform->translation.z = -4;
-        cameraObject.transform->translation.y = -1;
-//        cameraComponent->setViewTarget(cameraObject.transform->translation, glm::vec3{1, 0, 1}, glm::vec3{0, 1, 0});
-        gameObjects.emplace(cameraObject.getId(), std::move(cameraObject));
     }
 
     void Application::loadMaterials() {
@@ -386,7 +356,7 @@ namespace Kaamoo {
             }
         }
     }
-    
+
 
     void Application::UpdateComponents(FrameInfo &frameInfo) {
         ComponentUpdateInfo updateInfo{};

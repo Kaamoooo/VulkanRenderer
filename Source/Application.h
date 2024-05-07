@@ -23,9 +23,9 @@
 #include "RenderSystems/ShadowSystem.h"
 #include "RenderSystems/GrassSystem.h"
 #include "RenderSystems/SkyBoxSystem.hpp"
-#include "Components/CameraComponent.hpp"
-#include "Components/Input/CameraMovementComponent.hpp"
-#include "Components/Input/ObjectMovementComponent.hpp"
+//#include "Components/CameraComponent.hpp"
+//#include "Components/Input/CameraMovementComponent.hpp"
+//#include "Components/Input/ObjectMovementComponent.hpp"
 
 namespace Kaamoo {
     class Application {
@@ -33,6 +33,14 @@ namespace Kaamoo {
         static constexpr int WIDTH = 800;
         static constexpr int HEIGHT = 800;
 
+
+        inline const static std::string BaseConfigurationPath = "../Configurations/";
+        inline const static std::string BaseTexturePath = "../Textures/";
+        inline const static std::string GameObjectsFileName = "GameObjects.json";
+        inline const static std::string MaterialsFileName = "Materials.json";
+        inline const static std::string ComponentsFileName = "Components.json";
+        const int MATERIAL_NUMBER = 16;
+        
         void run();
 
         Application();
@@ -40,16 +48,20 @@ namespace Kaamoo {
         Application(const Application &) = delete;
 
         Application &operator=(const Application &) = delete;
-
+        
+        static const Device& getDevice() { return device; }
+        static const Renderer& getRenderer() { return renderer; }
+        static const MyWindow& getWindow() { return myWindow; }
+        
     private:
         void loadGameObjects();
         void loadMaterials();
         void updateLight(FrameInfo &frameInfo);
         void UpdateComponents(FrameInfo &frameInfo);
         
-        MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
-        Device device{myWindow};
-        Renderer renderer{myWindow, device};
+        inline static MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
+        inline static Device device{myWindow};
+        inline static Renderer renderer{myWindow, device};
 
         GameObject::Map gameObjects;
         Material::Map materials;

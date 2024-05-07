@@ -34,27 +34,7 @@ namespace Kaamoo {
             gameObject->transform = t;
             return *gameObject;
         }
-
-        static GameObject makeLight(float intensity, float radius, glm::vec3 color, int lightCategory= 0) {
-            static int lightNum = 0;
-            GameObject& gameObject = GameObject::createGameObject();
-
-            auto* meshRendererComponent=new MeshRendererComponent(nullptr,0);
-            gameObject.TryAddComponent(meshRendererComponent);
-            auto* lightComponent = new LightComponent();
-            gameObject.TryAddComponent(lightComponent);
-
-            gameObject.transform->scale.x = radius;
-            lightComponent->color = color;
-            lightComponent->lightIntensity = intensity;
-            lightComponent->lightIndex = lightNum;
-            lightComponent->lightCategory = lightCategory;
-            lightNum++;
-            return std::move(gameObject);
-        }
         
-        
-
         id_t getId() { return id; }
 
         //移动构造函数
@@ -71,9 +51,9 @@ namespace Kaamoo {
         template<typename T, typename std::enable_if<std::is_base_of<Component, T>::value, int>::type = 0>
         void TryAddComponent(T* component) {
             for (auto &item: components) {
-                if (dynamic_cast<T *>(item) != nullptr) {
+                if (item->GetName()==component->GetName()) {
                     throw std::runtime_error(
-                            "Game Object " + name + " already has component type " + Utils::TypeName<T>());
+                            "Game Object " + name + " already has component type " + component->GetName());
                 }
             }
             components.push_back(component);

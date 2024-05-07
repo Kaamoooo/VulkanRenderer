@@ -17,6 +17,8 @@ namespace Kaamoo {
 
         Model &operator=(const Model &model) = delete;
 
+        inline static const std::string BaseModelsPath = "../Models/";
+        
         struct Vertex {
             glm::vec3 position;
             glm::vec3 color;

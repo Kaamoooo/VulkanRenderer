@@ -18,9 +18,23 @@ namespace Kaamoo {
             name = "MeshRendererComponent";
         }
 
+        MeshRendererComponent(const rapidjson::Value &object) {
+            if (!object.HasMember("model")) {
+                this->model = nullptr;
+            } else {
+                const std::string modelName = object["model"].GetString();
+                std::shared_ptr<Model> modelFromFile = Model::createModelFromFile(*Device::getDeviceSingleton(),
+                                                                                  Model::BaseModelsPath + modelName);
+                this->model = modelFromFile;
+            }
+            this->materialId = object["materialId"].GetInt();
+            name = "MeshRendererComponent";
+        }
+
         id_t GetMaterialID() const { return materialId; }
 
         std::shared_ptr<Model> GetModelPtr() { return model; }
+
 
     private:
         id_t materialId;

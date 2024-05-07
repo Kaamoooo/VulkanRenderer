@@ -47,3 +47,8 @@
 4.17 Supported cube map. Added sky box.
 
 4.24 Completed point light omni-directional shadow map with cube map.
+
+5.5 Optimized input system. Make it as a component.
+
+5.7 Reconstructed game object and component system. Make all objects and components load from the configuration file. Fixed the issue of resizing the window leading cube map recreation failed.	
+
