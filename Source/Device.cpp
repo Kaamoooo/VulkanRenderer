@@ -13,7 +13,7 @@ namespace Kaamoo {
             VkDebugUtilsMessageTypeFlagsEXT messageType,
             const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
             void *pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+//        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
         return VK_FALSE;
     }
@@ -45,7 +45,6 @@ namespace Kaamoo {
         }
     }
 
-// class member functions
     Device::Device(MyWindow &window) : window{window} {
         createInstance();
         setupDebugMessenger();
@@ -118,6 +117,11 @@ namespace Kaamoo {
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
+        std::cout << "Required device extensions: " << deviceExtensions.size() << std::endl;
+        for (auto &extensionName: deviceExtensions) {
+            std::cout << "  " << extensionName << std::endl;
+        }
+
         for (const auto &device: devices) {
             if (isDeviceSuitable(device)) {
                 physicalDevice = device;
@@ -130,6 +134,8 @@ namespace Kaamoo {
         }
 
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+        properties2.pNext = &rayTracingPipelineProperties;
+        vkGetPhysicalDeviceProperties2(physicalDevice, &properties2);
         std::cout << "physical device: " << properties.deviceName << std::endl;
     }
 
@@ -154,22 +160,32 @@ namespace Kaamoo {
         deviceFeatures.samplerAnisotropy = VK_TRUE;
         deviceFeatures.geometryShader = VK_TRUE;
         deviceFeatures.tessellationShader = VK_TRUE;
+        
+        VkDeviceCreateInfo createInfo = {};
 
+#pragma region Enable features
         VkPhysicalDeviceVulkan11Features vulkan11Features = {};
         vulkan11Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
         vulkan11Features.multiview = VK_TRUE;
+        createInfo.pNext = &vulkan11Features;
 
-        VkDeviceCreateInfo createInfo = {};
+        VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = {};
+        accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+        accelerationStructureFeatures.accelerationStructure = VK_TRUE;
+        vulkan11Features.pNext = &accelerationStructureFeatures;
+
+        VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures = {};
+        rayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+        rayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
+        accelerationStructureFeatures.pNext = &rayTracingPipelineFeatures;
+#pragma endregion
+        
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
         createInfo.pEnabledFeatures = &deviceFeatures;
         createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
-        createInfo.pNext = &vulkan11Features;
 
         if (enableValidationLayers) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -288,14 +304,14 @@ namespace Kaamoo {
         std::vector<VkExtensionProperties> extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-        std::cout << "available extensions:" << std::endl;
+//        std::cout << "available extensions:" << std::endl;
         std::unordered_set<std::string> available;
         for (const auto &extension: extensions) {
             std::cout << "\t" << extension.extensionName << std::endl;
             available.insert(extension.extensionName);
         }
 
-        std::cout << "required extensions:" << std::endl;
+        std::cout << "Required instance extensions:" << std::endl;
         auto requiredExtensions = getRequiredExtensions();
         for (const auto &required: requiredExtensions) {
             std::cout << "\t" << required << std::endl;

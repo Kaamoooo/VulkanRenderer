@@ -10,9 +10,7 @@ include_directories("External")
 
 file(GLOB_RECURSE SOURCES
         ${PROJECT_SOURCE_DIR}/Source/*.cpp
-        ${PROJECT_SOURCE_DIR}/Source/RenderSystems/*.cpp
-        ${PROJECT_SOURCE_DIR}/Source/Components/*.hpp
-        ${PROJECT_SOURCE_DIR}/Source/Components/Input/*.hpp
+        ${PROJECT_SOURCE_DIR}/Source/*.hpp
         )
 add_executable(${PROJECT_NAME} ${SOURCES} Source/ComponentFactory.hpp)
 

@@ -59,5 +59,9 @@
   {
     "id": 10,
     "type": "CameraMovementComponent"
+  },
+  {
+    "id": 11,
+    "type": "RayTracingManagerComponent"
   }
 ]

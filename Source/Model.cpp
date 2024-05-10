@@ -95,7 +95,7 @@ namespace Kaamoo {
     std::unique_ptr<Model> Model::createModelFromFile(Device &device, const std::string &filePath) {
         Builder builder{};
         builder.loadModel(filePath);
-        std::cout << "Model vertices:" << builder.vertices.size() << std::endl;
+//        std::cout << "Model vertices:" << builder.vertices.size() << std::endl;
         return std::make_unique<Model>(device, builder);
     }
 

@@ -1,12 +1,7 @@
 ﻿#ifndef CAMERA_COMPONENT_INCLUDED
 #define CAMERA_COMPONENT_INCLUDED
 
-#include <string>
-#include <glm/vec3.hpp>
-#include <glm/fwd.hpp>
-#include <glm/detail/type_mat3x3.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <memory>
+
 #include "Component.hpp"
 
 namespace Kaamoo {
@@ -145,7 +140,6 @@ namespace Kaamoo {
             FrameInfo &frameInfo = *updateInfo.frameInfo;
             setViewYXZ(updateInfo.gameObject->transform->translation, updateInfo.gameObject->transform->rotation);
             setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
-//            inputController.moveCamera(frameInfo.frameTime, *cameraObj);
             frameInfo.globalUbo.viewMatrix = getViewMatrix();
             frameInfo.globalUbo.inverseViewMatrix = getInverseViewMatrix();
             frameInfo.globalUbo.projectionMatrix = getProjectionMatrix();

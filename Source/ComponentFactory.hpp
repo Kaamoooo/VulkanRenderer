@@ -3,6 +3,9 @@
 #include "Components/Input/ObjectMovementComponent.hpp"
 #include "Components/Input/CameraMovementComponent.hpp"
 #include "Components/CameraComponent.hpp"
+#include "Components/MeshRendererComponent.hpp"
+#include "Components/LightComponent.hpp"
+#include "Components/RayTracingManagerComponent.hpp"
 
 namespace Kaamoo {
 
@@ -14,6 +17,7 @@ namespace Kaamoo {
             inline static const std::string MeshRendererComponent = "MeshRendererComponent";
             inline static const std::string CameraComponent = "CameraComponent";
             inline static const std::string LightComponent = "LightComponent";
+            inline static const std::string RayTracingManagerComponent = "RayTracingManagerComponent";
         };
 
         //Initialize some global parameters
@@ -32,6 +36,7 @@ namespace Kaamoo {
             componentConstructorMap[ComponentName::ObjectMovementComponent] = [](const rapidjson::Value& object)->Component*{return new ObjectMovementComponent(Application::getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraMovementComponent] = [](const rapidjson::Value& object)->Component*{return new CameraMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraComponent] = [](const rapidjson::Value& object)->Component*{return new CameraComponent();};
+            componentConstructorMap[ComponentName::RayTracingManagerComponent] = [](const rapidjson::Value& object)->Component*{return new RayTracingManagerComponent();};
         }
 
     private:

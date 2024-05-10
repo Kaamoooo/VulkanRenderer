@@ -7,6 +7,7 @@
 #include "../Model.hpp"
 #include "../GameObject.hpp"
 #include "../StructureInfos.h"
+#include "../Components/MeshRendererComponent.hpp"
 
 namespace Kaamoo {
     class RenderSystem {

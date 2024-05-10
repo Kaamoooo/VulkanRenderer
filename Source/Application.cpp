@@ -3,6 +3,7 @@
 #include <numeric>
 #include <rapidjson/document.h>
 #include <mmcobj.h>
+#include <glm/ext/matrix_clip_space.hpp>
 
 namespace Kaamoo {
     Application::Application() {
@@ -13,6 +14,7 @@ namespace Kaamoo {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).build();
         loadGameObjects();
         loadMaterials();
+        
     }
 
     void Application::run() {
@@ -44,8 +46,6 @@ namespace Kaamoo {
             renderSystems.push_back(renderSystem);
         }
 
-//        InputController inputController{myWindow.getGLFWwindow()};
-
         auto currentTime = std::chrono::high_resolution_clock::now();
         float totalTime = 0;
         GlobalUbo ubo{};
@@ -65,9 +65,6 @@ namespace Kaamoo {
                 ubo.curTime = totalTime;
 
                 UpdateComponents(frameInfo);
-//                updateCamera(frameInfo, inputController);
-//                updateGameObjectMovement(frameInfo, inputController);
-                updateLight(frameInfo);
 
                 ubo.shadowViewMatrix[0] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
                                                                                        glm::vec3(0, 90, 180));
@@ -84,8 +81,6 @@ namespace Kaamoo {
                 ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f),
                                                                                             1.0f,0.1f, 5.0f);
                 ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
-//                auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, -1.f, 0));
-
 
                 renderer.beginShadowRenderPass(commandBuffer);
                 shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -100,7 +95,6 @@ namespace Kaamoo {
                     item->render(frameInfo);
                 }
                 renderer.endSwapChainRenderPass(commandBuffer);
-
 
                 renderer.endFrame();
             }
@@ -328,44 +322,20 @@ namespace Kaamoo {
         }
     }
 
-    void Application::updateLight(FrameInfo &frameInfo) {
-        //Todo:Optimization required
-        for (auto &gameObjPair: gameObjects) {
-            auto &obj = gameObjPair.second;
-            LightComponent *lightComponent;
-            if (obj.TryGetComponent(lightComponent)) {
-                int lightIndex = lightComponent->lightIndex;
-
-                assert(lightIndex < MAX_LIGHT_NUM && "光源数目过多");
-
-                Light light{};
-
-                if (lightComponent->lightCategory == LightCategory::POINT_LIGHT) {
-                    auto rotateLight = glm::rotate(glm::mat4{1.f}, frameInfo.frameTime, glm::vec3(0, 1.f, 0));
-                    obj.transform->translation = glm::vec3(rotateLight * glm::vec4(obj.transform->translation, 1));
-                    light.lightCategory = LightCategory::POINT_LIGHT;
-                } else {
-                    light.lightCategory = LightCategory::DIRECTIONAL_LIGHT;
-                }
-
-                light.position = glm::vec4(obj.transform->translation, 1.f);
-                light.rotation = glm::vec4(obj.transform->rotation, 1.f);
-                light.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
-
-                frameInfo.globalUbo.lights[lightIndex] = light;
-            }
-        }
-    }
-
-
     void Application::UpdateComponents(FrameInfo &frameInfo) {
         ComponentUpdateInfo updateInfo{};
+        
         updateInfo.frameInfo = &frameInfo;
         RendererInfo rendererInfo{renderer.getAspectRatio()};
         updateInfo.rendererInfo = &rendererInfo;
         for (auto &pair: gameObjects) {
             updateInfo.gameObject = &pair.second;
             pair.second.Update(updateInfo);
+        }
+        
+        for (auto &pair: gameObjects) {
+            updateInfo.gameObject = &pair.second;
+            pair.second.LateUpdate(updateInfo);
         }
     }
 }

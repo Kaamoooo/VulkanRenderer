@@ -47,7 +47,7 @@ namespace Kaamoo {
         Device(Device &&) = delete;
 
         Device &operator=(Device &&) = delete;
-        
+
         VkCommandPool getCommandPool() { return commandPool; }
 
         VkDevice device() { return device_; }
@@ -94,11 +94,14 @@ namespace Kaamoo {
                 VkImage &image,
                 VkDeviceMemory &imageMemory);
 
-        VkPhysicalDeviceProperties properties;
-        
-        static Device* getDeviceSingleton() { return deviceSingleton; }
-        
-        MyWindow& getWindow() { return window; }
+        VkPhysicalDeviceProperties properties{};
+        VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+        VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties{
+                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
+
+        static Device *getDeviceSingleton() { return deviceSingleton; }
+
+        MyWindow &getWindow() { return window; }
 
     private:
         void createInstance();
@@ -140,11 +143,15 @@ namespace Kaamoo {
         VkSurfaceKHR surface_;
         VkQueue graphicsQueue_;
         VkQueue presentQueue_;
-        
-        inline static Device* deviceSingleton;
+
+        inline static Device *deviceSingleton;
 
         const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-        const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,VK_KHR_MULTIVIEW_EXTENSION_NAME};
+        const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                                                            VK_KHR_MULTIVIEW_EXTENSION_NAME,
+                                                            VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+                                                            VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+                                                            VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME};
     };
 
-}  // namespace lve
+}

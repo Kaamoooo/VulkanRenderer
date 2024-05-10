@@ -42,7 +42,7 @@ namespace Kaamoo {
             throw std::runtime_error("failed to create shader module");
         }
         shaderModuleMap.emplace(shaderName, shaderModule);
-        std::cout << shaderName << " code size: " << code.size() << std::endl;
+//        std::cout << shaderName << " code size: " << code.size() << std::endl;
         return shaderModule;
     }
 

@@ -4,16 +4,9 @@
 #include <memory>
 #include "Utils/Utils.hpp"
 #include "Components/TransformComponent.hpp"
-#include "Components/LightComponent.hpp"
-#include "Components/MeshRendererComponent.hpp"
-
-#include <glm/gtc/matrix_transform.hpp>
-#include <unordered_map>
-#include <utility>
 
 namespace Kaamoo {
-//    class Component;
-
+    class Component;
     class GameObject {
     public:
         using Map = std::unordered_map<id_t, GameObject>;
@@ -74,6 +67,12 @@ namespace Kaamoo {
         void Update(const ComponentUpdateInfo& updateInfo){
             for(auto& component: components){
                 component->Update(updateInfo);
+            }
+        }
+        
+        void LateUpdate(const ComponentUpdateInfo& updateInfo){
+            for(auto& component: components){
+                component->LateUpdate(updateInfo);
             }
         }
 

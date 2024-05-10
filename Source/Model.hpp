@@ -48,6 +48,13 @@ namespace Kaamoo {
         void bind(VkCommandBuffer commandBuffer);
 
         void draw(VkCommandBuffer commandBuffer);
+        
+        std::unique_ptr<Buffer> &getVertexBuffer() { return vertexBuffer; }
+        std::unique_ptr<Buffer> &getIndexBuffer() { return indexBuffer; }
+        
+        uint32_t getPrimitiveCount() { return indexCount / 3; }
+        uint32_t getVertexCount() { return vertexCount; }
+        uint32_t getIndexCount() { return indexCount; }
 
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
@@ -56,12 +63,13 @@ namespace Kaamoo {
 
         Device &device;
 
-//        VkBuffer vertexBuffer;
         std::unique_ptr<Buffer> vertexBuffer;
         uint32_t vertexCount{};
 
-        bool hasIndexBuffer = false;
+        bool hasIndexBuffer = true;
         std::unique_ptr<Buffer> indexBuffer;
         uint32_t indexCount{};
+        
+        
     };
 }

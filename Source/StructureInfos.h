@@ -1,5 +1,4 @@
-﻿#ifndef STRUCTURE_INFOS_INCLUDED
-#define STRUCTURE_INFOS_INCLUDED
+﻿#pragma once
 
 #include <vulkan/vulkan.h>
 #include "GameObject.hpp"
@@ -54,5 +53,3 @@ namespace Kaamoo {
         glm::mat4 viewProjectionMatrix;
     };
 }
-
-#endif

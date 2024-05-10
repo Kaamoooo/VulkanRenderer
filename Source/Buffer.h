@@ -55,6 +55,12 @@ namespace Kaamoo {
         VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
 
         VkDeviceSize getBufferSize() const { return bufferSize; }
+        
+        VkDeviceAddress getDeviceAddress() const{
+            VkBufferDeviceAddressInfo bufferDeviceAddressInfo{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
+            bufferDeviceAddressInfo.buffer = buffer;
+            return vkGetBufferDeviceAddress(Device.device(), &bufferDeviceAddressInfo);
+        };
 
     private:
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);

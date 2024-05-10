@@ -1,15 +1,7 @@
-﻿#ifndef MESH_RENDERER_COMPONENT_INCLUDED
-#define MESH_RENDERER_COMPONENT_INCLUDED
+﻿#pragma once
 
-#include <string>
-#include <glm/vec3.hpp>
-#include <glm/fwd.hpp>
-#include <glm/detail/type_mat3x3.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <memory>
-#include <utility>
 #include "Component.hpp"
-#include "../Model.hpp"
+#include "../RayTracing/BLAS.hpp"
 
 namespace Kaamoo {
     class MeshRendererComponent : public Component {
@@ -18,7 +10,7 @@ namespace Kaamoo {
             name = "MeshRendererComponent";
         }
 
-        MeshRendererComponent(const rapidjson::Value &object) {
+        explicit MeshRendererComponent(const rapidjson::Value &object) {
             if (!object.HasMember("model")) {
                 this->model = nullptr;
             } else {
@@ -35,12 +27,22 @@ namespace Kaamoo {
 
         std::shared_ptr<Model> GetModelPtr() { return model; }
 
+        void Update(const ComponentUpdateInfo &updateInfo) override {
+            if (model == nullptr) {
+                return;
+            }
+            if(lastTransform!=updateInfo.gameObject->transform->mat4()){
+                lastTransform = updateInfo.gameObject->transform->mat4();
+                //TODO: update the object which is transformed
+                
+                BLAS::modelToBLASInput(model, lastTransform);
+            }
+        };
+
 
     private:
         id_t materialId;
         std::shared_ptr<Model> model = nullptr;
-
+        glm::mat4 lastTransform = glm::mat4{-10000000.f};
     };
 }
-
-#endif

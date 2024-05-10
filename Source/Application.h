@@ -56,7 +56,6 @@ namespace Kaamoo {
     private:
         void loadGameObjects();
         void loadMaterials();
-        void updateLight(FrameInfo &frameInfo);
         void UpdateComponents(FrameInfo &frameInfo);
         
         inline static MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
