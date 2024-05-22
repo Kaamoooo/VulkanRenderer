@@ -478,7 +478,7 @@ namespace Kaamoo {
         return commandBuffer;
     }
 
-    void Device::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+    void Device::endSingleTimeCommands(VkCommandBuffer& commandBuffer) {
         vkEndCommandBuffer(commandBuffer);
 
         VkSubmitInfo submitInfo{};

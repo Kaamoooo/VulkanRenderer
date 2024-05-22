@@ -199,7 +199,7 @@ namespace Kaamoo {
                                    const std::vector<uint32_t> &indices,
                                    std::vector<BLASBuildInfo> &buildInfos,
                                    VkQueryPool &queryPool) {
-
+            uint32_t queryCount = 0;
             std::vector<VkAccelerationStructureKHR> cleanUpBLAS(indices.size());
             std::vector<VkDeviceSize> compactSizes(indices.size());
             vkGetQueryPoolResults(
@@ -209,11 +209,12 @@ namespace Kaamoo {
             );
             for (auto &idx: indices) {
                 cleanUpBLAS[idx] = buildInfos[idx].as;
+                buildInfos[idx].buildSizesInfo.accelerationStructureSize = compactSizes[queryCount++];
 
                 VkAccelerationStructureCreateInfoKHR compactAsCreateInfo{
                         VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR};
                 compactAsCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-                compactAsCreateInfo.size = compactSizes[idx];
+                compactAsCreateInfo.size = buildInfos[idx].buildSizesInfo.accelerationStructureSize;
                 auto asBuffer = new Buffer(
                         *Device::getDeviceSingleton(),
                         compactAsCreateInfo.size,
@@ -233,6 +234,7 @@ namespace Kaamoo {
                 VkCopyAccelerationStructureInfoKHR copyInfo{VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_INFO_KHR};
                 copyInfo.dst = buildInfos[idx].as;
                 copyInfo.src = cleanUpBLAS[idx];
+                copyInfo.mode = VK_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT_KHR;
                 Device::pfn_vkCmdCopyAccelerationStructureKHR(commandBuffer, &copyInfo);
                 Device::pfn_vkDestroyAccelerationStructureKHR(Device::getDeviceSingleton()->device(), cleanUpBLAS[idx],
                                                               nullptr);
