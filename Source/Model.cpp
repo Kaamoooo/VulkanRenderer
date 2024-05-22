@@ -28,6 +28,8 @@ namespace std {
 
 namespace Kaamoo {
     Model::Model(Kaamoo::Device &device, const Builder &builder) : device{device} {
+        static uint32_t modelIndex = 0;
+        indexReference = modelIndex++;
         createVertexBuffers(builder.vertices);
         createIndexBuffers(builder.indices);
     }

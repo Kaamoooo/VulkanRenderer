@@ -17,7 +17,6 @@
 #include "ShaderBuilder.h"
 #include "Utils/JsonUtils.hpp"
 
-
 #include "Sampler.h"
 #include "ShaderBuilder.h"
 #include "RenderSystems/ShadowSystem.h"

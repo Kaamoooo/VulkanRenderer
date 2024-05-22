@@ -1,11 +1,5 @@
 ﻿#pragma once
 
-#include "Device.hpp"
-
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
 #include <glm/glm.hpp>
 #include "Buffer.h"
 #include <memory>
@@ -52,9 +46,10 @@ namespace Kaamoo {
         std::unique_ptr<Buffer> &getVertexBuffer() { return vertexBuffer; }
         std::unique_ptr<Buffer> &getIndexBuffer() { return indexBuffer; }
         
-        uint32_t getPrimitiveCount() { return indexCount / 3; }
-        uint32_t getVertexCount() { return vertexCount; }
-        uint32_t getIndexCount() { return indexCount; }
+        uint32_t getPrimitiveCount() const { return indexCount / 3; }
+        uint32_t getVertexCount() const { return vertexCount; }
+        uint32_t getIndexCount() const { return indexCount; }
+        uint32_t getIndexReference() const { return indexReference; }
 
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
@@ -70,6 +65,6 @@ namespace Kaamoo {
         std::unique_ptr<Buffer> indexBuffer;
         uint32_t indexCount{};
         
-        
+        uint32_t indexReference;
     };
 }

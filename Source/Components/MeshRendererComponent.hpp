@@ -18,6 +18,7 @@ namespace Kaamoo {
                 std::shared_ptr<Model> modelFromFile = Model::createModelFromFile(*Device::getDeviceSingleton(),
                                                                                   Model::BaseModelsPath + modelName);
                 this->model = modelFromFile;
+                BLAS::modelToBLASInput(model);
             }
             this->materialId = object["materialId"].GetInt();
             name = "MeshRendererComponent";
@@ -35,7 +36,8 @@ namespace Kaamoo {
                 lastTransform = updateInfo.gameObject->transform->mat4();
                 //TODO: update the object which is transformed
                 
-                BLAS::modelToBLASInput(model, lastTransform);
+                BLAS::modelToBLASInput(model);
+//                TLAS::(, lastTransform)
             }
         };
 

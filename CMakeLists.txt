@@ -12,7 +12,7 @@ file(GLOB_RECURSE SOURCES
         ${PROJECT_SOURCE_DIR}/Source/*.cpp
         ${PROJECT_SOURCE_DIR}/Source/*.hpp
         )
-add_executable(${PROJECT_NAME} ${SOURCES} Source/ComponentFactory.hpp)
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} "E:\\Vulkan\\SDK\\Lib\\vulkan-1.lib")
 target_link_libraries(${PROJECT_NAME} "E:\\Vulkan\\glfw-3.3.8.bin.WIN64\\lib-mingw-w64\\libglfw3.a")

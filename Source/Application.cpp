@@ -2,7 +2,6 @@
 #include "ComponentFactory.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
-#include <mmcobj.h>
 #include <glm/ext/matrix_clip_space.hpp>
 
 namespace Kaamoo {
@@ -324,10 +323,19 @@ namespace Kaamoo {
 
     void Application::UpdateComponents(FrameInfo &frameInfo) {
         ComponentUpdateInfo updateInfo{};
-        
-        updateInfo.frameInfo = &frameInfo;
         RendererInfo rendererInfo{renderer.getAspectRatio()};
+        updateInfo.frameInfo = &frameInfo;
         updateInfo.rendererInfo = &rendererInfo;
+        
+        static bool firstFrame = true;
+        if (firstFrame){
+            for (auto &pair: gameObjects) {
+                updateInfo.gameObject = &pair.second;
+                pair.second.Start(updateInfo);
+            }
+            firstFrame = false;
+        }
+        
         for (auto &pair: gameObjects) {
             updateInfo.gameObject = &pair.second;
             pair.second.Update(updateInfo);

@@ -200,6 +200,8 @@ namespace Kaamoo {
 
         vkGetDeviceQueue(device_, indices.graphicsFamily, 0, &graphicsQueue_);
         vkGetDeviceQueue(device_, indices.presentFamily, 0, &presentQueue_);
+
+        loadExtensionFunctions();
     }
 
     void Device::createCommandPool() {
@@ -604,6 +606,28 @@ namespace Kaamoo {
                              1, &barrier);
 
         endSingleTimeCommands(commandBuffer);
+    }
+
+    void Device::loadExtensionFunctions() {
+        PFN_vkVoidFunction (*getDeviceProcAddr)(VkDevice, const char*) = vkGetDeviceProcAddr;
+        VkDevice device = device_;
+        pfn_vkBuildAccelerationStructuresKHR = (PFN_vkBuildAccelerationStructuresKHR) getDeviceProcAddr(device,"vkBuildAccelerationStructuresKHR");
+        pfn_vkCmdBuildAccelerationStructuresIndirectKHR = (PFN_vkCmdBuildAccelerationStructuresIndirectKHR) getDeviceProcAddr(device, "vkCmdBuildAccelerationStructuresIndirectKHR");
+        pfn_vkCmdBuildAccelerationStructuresKHR = (PFN_vkCmdBuildAccelerationStructuresKHR) getDeviceProcAddr(device, "vkCmdBuildAccelerationStructuresKHR");
+        pfn_vkCmdCopyAccelerationStructureKHR = (PFN_vkCmdCopyAccelerationStructureKHR) getDeviceProcAddr(device,"vkCmdCopyAccelerationStructureKHR");
+        pfn_vkCmdCopyAccelerationStructureToMemoryKHR = (PFN_vkCmdCopyAccelerationStructureToMemoryKHR) getDeviceProcAddr(device, "vkCmdCopyAccelerationStructureToMemoryKHR");
+        pfn_vkCmdCopyMemoryToAccelerationStructureKHR = (PFN_vkCmdCopyMemoryToAccelerationStructureKHR) getDeviceProcAddr(device, "vkCmdCopyMemoryToAccelerationStructureKHR");
+        pfn_vkCmdWriteAccelerationStructuresPropertiesKHR = (PFN_vkCmdWriteAccelerationStructuresPropertiesKHR) getDeviceProcAddr(device, "vkCmdWriteAccelerationStructuresPropertiesKHR");
+        pfn_vkCopyAccelerationStructureKHR = (PFN_vkCopyAccelerationStructureKHR) getDeviceProcAddr(device,"vkCopyAccelerationStructureKHR");
+        pfn_vkCopyAccelerationStructureToMemoryKHR = (PFN_vkCopyAccelerationStructureToMemoryKHR) getDeviceProcAddr(device, "vkCopyAccelerationStructureToMemoryKHR");
+        pfn_vkCopyMemoryToAccelerationStructureKHR = (PFN_vkCopyMemoryToAccelerationStructureKHR) getDeviceProcAddr(device, "vkCopyMemoryToAccelerationStructureKHR");
+        pfn_vkCreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR) getDeviceProcAddr(device,"vkCreateAccelerationStructureKHR");
+        pfn_vkDestroyAccelerationStructureKHR = (PFN_vkDestroyAccelerationStructureKHR) getDeviceProcAddr(device,"vkDestroyAccelerationStructureKHR");
+        pfn_vkGetAccelerationStructureBuildSizesKHR = (PFN_vkGetAccelerationStructureBuildSizesKHR) getDeviceProcAddr(device, "vkGetAccelerationStructureBuildSizesKHR");
+        pfn_vkGetAccelerationStructureDeviceAddressKHR = (PFN_vkGetAccelerationStructureDeviceAddressKHR) getDeviceProcAddr(device, "vkGetAccelerationStructureDeviceAddressKHR");
+        pfn_vkGetDeviceAccelerationStructureCompatibilityKHR = (PFN_vkGetDeviceAccelerationStructureCompatibilityKHR) getDeviceProcAddr(device, "vkGetDeviceAccelerationStructureCompatibilityKHR");
+        pfn_vkWriteAccelerationStructuresPropertiesKHR = (PFN_vkWriteAccelerationStructuresPropertiesKHR) getDeviceProcAddr(device, "vkWriteAccelerationStructuresPropertiesKHR");
+
     }
 
 }  // namespace lve

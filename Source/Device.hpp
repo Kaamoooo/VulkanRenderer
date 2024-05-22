@@ -1,12 +1,9 @@
 #pragma once
 
+#define RAY_TRACING
+
 #include "MyWindow.hpp"
-
-// std lib headers
 #include <string>
-
-#pragma once
-
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -29,11 +26,7 @@ namespace Kaamoo {
 
     class Device {
     public:
-#ifdef NDEBUG
-        const bool enableValidationLayers = false;
-#else
         const bool enableValidationLayers = true;
-#endif
 
         Device(MyWindow &window);
 
@@ -102,6 +95,12 @@ namespace Kaamoo {
         static Device *getDeviceSingleton() { return deviceSingleton; }
 
         MyWindow &getWindow() { return window; }
+        
+        VkDeviceAddress getAccelerationStructureAddressKHR(VkAccelerationStructureKHR& accelerationStructure){
+            VkAccelerationStructureDeviceAddressInfoKHR addressInfo{};
+            addressInfo.accelerationStructure = accelerationStructure;
+            return vkGetAccelerationStructureDeviceAddressKHR(device_, &addressInfo);
+        }
 
     private:
         void createInstance();
@@ -132,6 +131,8 @@ namespace Kaamoo {
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+        
+        void loadExtensionFunctions();
 
         VkInstance instance;
         VkDebugUtilsMessengerEXT debugMessenger;
@@ -152,6 +153,25 @@ namespace Kaamoo {
                                                             VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
                                                             VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
                                                             VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME};
+    public:
+#ifdef RAY_TRACING
+        inline static PFN_vkBuildAccelerationStructuresKHR pfn_vkBuildAccelerationStructuresKHR = 0;
+        inline static PFN_vkCmdBuildAccelerationStructuresIndirectKHR pfn_vkCmdBuildAccelerationStructuresIndirectKHR = 0;
+        inline static PFN_vkCmdBuildAccelerationStructuresKHR pfn_vkCmdBuildAccelerationStructuresKHR = 0;
+        inline static PFN_vkCmdCopyAccelerationStructureKHR pfn_vkCmdCopyAccelerationStructureKHR = 0;
+        inline static PFN_vkCmdCopyAccelerationStructureToMemoryKHR pfn_vkCmdCopyAccelerationStructureToMemoryKHR = 0;
+        inline static PFN_vkCmdCopyMemoryToAccelerationStructureKHR pfn_vkCmdCopyMemoryToAccelerationStructureKHR = 0;
+        inline static PFN_vkCmdWriteAccelerationStructuresPropertiesKHR pfn_vkCmdWriteAccelerationStructuresPropertiesKHR = 0;
+        inline static PFN_vkCopyAccelerationStructureKHR pfn_vkCopyAccelerationStructureKHR = 0;
+        inline static PFN_vkCopyAccelerationStructureToMemoryKHR pfn_vkCopyAccelerationStructureToMemoryKHR = 0;
+        inline static PFN_vkCopyMemoryToAccelerationStructureKHR pfn_vkCopyMemoryToAccelerationStructureKHR = 0;
+        inline static PFN_vkCreateAccelerationStructureKHR pfn_vkCreateAccelerationStructureKHR = 0;
+        inline static PFN_vkDestroyAccelerationStructureKHR pfn_vkDestroyAccelerationStructureKHR = 0;
+        inline static PFN_vkGetAccelerationStructureBuildSizesKHR pfn_vkGetAccelerationStructureBuildSizesKHR = 0;
+        inline static PFN_vkGetAccelerationStructureDeviceAddressKHR pfn_vkGetAccelerationStructureDeviceAddressKHR = 0;
+        inline static PFN_vkGetDeviceAccelerationStructureCompatibilityKHR pfn_vkGetDeviceAccelerationStructureCompatibilityKHR = 0;
+        inline static PFN_vkWriteAccelerationStructuresPropertiesKHR pfn_vkWriteAccelerationStructuresPropertiesKHR = 0;
+#endif
     };
 
 }

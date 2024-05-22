@@ -26,6 +26,8 @@ namespace Kaamoo {
 
         virtual ~Component() = default;
 
+        virtual void Start(const ComponentUpdateInfo &updateInfo) {};
+        
         virtual void Update(const ComponentUpdateInfo &updateInfo) {};
         
         virtual void LateUpdate(const ComponentUpdateInfo &updateInfo) {};

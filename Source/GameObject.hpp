@@ -64,6 +64,12 @@ namespace Kaamoo {
             return false;
         }
         
+        void Start(const ComponentUpdateInfo& updateInfo){
+            for(auto& component: components){
+                component->Start(updateInfo);
+            }
+        }
+        
         void Update(const ComponentUpdateInfo& updateInfo){
             for(auto& component: components){
                 component->Update(updateInfo);
