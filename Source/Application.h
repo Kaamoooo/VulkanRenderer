@@ -43,6 +43,8 @@ namespace Kaamoo {
         void run();
 
         Application();
+        
+        ~Application();
 
         Application(const Application &) = delete;
 
@@ -66,5 +68,9 @@ namespace Kaamoo {
         std::unique_ptr<DescriptorPool> globalPool;
         std::shared_ptr<VkRenderPass> shadowPass;
         std::shared_ptr<VkFramebuffer> shadowFramebuffer;
+
+        void UpdateUbo(GlobalUbo &ubo,float totalTime, std::shared_ptr<ShadowSystem> shadowSystem);
+
+        void Awake();
     };
 }

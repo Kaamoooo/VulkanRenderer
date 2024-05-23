@@ -3,10 +3,12 @@
 #include <glm/glm.hpp>
 #include "Buffer.h"
 #include <memory>
+#include <iostream>
 
 namespace Kaamoo {
     class Model {
     public:
+        
         Model(const Model &model) = delete;
 
         Model &operator=(const Model &model) = delete;

@@ -50,7 +50,7 @@ namespace Kaamoo {
 
     Buffer::~Buffer() {
         unmap();
-        vkDestroyBuffer(Device.device(), buffer, nullptr);
+         vkDestroyBuffer(Device.device(), buffer, nullptr);
         vkFreeMemory(Device.device(), memory, nullptr);
     }
 

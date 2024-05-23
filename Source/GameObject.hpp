@@ -64,6 +64,18 @@ namespace Kaamoo {
             return false;
         }
         
+        void Loaded(){
+            for(auto& component: components){
+                component->Loaded(this);
+            }
+        }
+        
+        void Awake(ComponentAwakeInfo awakeInfo){
+            for(auto& component: components){
+                component->Awake(awakeInfo);
+            }
+        }
+        
         void Start(const ComponentUpdateInfo& updateInfo){
             for(auto& component: components){
                 component->Start(updateInfo);

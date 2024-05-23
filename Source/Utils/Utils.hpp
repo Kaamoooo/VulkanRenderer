@@ -1,4 +1,6 @@
-﻿#include <typeinfo>
+﻿#pragma once
+
+#include <typeinfo>
 #include <string>
 
 namespace Kaamoo {

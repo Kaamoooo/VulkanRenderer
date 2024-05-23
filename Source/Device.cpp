@@ -493,8 +493,6 @@ namespace Kaamoo {
     }
 
     void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-        //Q:为什么不使用渲染中现成的command buffer？
-        //A:因为在处理内存时的command buffer是独立的，渲染中会为每个交换链缓冲区分别创建一个command buffer，因此无论使用交换链的哪一个command buffer都是不合理的
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkBufferCopy copyRegion{};

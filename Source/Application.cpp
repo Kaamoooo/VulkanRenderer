@@ -5,6 +5,11 @@
 #include <glm/ext/matrix_clip_space.hpp>
 
 namespace Kaamoo {
+    Application::~Application() {
+        gameObjects.clear();
+        materials.clear();
+    }
+
     Application::Application() {
         globalPool = DescriptorPool::Builder(device).setMaxSets(
                 SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -13,7 +18,7 @@ namespace Kaamoo {
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).build();
         loadGameObjects();
         loadMaterials();
-        
+
     }
 
     void Application::run() {
@@ -48,7 +53,7 @@ namespace Kaamoo {
         auto currentTime = std::chrono::high_resolution_clock::now();
         float totalTime = 0;
         GlobalUbo ubo{};
-        ubo.lightNum = LightComponent::lightNum;
+        Awake();
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
 
@@ -61,25 +66,8 @@ namespace Kaamoo {
                 int frameIndex = renderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, gameObjects, materials, ubo};
 
-                ubo.curTime = totalTime;
-
                 UpdateComponents(frameInfo);
-
-                ubo.shadowViewMatrix[0] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
-                                                                                       glm::vec3(0, 90, 180));
-                ubo.shadowViewMatrix[1] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
-                                                                                       glm::vec3(0, -90, 180));
-                ubo.shadowViewMatrix[2] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
-                                                                                       glm::vec3(-90, 0, 0));
-                ubo.shadowViewMatrix[3] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
-                                                                                       glm::vec3(90, 0, 0));
-                ubo.shadowViewMatrix[4] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
-                                                                                       glm::vec3(180, 0, 0));
-                ubo.shadowViewMatrix[5] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
-                                                                                       glm::vec3(0, 0, 180));
-                ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f),
-                                                                                            1.0f,0.1f, 5.0f);
-                ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
+                UpdateUbo(ubo, totalTime, shadowSystem);
 
                 renderer.beginShadowRenderPass(commandBuffer);
                 shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -157,6 +145,11 @@ namespace Kaamoo {
 
                 gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
+        }
+
+        for (auto &pair: gameObjects) {
+            auto &gameObject = pair.second;
+            gameObject.Loaded();
         }
 
     }
@@ -321,29 +314,59 @@ namespace Kaamoo {
         }
     }
 
+    void Application::Awake() {
+        ComponentAwakeInfo awakeInfo{};
+        for (auto &pair: gameObjects) {
+            awakeInfo.gameObject = &pair.second;
+            pair.second.Awake(awakeInfo);
+        }
+    }
+
     void Application::UpdateComponents(FrameInfo &frameInfo) {
         ComponentUpdateInfo updateInfo{};
         RendererInfo rendererInfo{renderer.getAspectRatio()};
         updateInfo.frameInfo = &frameInfo;
         updateInfo.rendererInfo = &rendererInfo;
-        
+
         static bool firstFrame = true;
-        if (firstFrame){
+        if (firstFrame) {
             for (auto &pair: gameObjects) {
                 updateInfo.gameObject = &pair.second;
                 pair.second.Start(updateInfo);
             }
             firstFrame = false;
         }
-        
+
         for (auto &pair: gameObjects) {
             updateInfo.gameObject = &pair.second;
             pair.second.Update(updateInfo);
         }
-        
+
         for (auto &pair: gameObjects) {
             updateInfo.gameObject = &pair.second;
             pair.second.LateUpdate(updateInfo);
         }
     }
+
+    void Application::UpdateUbo(GlobalUbo &ubo, float totalTime, std::shared_ptr<ShadowSystem> shadowSystem) {
+        ubo.lightNum = LightComponent::lightNum;
+        ubo.curTime = totalTime;
+        ubo.shadowViewMatrix[0] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                               glm::vec3(0, 90, 180));
+        ubo.shadowViewMatrix[1] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                               glm::vec3(0, -90, 180));
+        ubo.shadowViewMatrix[2] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                               glm::vec3(-90, 0, 0));
+        ubo.shadowViewMatrix[3] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                               glm::vec3(90, 0, 0));
+        ubo.shadowViewMatrix[4] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                               glm::vec3(180, 0, 0));
+        ubo.shadowViewMatrix[5] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
+                                                                               glm::vec3(0, 0, 180));
+        ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f),
+                                                                                    1.0f, 0.1f, 5.0f);
+        ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
+    }
+
+
 }

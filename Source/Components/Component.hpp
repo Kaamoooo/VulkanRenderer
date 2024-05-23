@@ -13,8 +13,11 @@
 namespace Kaamoo {
     class GameObject;
 
+    struct ComponentAwakeInfo {
+        GameObject *gameObject;
+    };
+
     struct ComponentUpdateInfo {
-        
         GameObject *gameObject;
         FrameInfo *frameInfo;
         RendererInfo *rendererInfo;
@@ -26,10 +29,14 @@ namespace Kaamoo {
 
         virtual ~Component() = default;
 
+        virtual void Loaded(GameObject *gameObject) {};
+        
+        virtual void Awake(const ComponentAwakeInfo &awakeInfo) {};
+
         virtual void Start(const ComponentUpdateInfo &updateInfo) {};
-        
+
         virtual void Update(const ComponentUpdateInfo &updateInfo) {};
-        
+
         virtual void LateUpdate(const ComponentUpdateInfo &updateInfo) {};
 
     protected:

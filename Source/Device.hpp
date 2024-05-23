@@ -99,7 +99,7 @@ namespace Kaamoo {
         VkDeviceAddress getAccelerationStructureAddressKHR(VkAccelerationStructureKHR& accelerationStructure){
             VkAccelerationStructureDeviceAddressInfoKHR addressInfo{};
             addressInfo.accelerationStructure = accelerationStructure;
-            return vkGetAccelerationStructureDeviceAddressKHR(device_, &addressInfo);
+            return pfn_vkGetAccelerationStructureDeviceAddressKHR(device_, &addressInfo);
         }
 
     private:

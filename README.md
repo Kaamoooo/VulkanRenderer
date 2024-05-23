@@ -55,3 +55,5 @@
 5.10 Built the framework of creating ray tracing BLAS.
 
 5.22 Periodical backup.
+
+5.23 Constructed TLAS.
