@@ -35,11 +35,11 @@ namespace Kaamoo {
         subresourceRange.levelCount = 1;
         subresourceRange.baseArrayLayer = 0;
         subresourceRange.layerCount = 1;
-        device.transitionImageLayout(image, createInfo.format, createInfo.initialLayout,
+        device.transitionImageLayout(image, createInfo.initialLayout,
                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
         device.copyBufferToImage(stagingBuffer->getBuffer(), image, static_cast<uint32_t>(texWidth),
                                  static_cast<uint32_t>(texHeight), 1);
-        device.transitionImageLayout(image, createInfo.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        device.transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
 
@@ -83,11 +83,11 @@ namespace Kaamoo {
         subresourceRange.levelCount = 1;
         subresourceRange.baseArrayLayer = 0;
         subresourceRange.layerCount = 6;
-        device.transitionImageLayout(image, createInfo.format, createInfo.initialLayout,
+        device.transitionImageLayout(image, createInfo.initialLayout,
                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
         device.copyBufferToImage(stagingBuffer->getBuffer(), image, static_cast<uint32_t>(texWidth),
                                  static_cast<uint32_t>(texHeight), 6);
-        device.transitionImageLayout(image, createInfo.format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        device.transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
 
@@ -169,6 +169,14 @@ namespace Kaamoo {
         return imageInfo;
     }
 
+    std::shared_ptr<VkDescriptorImageInfo> Image::descriptorInfo() {
+        auto imageInfo = std::make_shared<VkDescriptorImageInfo>();
+        imageInfo->sampler = sampler;
+        imageInfo->imageView = imageView;
+        imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        return imageInfo;    }
+    
+    
     void Image::createImage(VkImageCreateInfo createInfo) {
         device.createImageWithInfo(createInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
     }
@@ -176,6 +184,7 @@ namespace Kaamoo {
     const VkImageView *Image::getImageView() const {
         return &imageView;
     }
+
 
 
 }

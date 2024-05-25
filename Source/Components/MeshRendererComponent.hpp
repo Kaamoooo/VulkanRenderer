@@ -28,7 +28,9 @@ namespace Kaamoo {
                                                                                       modelName);
                     this->model = modelFromFile;
                     models.emplace(modelName, modelFromFile);
+#ifdef RAY_TRACING
                     BLAS::modelToBLASInput(model);
+#endif
                 }
             }
             this->materialId = object["materialId"].GetInt();
@@ -39,12 +41,15 @@ namespace Kaamoo {
 
         std::shared_ptr<Model> GetModelPtr() { return model; }
 
-        void Awake(const ComponentAwakeInfo &awakeInfo) override {
+        void OnLoad(GameObject *gameObject) override {
             if (model == nullptr) {
                 return;
             }
-            TLAS::createTLAS(*model, awakeInfo.gameObject->transform->mat4());
+#ifdef RAY_TRACING
+            TLAS::createTLAS(*model, gameObject->transform->mat4());
+#endif
         }
+
 
         void Update(const ComponentUpdateInfo &updateInfo) override {
             if (model == nullptr) {

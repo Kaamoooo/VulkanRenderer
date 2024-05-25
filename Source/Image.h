@@ -17,6 +17,10 @@ namespace Kaamoo {
     } ImageType;
     class Image {
     public:
+        VkImage image;
+        VkImageView imageView;
+        VkSampler sampler;
+        
         explicit Image(Device &device, std::string imageCategory = ImageType.Default);
 
         ~Image();
@@ -29,6 +33,8 @@ namespace Kaamoo {
         void createImageView(VkImageViewCreateInfo createInfo);
 
         std::shared_ptr<VkDescriptorImageInfo> descriptorInfo(Sampler &sampler);
+        
+        std::shared_ptr<VkDescriptorImageInfo> descriptorInfo();
 
         void setImage(VkImage vkImage) { this->image = vkImage; }
 
@@ -41,11 +47,10 @@ namespace Kaamoo {
         void createImage(VkImageCreateInfo createInfo);
 
         const VkImageView *getImageView() const;
-
+        
     private:
         Device &device;
-        VkImage image;
-        VkImageView imageView;
+        
         VkDeviceMemory imageMemory{};
         int texWidth, texHeight, texChannels;
         

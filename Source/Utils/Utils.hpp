@@ -2,6 +2,7 @@
 
 #include <typeinfo>
 #include <string>
+#include <glm/glm.hpp>
 
 namespace Kaamoo {
     using id_t = unsigned int;

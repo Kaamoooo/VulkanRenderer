@@ -26,6 +26,9 @@ namespace Kaamoo {
                 InitMap();
             }
             auto typeName = componentsMap[componentId]["type"].GetString();
+            if (componentConstructorMap.count(typeName) == 0) {
+                return nullptr;
+            }
             auto componentConstructor = componentConstructorMap.find(typeName)->second;
             return (*componentConstructor)(componentsMap[componentId]);
         }
@@ -36,7 +39,9 @@ namespace Kaamoo {
             componentConstructorMap[ComponentName::ObjectMovementComponent] = [](const rapidjson::Value& object)->Component*{return new ObjectMovementComponent(Application::getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraMovementComponent] = [](const rapidjson::Value& object)->Component*{return new CameraMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraComponent] = [](const rapidjson::Value& object)->Component*{return new CameraComponent();};
+#ifdef RAY_TRACING
             componentConstructorMap[ComponentName::RayTracingManagerComponent] = [](const rapidjson::Value& object)->Component*{return new RayTracingManagerComponent();};
+#endif
         }
 
     private:

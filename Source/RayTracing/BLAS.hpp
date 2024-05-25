@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Model.hpp"
+#ifdef RAY_TRACING
 
 namespace Kaamoo {
     struct BLASInput {
@@ -251,3 +252,4 @@ namespace Kaamoo {
 
 
 }
+#endif

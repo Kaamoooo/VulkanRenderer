@@ -160,7 +160,7 @@ namespace Kaamoo {
         deviceFeatures.samplerAnisotropy = VK_TRUE;
         deviceFeatures.geometryShader = VK_TRUE;
         deviceFeatures.tessellationShader = VK_TRUE;
-        
+
         VkDeviceCreateInfo createInfo = {};
 
 #pragma region Enable features
@@ -179,7 +179,7 @@ namespace Kaamoo {
         rayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
         accelerationStructureFeatures.pNext = &rayTracingPipelineFeatures;
 #pragma endregion
-        
+
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -478,7 +478,7 @@ namespace Kaamoo {
         return commandBuffer;
     }
 
-    void Device::endSingleTimeCommands(VkCommandBuffer& commandBuffer) {
+    void Device::endSingleTimeCommands(VkCommandBuffer &commandBuffer) {
         vkEndCommandBuffer(commandBuffer);
 
         VkSubmitInfo submitInfo{};
@@ -557,7 +557,7 @@ namespace Kaamoo {
         }
     }
 
-    void Device::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
+    void Device::transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout,
                                        VkImageSubresourceRange subresourceRange) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -572,29 +572,10 @@ namespace Kaamoo {
 
         VkPipelineStageFlagBits srcStage, dstStage;
 
-        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-            srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-                   newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-            srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-            dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        } else if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL &&
-                   newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-            barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            srcStage = static_cast<VkPipelineStageFlagBits>(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
-                                                            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-            dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        } else {
-            throw std::runtime_error("unsupported layout transition");
-        }
+        barrier.srcAccessMask = accessFlagsForImageLayout(oldLayout);
+        barrier.dstAccessMask = accessFlagsForImageLayout(newLayout);
+        srcStage = pipelineStageForLayout(oldLayout);
+        dstStage = pipelineStageForLayout(newLayout);
 
         vkCmdPipelineBarrier(commandBuffer,
                              srcStage, dstStage,
@@ -607,25 +588,83 @@ namespace Kaamoo {
     }
 
     void Device::loadExtensionFunctions() {
-        PFN_vkVoidFunction (*getDeviceProcAddr)(VkDevice, const char*) = vkGetDeviceProcAddr;
+#ifdef RAY_TRACING
+        PFN_vkVoidFunction (*getDeviceProcAddr)(VkDevice, const char *) = vkGetDeviceProcAddr;
         VkDevice device = device_;
-        pfn_vkBuildAccelerationStructuresKHR = (PFN_vkBuildAccelerationStructuresKHR) getDeviceProcAddr(device,"vkBuildAccelerationStructuresKHR");
-        pfn_vkCmdBuildAccelerationStructuresIndirectKHR = (PFN_vkCmdBuildAccelerationStructuresIndirectKHR) getDeviceProcAddr(device, "vkCmdBuildAccelerationStructuresIndirectKHR");
-        pfn_vkCmdBuildAccelerationStructuresKHR = (PFN_vkCmdBuildAccelerationStructuresKHR) getDeviceProcAddr(device, "vkCmdBuildAccelerationStructuresKHR");
-        pfn_vkCmdCopyAccelerationStructureKHR = (PFN_vkCmdCopyAccelerationStructureKHR) getDeviceProcAddr(device,"vkCmdCopyAccelerationStructureKHR");
-        pfn_vkCmdCopyAccelerationStructureToMemoryKHR = (PFN_vkCmdCopyAccelerationStructureToMemoryKHR) getDeviceProcAddr(device, "vkCmdCopyAccelerationStructureToMemoryKHR");
-        pfn_vkCmdCopyMemoryToAccelerationStructureKHR = (PFN_vkCmdCopyMemoryToAccelerationStructureKHR) getDeviceProcAddr(device, "vkCmdCopyMemoryToAccelerationStructureKHR");
-        pfn_vkCmdWriteAccelerationStructuresPropertiesKHR = (PFN_vkCmdWriteAccelerationStructuresPropertiesKHR) getDeviceProcAddr(device, "vkCmdWriteAccelerationStructuresPropertiesKHR");
-        pfn_vkCopyAccelerationStructureKHR = (PFN_vkCopyAccelerationStructureKHR) getDeviceProcAddr(device,"vkCopyAccelerationStructureKHR");
-        pfn_vkCopyAccelerationStructureToMemoryKHR = (PFN_vkCopyAccelerationStructureToMemoryKHR) getDeviceProcAddr(device, "vkCopyAccelerationStructureToMemoryKHR");
-        pfn_vkCopyMemoryToAccelerationStructureKHR = (PFN_vkCopyMemoryToAccelerationStructureKHR) getDeviceProcAddr(device, "vkCopyMemoryToAccelerationStructureKHR");
-        pfn_vkCreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR) getDeviceProcAddr(device,"vkCreateAccelerationStructureKHR");
-        pfn_vkDestroyAccelerationStructureKHR = (PFN_vkDestroyAccelerationStructureKHR) getDeviceProcAddr(device,"vkDestroyAccelerationStructureKHR");
-        pfn_vkGetAccelerationStructureBuildSizesKHR = (PFN_vkGetAccelerationStructureBuildSizesKHR) getDeviceProcAddr(device, "vkGetAccelerationStructureBuildSizesKHR");
-        pfn_vkGetAccelerationStructureDeviceAddressKHR = (PFN_vkGetAccelerationStructureDeviceAddressKHR) getDeviceProcAddr(device, "vkGetAccelerationStructureDeviceAddressKHR");
-        pfn_vkGetDeviceAccelerationStructureCompatibilityKHR = (PFN_vkGetDeviceAccelerationStructureCompatibilityKHR) getDeviceProcAddr(device, "vkGetDeviceAccelerationStructureCompatibilityKHR");
-        pfn_vkWriteAccelerationStructuresPropertiesKHR = (PFN_vkWriteAccelerationStructuresPropertiesKHR) getDeviceProcAddr(device, "vkWriteAccelerationStructuresPropertiesKHR");
+        pfn_vkBuildAccelerationStructuresKHR = (PFN_vkBuildAccelerationStructuresKHR) getDeviceProcAddr(device,
+                                                                                                        "vkBuildAccelerationStructuresKHR");
+        pfn_vkCmdBuildAccelerationStructuresIndirectKHR = (PFN_vkCmdBuildAccelerationStructuresIndirectKHR) getDeviceProcAddr(
+                device, "vkCmdBuildAccelerationStructuresIndirectKHR");
+        pfn_vkCmdBuildAccelerationStructuresKHR = (PFN_vkCmdBuildAccelerationStructuresKHR) getDeviceProcAddr(device,
+                                                                                                              "vkCmdBuildAccelerationStructuresKHR");
+        pfn_vkCmdCopyAccelerationStructureKHR = (PFN_vkCmdCopyAccelerationStructureKHR) getDeviceProcAddr(device,
+                                                                                                          "vkCmdCopyAccelerationStructureKHR");
+        pfn_vkCmdCopyAccelerationStructureToMemoryKHR = (PFN_vkCmdCopyAccelerationStructureToMemoryKHR) getDeviceProcAddr(
+                device, "vkCmdCopyAccelerationStructureToMemoryKHR");
+        pfn_vkCmdCopyMemoryToAccelerationStructureKHR = (PFN_vkCmdCopyMemoryToAccelerationStructureKHR) getDeviceProcAddr(
+                device, "vkCmdCopyMemoryToAccelerationStructureKHR");
+        pfn_vkCmdWriteAccelerationStructuresPropertiesKHR = (PFN_vkCmdWriteAccelerationStructuresPropertiesKHR) getDeviceProcAddr(
+                device, "vkCmdWriteAccelerationStructuresPropertiesKHR");
+        pfn_vkCopyAccelerationStructureKHR = (PFN_vkCopyAccelerationStructureKHR) getDeviceProcAddr(device,
+                                                                                                    "vkCopyAccelerationStructureKHR");
+        pfn_vkCopyAccelerationStructureToMemoryKHR = (PFN_vkCopyAccelerationStructureToMemoryKHR) getDeviceProcAddr(
+                device, "vkCopyAccelerationStructureToMemoryKHR");
+        pfn_vkCopyMemoryToAccelerationStructureKHR = (PFN_vkCopyMemoryToAccelerationStructureKHR) getDeviceProcAddr(
+                device, "vkCopyMemoryToAccelerationStructureKHR");
+        pfn_vkCreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR) getDeviceProcAddr(device,
+                                                                                                        "vkCreateAccelerationStructureKHR");
+        pfn_vkDestroyAccelerationStructureKHR = (PFN_vkDestroyAccelerationStructureKHR) getDeviceProcAddr(device,
+                                                                                                          "vkDestroyAccelerationStructureKHR");
+        pfn_vkGetAccelerationStructureBuildSizesKHR = (PFN_vkGetAccelerationStructureBuildSizesKHR) getDeviceProcAddr(
+                device, "vkGetAccelerationStructureBuildSizesKHR");
+        pfn_vkGetAccelerationStructureDeviceAddressKHR = (PFN_vkGetAccelerationStructureDeviceAddressKHR) getDeviceProcAddr(
+                device, "vkGetAccelerationStructureDeviceAddressKHR");
+        pfn_vkGetDeviceAccelerationStructureCompatibilityKHR = (PFN_vkGetDeviceAccelerationStructureCompatibilityKHR) getDeviceProcAddr(
+                device, "vkGetDeviceAccelerationStructureCompatibilityKHR");
+        pfn_vkWriteAccelerationStructuresPropertiesKHR = (PFN_vkWriteAccelerationStructuresPropertiesKHR) getDeviceProcAddr(
+                device, "vkWriteAccelerationStructuresPropertiesKHR");
+#endif
+    }
 
+    VkPipelineStageFlagBits Device::pipelineStageForLayout(VkImageLayout layout) {
+        switch (layout) {
+            case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+            case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+                return VK_PIPELINE_STAGE_TRANSFER_BIT;
+            case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+                return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+                return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;  // We do this to allow queue other than graphic
+                // return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+                return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;  // We do this to allow queue other than graphic
+                // return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            case VK_IMAGE_LAYOUT_PREINITIALIZED:
+                return VK_PIPELINE_STAGE_HOST_BIT;
+            case VK_IMAGE_LAYOUT_UNDEFINED:
+                return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            default:
+                return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        }
+    }
+
+    VkAccessFlags Device::accessFlagsForImageLayout(VkImageLayout layout) {
+        switch (layout) {
+            case VK_IMAGE_LAYOUT_PREINITIALIZED:
+                return VK_ACCESS_HOST_WRITE_BIT;
+            case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+                return VK_ACCESS_TRANSFER_WRITE_BIT;
+            case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+                return VK_ACCESS_TRANSFER_READ_BIT;
+            case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+                return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+                return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+                return VK_ACCESS_SHADER_READ_BIT;
+            default:
+                return VkAccessFlags();
+        }
     }
 
 }  // namespace lve

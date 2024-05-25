@@ -29,6 +29,8 @@ namespace Kaamoo {
 
         virtual ~Component() = default;
 
+        virtual void OnLoad(GameObject *gameObject) {};
+        
         virtual void Loaded(GameObject *gameObject) {};
         
         virtual void Awake(const ComponentAwakeInfo &awakeInfo) {};

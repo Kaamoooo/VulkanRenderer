@@ -69,12 +69,15 @@ namespace Kaamoo {
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime, shadowSystem);
 
+#ifdef RAY_TRACING
+
+#else
                 renderer.beginShadowRenderPass(commandBuffer);
                 shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 shadowSystem->renderShadow(frameInfo);
                 renderer.endShadowRenderPass(commandBuffer);
-
                 renderer.setShadowMapSynchronization(commandBuffer);
+#endif
 
                 renderer.beginSwapChainRenderPass(commandBuffer);
                 for (const auto &item: renderSystems) {
@@ -91,8 +94,8 @@ namespace Kaamoo {
     }
 
     void Application::loadGameObjects() {
-        std::string gameObjectsJsonString = JsonUtils::ReadJsonFile(BaseConfigurationPath + GameObjectsFileName);
-        std::string componentsJsonString = JsonUtils::ReadJsonFile(BaseConfigurationPath + ComponentsFileName);
+        std::string gameObjectsJsonString = JsonUtils::ReadJsonFile(BasePath + GameObjectsFileName);
+        std::string componentsJsonString = JsonUtils::ReadJsonFile(BasePath + ComponentsFileName);
 
         rapidjson::Document gameObjectsDocument;
         rapidjson::Document componentsDocument;
@@ -149,6 +152,11 @@ namespace Kaamoo {
 
         for (auto &pair: gameObjects) {
             auto &gameObject = pair.second;
+            gameObject.OnLoad();
+        }
+        
+        for (auto &pair: gameObjects) {
+            auto &gameObject = pair.second;
             gameObject.Loaded();
         }
 
@@ -158,11 +166,41 @@ namespace Kaamoo {
 
         uint32_t minOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,
                                                device.properties.limits.nonCoherentAtomSize);
+        std::string materialsString = JsonUtils::ReadJsonFile(BasePath + "Materials.json");
+        rapidjson::Document materialsDocument;
+        materialsDocument.Parse(materialsString.c_str());
+        ShaderBuilder shaderBuilder(device);
+
+#ifdef RAY_TRACING
+        auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+                addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                build();
+        
+        auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
+        
+        auto accelerationStructureInfo = std::make_shared<VkWriteDescriptorSetAccelerationStructureKHR>();
+        accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+        accelerationStructureInfo->accelerationStructureCount = 1;
+        accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
+        auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
+        offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
+
+//        Material material(id, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
+//                          imagePointers, samplerPointers, bufferPointers, pipelineCategoryString);
+
+        DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).
+                writeTLAS(0,accelerationStructureInfo).
+                writeImage(1, offScreenImageInfo).
+                build(rayGenDescriptorSet);
+#else
         auto globalUboBufferPtr = std::make_shared<Buffer>(
                 device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
         globalUboBufferPtr->map();
+        auto bufferInfo = globalUboBufferPtr->descriptorInfo();
 
         auto globalDescriptorSetLayoutPointer = DescriptorSetLayout::Builder(device).
                 addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS).
@@ -170,17 +208,11 @@ namespace Kaamoo {
                 build();
 
         std::shared_ptr<VkDescriptorSet> globalDescriptorSetPointer = std::make_shared<VkDescriptorSet>();
-        auto bufferInfo = globalUboBufferPtr->descriptorInfo();
         DescriptorWriter(globalDescriptorSetLayoutPointer, *globalPool).
                 writeBuffer(0, bufferInfo).
                 writeImage(1, renderer.getShadowImageInfo()).
                 build(globalDescriptorSetPointer);
-
-        std::string materialsString = JsonUtils::ReadJsonFile(BaseConfigurationPath + "Materials.json");
-        rapidjson::Document materialsDocument;
-        materialsDocument.Parse(materialsString.c_str());
-        ShaderBuilder shaderBuilder(device);
-
+        
         if (materialsDocument.IsArray()) {
             for (rapidjson::SizeType i = 0; i < materialsDocument.Size(); i++) {
                 const rapidjson::Value &object = materialsDocument[i];
@@ -312,6 +344,7 @@ namespace Kaamoo {
                 materials.emplace(id, std::move(material));
             }
         }
+#endif
     }
 
     void Application::Awake() {

@@ -57,3 +57,5 @@
 5.22 Periodical backup.
 
 5.23 Constructed TLAS.
+
+5.25 Created ray tracing descriptor set. Using macro definitions to switch between ray tracing and rasterization.

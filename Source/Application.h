@@ -32,33 +32,41 @@ namespace Kaamoo {
         static constexpr int WIDTH = 800;
         static constexpr int HEIGHT = 800;
 
-
-        inline const static std::string BaseConfigurationPath = "../Configurations/";
+#ifdef RAY_TRACING
+        inline const static std::string ConfigPath = "RayTracing/";
+#else
+        inline const static std::string ConfigPath = "Rasterization/";
+#endif
+        inline const static std::string BasePath = "../Configurations/" + ConfigPath;
         inline const static std::string BaseTexturePath = "../Textures/";
         inline const static std::string GameObjectsFileName = "GameObjects.json";
         inline const static std::string MaterialsFileName = "Materials.json";
         inline const static std::string ComponentsFileName = "Components.json";
         const int MATERIAL_NUMBER = 16;
-        
+
         void run();
 
         Application();
-        
+
         ~Application();
 
         Application(const Application &) = delete;
 
         Application &operator=(const Application &) = delete;
-        
-        static const Device& getDevice() { return device; }
-        static const Renderer& getRenderer() { return renderer; }
-        static const MyWindow& getWindow() { return myWindow; }
-        
+
+        static const Device &getDevice() { return device; }
+
+        static const Renderer &getRenderer() { return renderer; }
+
+        static const MyWindow &getWindow() { return myWindow; }
+
     private:
         void loadGameObjects();
+
         void loadMaterials();
+
         void UpdateComponents(FrameInfo &frameInfo);
-        
+
         inline static MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         inline static Device device{myWindow};
         inline static Renderer renderer{myWindow, device};
@@ -69,7 +77,7 @@ namespace Kaamoo {
         std::shared_ptr<VkRenderPass> shadowPass;
         std::shared_ptr<VkFramebuffer> shadowFramebuffer;
 
-        void UpdateUbo(GlobalUbo &ubo,float totalTime, std::shared_ptr<ShadowSystem> shadowSystem);
+        void UpdateUbo(GlobalUbo &ubo, float totalTime, std::shared_ptr<ShadowSystem> shadowSystem);
 
         void Awake();
     };

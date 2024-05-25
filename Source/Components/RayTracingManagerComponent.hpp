@@ -4,6 +4,7 @@
 #include "../RayTracing/BLAS.hpp"
 
 
+#ifdef RAY_TRACING
 namespace Kaamoo {
     class RayTracingManagerComponent : public Component {
     public:
@@ -19,12 +20,12 @@ namespace Kaamoo {
             name = "RayTracingManagerComponentComponent";
         }
         
-        void Loaded(GameObject*gameObject) override {
+        void OnLoad(GameObject*gameObject) override {
             BLAS::buildBLAS(VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR
                             | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
         }
 
-        void Start(const ComponentUpdateInfo &updateInfo) override {
+        void Loaded(GameObject*gameObject) override {
             TLAS::buildTLAS(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
         };
 
@@ -35,3 +36,5 @@ namespace Kaamoo {
     private:
     };
 }
+
+#endif

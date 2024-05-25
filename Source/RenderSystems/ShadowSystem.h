@@ -26,6 +26,9 @@ namespace Kaamoo {
         
         template<class T>
         void UpdateGlobalUboBuffer(T &globalUbo, uint32_t frameIndex) {
+            if (material.getBufferPointers().empty()) {
+                return;
+            }
             material.getBufferPointers()[0]->writeToIndex(&globalUbo, frameIndex);
             material.getBufferPointers()[0]->flushIndex(frameIndex);
         };

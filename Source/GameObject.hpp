@@ -64,6 +64,12 @@ namespace Kaamoo {
             return false;
         }
         
+        void OnLoad(){
+            for(auto& component: components){
+                component->OnLoad(this);
+            }
+        }
+        
         void Loaded(){
             for(auto& component: components){
                 component->Loaded(this);

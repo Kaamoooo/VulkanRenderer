@@ -6,6 +6,7 @@
 namespace Kaamoo {
     class Sampler {
     public:
+        //Todo: Make a sampler pool
         Sampler(Device &device) : device{device} {};
 
         ~Sampler();

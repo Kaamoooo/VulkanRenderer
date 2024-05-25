@@ -71,14 +71,14 @@ namespace Kaamoo {
 
         VkCommandBuffer beginSingleTimeCommands();
 
-        void endSingleTimeCommands(VkCommandBuffer& commandBuffer);
+        void endSingleTimeCommands(VkCommandBuffer &commandBuffer);
 
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
         void copyBufferToImage(
                 VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
-        void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
+        void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout,
                                    VkImageSubresourceRange subresourceRange);
 
         void createImageWithInfo(
@@ -86,6 +86,11 @@ namespace Kaamoo {
                 VkMemoryPropertyFlags properties,
                 VkImage &image,
                 VkDeviceMemory &imageMemory);
+
+
+        VkPipelineStageFlagBits pipelineStageForLayout(VkImageLayout layout);
+
+        VkAccessFlags accessFlagsForImageLayout(VkImageLayout layout);
 
         VkPhysicalDeviceProperties properties{};
         VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
@@ -95,13 +100,14 @@ namespace Kaamoo {
         static Device *getDeviceSingleton() { return deviceSingleton; }
 
         MyWindow &getWindow() { return window; }
-        
+
+#ifdef RAY_TRACING
         VkDeviceAddress getAccelerationStructureAddressKHR(VkAccelerationStructureKHR& accelerationStructure){
             VkAccelerationStructureDeviceAddressInfoKHR addressInfo{};
             addressInfo.accelerationStructure = accelerationStructure;
             return pfn_vkGetAccelerationStructureDeviceAddressKHR(device_, &addressInfo);
         }
-
+#endif
     private:
         void createInstance();
 
@@ -115,7 +121,7 @@ namespace Kaamoo {
 
         void createCommandPool();
 
-        // helper functions
+// helper functions
         bool isDeviceSuitable(VkPhysicalDevice device);
 
         std::vector<const char *> getRequiredExtensions();
@@ -131,8 +137,9 @@ namespace Kaamoo {
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
-        
+
         void loadExtensionFunctions();
+
 
         VkInstance instance;
         VkDebugUtilsMessengerEXT debugMessenger;

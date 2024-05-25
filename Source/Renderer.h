@@ -74,7 +74,9 @@ namespace Kaamoo {
 
         void loadShadow();
 
-        void createShadowImage();
+        void freeOffscreenResources();
+
+        void loadOffscreenResources();
 
         MyWindow &myWindow;
         Device &device;
@@ -86,13 +88,25 @@ namespace Kaamoo {
         bool isFrameStarted = false;
 
         bool isCubeMap = true;
+        const int ShadowMapResolution = 1024;
         std::shared_ptr<Image> shadowImage;
         std::shared_ptr<Sampler> shadowSampler;
         VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;
         VkRenderPass shadowRenderPass = VK_NULL_HANDLE;
-        
-        const int ShadowMapResolution = 1024;
-    };
 
+        std::shared_ptr<Image> offscreenImageColor;
+
+        std::shared_ptr<Image> offscreenImageDepth;
+        VkFramebuffer offscreenFrameBuffer = VK_NULL_HANDLE;
+        VkRenderPass offscreenRenderPass = VK_NULL_HANDLE;
+
+        VkFormat offscreenColorFormat{VK_FORMAT_R32G32B32A32_SFLOAT};
+        VkFormat offscreenDepthFormat{VK_FORMAT_X8_D24_UNORM_PACK32};
+
+
+    public:
+
+        const std::shared_ptr<Image> &getOffscreenImageColor() const;
+    };
 
 }

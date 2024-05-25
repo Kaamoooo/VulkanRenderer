@@ -1,5 +1,5 @@
 ﻿#include "Descriptor.h"
-
+#include "RayTracing/TLAS.hpp"
 // std
 #include <cassert>
 #include <stdexcept>
@@ -136,14 +136,7 @@ namespace Kaamoo {
 
     DescriptorWriter &DescriptorWriter::writeBuffer(
             uint32_t binding, VkDescriptorBufferInfo bufferInfo) {
-//        assert(setLayout->bindings.count(binding) == 1 && "Layout does not contain specified binding");
-
         auto &bindingDescription = setLayout->bindings[binding];
-
-        assert(
-                bindingDescription.descriptorCount == 1 &&
-                "Binding single descriptor info, but binding expects multiple");
-
         auto write = std::make_shared<VkWriteDescriptorSet>();
         write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write->descriptorType = bindingDescription.descriptorType;
@@ -159,17 +152,29 @@ namespace Kaamoo {
             uint32_t binding, const std::shared_ptr<VkDescriptorImageInfo>& imageInfo) {
 
         auto &bindingDescription = setLayout->bindings[binding];
-
         auto write = std::make_shared<VkWriteDescriptorSet>();
         write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write->descriptorType = bindingDescription.descriptorType;
         write->dstBinding = binding;
         write->pImageInfo = imageInfo.get();
         write->descriptorCount = 1;
-
         writes.push_back(write);
         return *this;
     }
+#ifdef RAY_TRACING
+    DescriptorWriter &DescriptorWriter::writeTLAS(uint32_t binding,
+                                                  std::shared_ptr<VkWriteDescriptorSetAccelerationStructureKHR> accelerationStructureInfo) {
+        auto &bindingDescription = setLayout->bindings[binding];
+        auto write = std::make_shared<VkWriteDescriptorSet>();
+        write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write->descriptorType = bindingDescription.descriptorType;
+        write->dstBinding = binding;
+        write->descriptorCount = 1;
+        write->pNext = accelerationStructureInfo.get();
+        writes.push_back(write);
+        return *this;
+    }
+#endif
 
     bool DescriptorWriter::build(std::shared_ptr<VkDescriptorSet> &setPtr) {
         bool success = pool.allocateDescriptor(setLayout->getDescriptorSetLayout(), setPtr);

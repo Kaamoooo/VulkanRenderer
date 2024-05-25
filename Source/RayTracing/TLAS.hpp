@@ -2,10 +2,12 @@
 
 #include "../Utils/Utils.hpp"
 #include "BLAS.hpp"
-
+#ifdef RAY_TRACING
 namespace Kaamoo {
     class TLAS {
     public:
+        inline static VkAccelerationStructureKHR tlas{};
+        
         static auto createTLAS(Model &model, glm::mat4 translation = glm::mat4{1.f}) {
             VkAccelerationStructureInstanceKHR instance{};
             //Todo: May encounter a problem here
@@ -59,7 +61,6 @@ namespace Kaamoo {
 
     private:
         inline static std::vector<VkAccelerationStructureInstanceKHR> instances{};
-        inline static VkAccelerationStructureKHR tlas{};
 
         static void cmdCreateTLAS(VkCommandBuffer &commandBuffer, VkDeviceAddress instanceBufferDeviceAddress,
                                   VkBuildAccelerationStructureFlagsKHR flags, bool update, bool motion) {
@@ -144,3 +145,5 @@ namespace Kaamoo {
 
 
 }
+
+#endif
