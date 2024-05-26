@@ -22,7 +22,16 @@ namespace Kaamoo {
         // 0: point lights, 1: directional lights
         alignas(16) LightCategory lightCategory;
     };
-
+#ifdef RAY_TRACING
+    struct GlobalUbo {
+        glm::mat4 viewMatrix{1.f};
+        glm::mat4 inverseViewMatrix{1.f};
+        glm::mat4 projectionMatrix{1.f};
+        Light lights[MAX_LIGHT_NUM];
+        alignas(16) int lightNum;
+        alignas(16) float curTime;
+    };
+#else
     struct GlobalUbo {
         glm::mat4 viewMatrix{1.f};
         glm::mat4 inverseViewMatrix{1.f};
@@ -35,6 +44,7 @@ namespace Kaamoo {
         alignas(16) glm::mat4 shadowViewMatrix[6];
         alignas(16) glm::mat4 shadowProjMatrix;
     };
+#endif
 
     struct FrameInfo {
         int frameIndex;

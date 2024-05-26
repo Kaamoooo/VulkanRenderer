@@ -154,7 +154,7 @@ namespace Kaamoo {
             auto &gameObject = pair.second;
             gameObject.OnLoad();
         }
-        
+
         for (auto &pair: gameObjects) {
             auto &gameObject = pair.second;
             gameObject.Loaded();
@@ -172,28 +172,70 @@ namespace Kaamoo {
         ShaderBuilder shaderBuilder(device);
 
 #ifdef RAY_TRACING
-        auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
-                addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
-                addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
-                build();
         
-        auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
-        
-        auto accelerationStructureInfo = std::make_shared<VkWriteDescriptorSetAccelerationStructureKHR>();
-        accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
-        accelerationStructureInfo->accelerationStructureCount = 1;
-        accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
-        auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
-        offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
+        {
+            //TLAS, offcreen
+            auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                    build();
 
-//        Material material(id, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
-//                          imagePointers, samplerPointers, bufferPointers, pipelineCategoryString);
+            auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
 
-        DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).
-                writeTLAS(0,accelerationStructureInfo).
-                writeImage(1, offScreenImageInfo).
-                build(rayGenDescriptorSet);
+            auto accelerationStructureInfo = std::make_shared<VkWriteDescriptorSetAccelerationStructureKHR>();
+            accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+            accelerationStructureInfo->accelerationStructureCount = 1;
+            accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
+            auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
+            offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
+
+            DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).
+                    writeTLAS(0, accelerationStructureInfo).
+                    writeImage(1, offScreenImageInfo).
+                    build(rayGenDescriptorSet);
+        };
+        {
+            //Global, Obj, Textures
+            auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                    addBinding(1 ,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
+//                    addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
+                    build();
+
+            //Global
+            auto globalUboBufferPtr = std::make_shared<Buffer>(
+                    device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
+            globalUboBufferPtr->map();
+            auto bufferInfo = globalUboBufferPtr->descriptorInfo();
+            
+            //Obj
+            std::vector<ModelDesc> modelDescs;
+            for (auto &modelPair: Model::models) {
+                ModelDesc modelDesc{};
+                auto model = modelPair.second;
+                modelDesc.indexReference = model->getIndexReference();
+                modelDesc.vertexBufferAddress = model->getVertexBuffer()->getDeviceAddress();
+                modelDesc.indexBufferAddress = model->getIndexBuffer()->getDeviceAddress();
+                modelDescs.push_back(modelDesc);
+            }
+            auto objBufferPtr = std::make_shared<Buffer>(
+                    device, sizeof(ModelDesc), modelDescs.size(),
+                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
+            objBufferPtr->map();
+            
+            //Textures, for now we ignore
+            
+            //Build Descriptor Set
+            auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
+            DescriptorWriter(sceneDescriptorSetLayoutPtr, *globalPool).
+                    writeBuffer(0, bufferInfo).
+                    writeBuffer(1, objBufferPtr->descriptorInfo()).
+                    build(sceneDescriptorSet);
+        };
 #else
         auto globalUboBufferPtr = std::make_shared<Buffer>(
                 device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
@@ -384,6 +426,7 @@ namespace Kaamoo {
     void Application::UpdateUbo(GlobalUbo &ubo, float totalTime, std::shared_ptr<ShadowSystem> shadowSystem) {
         ubo.lightNum = LightComponent::lightNum;
         ubo.curTime = totalTime;
+#ifndef RAY_TRACING
         ubo.shadowViewMatrix[0] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
                                                                                glm::vec3(0, 90, 180));
         ubo.shadowViewMatrix[1] = shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position,
@@ -399,6 +442,7 @@ namespace Kaamoo {
         ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f),
                                                                                     1.0f, 0.1f, 5.0f);
         ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
+#endif
     }
 
 

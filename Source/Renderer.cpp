@@ -35,7 +35,11 @@ namespace Kaamoo {
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             recreateSwapChain();
-//            loadShadow();
+#ifdef RAY_TRACING
+            loadOffscreenResources();
+#else
+            loadShadow();
+#endif
             return nullptr;
         }
 

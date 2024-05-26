@@ -7,8 +7,9 @@
 namespace Kaamoo {
     class MeshRendererComponent : public Component {
     public:
+        
         ~MeshRendererComponent() override {
-            models.clear();
+            Model::models.clear();
         };
 
         MeshRendererComponent(std::shared_ptr<Model> model, id_t materialID) : model(model), materialId(materialID) {
@@ -20,14 +21,14 @@ namespace Kaamoo {
                 this->model = nullptr;
             } else {
                 const std::string modelName = object["model"].GetString();
-                if (models.count(modelName) > 0) {
-                    this->model = models.at(modelName);
+                if (Model::models.count(modelName) > 0) {
+                    this->model = Model::models.at(modelName);
                 } else {
                     std::shared_ptr<Model> modelFromFile = Model::createModelFromFile(*Device::getDeviceSingleton(),
                                                                                       Model::BaseModelsPath +
                                                                                       modelName);
                     this->model = modelFromFile;
-                    models.emplace(modelName, modelFromFile);
+                    Model::models.emplace(modelName, modelFromFile);
 #ifdef RAY_TRACING
                     BLAS::modelToBLASInput(model);
 #endif
@@ -63,7 +64,6 @@ namespace Kaamoo {
 
 
     private:
-        inline static std::unordered_map<std::string, std::shared_ptr<Model>> models{};
 
         id_t materialId;
         std::shared_ptr<Model> model = nullptr;

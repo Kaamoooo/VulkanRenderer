@@ -32,6 +32,7 @@ namespace Kaamoo {
         indexReference = modelIndex++;
         createVertexBuffers(builder.vertices);
         createIndexBuffers(builder.indices);
+
     }
 
     void Model::draw(VkCommandBuffer commandBuffer) {
@@ -58,18 +59,25 @@ namespace Kaamoo {
 
         assert(vertexCount >= 3 && "vertex count must be at least 3");
         uint32_t vertexSize = sizeof(vertices[0]);
-        uint32_t bufferSize = vertexSize*vertexCount;
+        uint32_t bufferSize = vertexSize * vertexCount;
 
         Buffer stagingBuffer(device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                              VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
         stagingBuffer.map();
-        stagingBuffer.writeToBuffer((void*)vertices.data());
-        
+        stagingBuffer.writeToBuffer((void *) vertices.data());
+
+#ifdef RAY_TRACING
+        vertexBuffer = std::make_unique<Buffer>(
+                device, vertexSize, vertexCount,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | rayTracingFlags,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
+#else
         vertexBuffer=std::make_unique<Buffer>(
                 device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
                 );
-
+#endif
         device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
     }
 
@@ -79,17 +87,24 @@ namespace Kaamoo {
         if (!hasIndexBuffer)return;
 
         VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
-        uint32_t indexSize=sizeof(indices[0]);
+        uint32_t indexSize = sizeof(indices[0]);
 
         Buffer stagingBuffer(device, indexSize, indexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                              VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
         stagingBuffer.map();
-        stagingBuffer.writeToBuffer((void*)indices.data());
-
-        indexBuffer=std::make_unique<Buffer>(
-                device, indexSize, indexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        stagingBuffer.writeToBuffer((void *) indices.data());
+#ifdef RAY_TRACING
+        indexBuffer = std::make_unique<Buffer>(
+                device, indexSize, indexCount,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | rayTracingFlags,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
+#else
+        indexBuffer = std::make_unique<Buffer>(
+                device, indexSize, indexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
+#endif
 
         device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
     }
@@ -162,7 +177,7 @@ namespace Kaamoo {
                             attrib.normals[3 * index.normal_index + 2]
                     };
                 }
-                
+
                 if (index.texcoord_index >= 0) {
                     vertex.uv = {
                             attrib.texcoords[2 * index.texcoord_index + 0],

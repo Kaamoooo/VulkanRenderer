@@ -4,17 +4,25 @@
 #include "Buffer.h"
 #include <memory>
 #include <iostream>
+#include <unordered_map>
 
 namespace Kaamoo {
+    struct ModelDesc {
+        alignas(16)int indexReference;
+        uint64_t vertexBufferAddress;
+        uint64_t indexBufferAddress;
+    };
+
     class Model {
     public:
-        
+        inline static std::unordered_map<std::string, std::shared_ptr<Model>> models{};
+
         Model(const Model &model) = delete;
 
         Model &operator=(const Model &model) = delete;
 
         inline static const std::string BaseModelsPath = "../Models/";
-        
+
         struct Vertex {
             glm::vec3 position;
             glm::vec3 color;
@@ -44,13 +52,17 @@ namespace Kaamoo {
         void bind(VkCommandBuffer commandBuffer);
 
         void draw(VkCommandBuffer commandBuffer);
-        
+
         std::unique_ptr<Buffer> &getVertexBuffer() { return vertexBuffer; }
+
         std::unique_ptr<Buffer> &getIndexBuffer() { return indexBuffer; }
-        
+
         uint32_t getPrimitiveCount() const { return indexCount / 3; }
+
         uint32_t getVertexCount() const { return vertexCount; }
+
         uint32_t getIndexCount() const { return indexCount; }
+
         uint32_t getIndexReference() const { return indexReference; }
 
     private:
@@ -58,6 +70,13 @@ namespace Kaamoo {
 
         void createIndexBuffers(const std::vector<uint32_t> &indices);
 
+#ifdef RAY_TRACING
+        const VkBufferUsageFlags flags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+        const VkBufferUsageFlags rayTracingFlags =
+                flags | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+#endif
+        
         Device &device;
 
         std::unique_ptr<Buffer> vertexBuffer;
@@ -66,7 +85,7 @@ namespace Kaamoo {
         bool hasIndexBuffer = true;
         std::unique_ptr<Buffer> indexBuffer;
         uint32_t indexCount{};
-        
+
         uint32_t indexReference;
     };
 }
