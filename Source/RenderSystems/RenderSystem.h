@@ -40,7 +40,7 @@ namespace Kaamoo {
         //路径是从可执行文件开始的，并非从根目录
         Device &device;
         std::unique_ptr<Pipeline> pipeline;
-        VkPipelineLayout pipelineLayout;
+        VkPipelineLayout m_pipelineLayout;
         Material &material;
         VkRenderPass renderPass;
     };

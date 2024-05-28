@@ -356,7 +356,7 @@ struct mesh_t {
       num_face_vertices;          // The number of vertices per
                                   // face. 3 = triangle, 4 = quad,
                                   // ... Up to 255 vertices per face.
-  std::vector<int> material_ids;  // per-face material ID
+  std::vector<int> material_ids;  // per-face m_material ID
   std::vector<unsigned int> smoothing_group_ids;  // per-face smoothing group
                                                   // ID(0 = off. positive value
                                                   // = group id)
@@ -433,11 +433,11 @@ struct callback_t {
   // triangle, 4 for quad)
   // 0 will be passed for undefined index in index_t members.
   void (*index_cb)(void *user_data, index_t *indices, int num_indices);
-  // `name` material name, `material_id` = the array index of material_t[]. -1
+  // `name` m_material name, `material_id` = the array index of material_t[]. -1
   // if
-  // a material not found in .mtl
+  // a m_material not found in .mtl
   void (*usemtl_cb)(void *user_data, const char *name, int material_id);
-  // `materials` = parsed material data.
+  // `materials` = parsed m_material data.
   void (*mtllib_cb)(void *user_data, const material_t *materials,
                     int num_materials);
   // There may be multiple group names
@@ -636,7 +636,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
 
 ///
 /// Parse texture name and texture option for custom texture parameter through
-/// material::unknown_parameter
+/// m_material::unknown_parameter
 ///
 /// @param[out] texname Parsed texture name
 /// @param[out] texopt Parsed texopt
@@ -2045,7 +2045,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
              std::string *warning, std::string *err) {
   (void)err;
 
-  // Create a default material anyway.
+  // Create a default m_material anyway.
   material_t material;
   InitMaterial(&material);
 
@@ -2096,14 +2096,14 @@ void LoadMtl(std::map<std::string, int> *material_map,
 
     // new mtl
     if ((0 == strncmp(token, "newmtl", 6)) && IS_SPACE((token[6]))) {
-      // flush previous material.
+      // flush previous m_material.
       if (!material.name.empty()) {
         material_map->insert(std::pair<std::string, int>(
             material.name, static_cast<int>(materials->size())));
         materials->push_back(material);
       }
 
-      // initial temporary material
+      // initial temporary m_material
       InitMaterial(&material);
 
       has_d = false;
@@ -2116,7 +2116,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
         // TODO: empty name check?
         if (namebuf.empty()) {
           if (warning) {
-            (*warning) += "empty material name in `newmtl`\n";
+            (*warning) += "empty m_material name in `newmtl`\n";
           }
         }
         material.name = namebuf;
@@ -2430,7 +2430,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
           std::pair<std::string, std::string>(key, value));
     }
   }
-  // flush last material.
+  // flush last m_material.
   material_map->insert(std::pair<std::string, int>(
       material.name, static_cast<int>(materials->size())));
   materials->push_back(material);
@@ -2571,7 +2571,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
   PrimGroup prim_group;
   std::string name;
 
-  // material
+  // m_material
   std::set<std::string> material_filenames;
   std::map<std::string, int> material_map;
   int material = -1;
@@ -2820,14 +2820,14 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
       if (it != material_map.end()) {
         newMaterialId = it->second;
       } else {
-        // { error!! material not found }
+        // { error!! m_material not found }
         if (warn) {
-          (*warn) += "material [ '" + namebuf + "' ] not found in .mtl\n";
+          (*warn) += "m_material [ '" + namebuf + "' ] not found in .mtl\n";
         }
       }
 
       if (newMaterialId != material) {
-        // Create per-face material. Thus we don't add `shape` to `shapes` at
+        // Create per-face m_material. Thus we don't add `shape` to `shapes` at
         // this time.
         // just clear `faceGroup` after `exportGroupsToShape()` call.
         exportGroupsToShape(&shape, prim_group, tags, material, name,
@@ -2851,7 +2851,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
           if (warn) {
             std::stringstream ss;
             ss << "Looks like empty filename for mtllib. Use default "
-                  "material (line "
+                  "m_material (line "
                << line_num << ".)\n";
 
             (*warn) += ss.str();
@@ -2886,8 +2886,8 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
           if (!found) {
             if (warn) {
               (*warn) +=
-                  "Failed to load material file(s). Use default "
-                  "material.\n";
+                  "Failed to load m_material file(s). Use default "
+                  "m_material.\n";
             }
           }
         }
@@ -2909,7 +2909,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
 
       shape = shape_t();
 
-      // material = -1;
+      // m_material = -1;
       prim_group.clear();
 
       std::vector<std::string> names;
@@ -2960,7 +2960,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
         shapes->push_back(shape);
       }
 
-      // material = -1;
+      // m_material = -1;
       prim_group.clear();
       shape = shape_t();
 
@@ -3122,7 +3122,7 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
                          std::string *err /*= NULL*/) {
   std::stringstream errss;
 
-  // material
+  // m_material
   std::set<std::string> material_filenames;
   std::map<std::string, int> material_map;
   int material_id = -1;  // -1 = invalid
@@ -3239,9 +3239,9 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
       if (it != material_map.end()) {
         newMaterialId = it->second;
       } else {
-        // { warn!! material not found }
+        // { warn!! m_material not found }
         if (warn && (!callback.usemtl_cb)) {
-          (*warn) += "material [ " + namebuf + " ] not found in .mtl\n";
+          (*warn) += "m_material [ " + namebuf + " ] not found in .mtl\n";
         }
       }
 
@@ -3268,7 +3268,7 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
           if (warn) {
             (*warn) +=
                 "Looks like empty filename for mtllib. Use default "
-                "material. \n";
+                "m_material. \n";
           }
         } else {
           bool found = false;
@@ -3301,8 +3301,8 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
           if (!found) {
             if (warn) {
               (*warn) +=
-                  "Failed to load material file(s). Use default "
-                  "material.\n";
+                  "Failed to load m_material file(s). Use default "
+                  "m_material.\n";
             }
           } else {
             if (callback.mtllib_cb) {

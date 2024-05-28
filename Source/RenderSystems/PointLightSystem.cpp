@@ -55,7 +55,7 @@ namespace Kaamoo {
         pipelineConfigureInfo.pipelineLayout = pipelineLayout;
 //        pipeline = std::make_unique<Pipeline>(
 //                device,
-//                material
+//                m_material
 //        );
     }
 

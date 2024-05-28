@@ -27,7 +27,7 @@ namespace Kaamoo {
     }
 
     RenderSystem::~RenderSystem() {
-        vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+        vkDestroyPipelineLayout(device.device(), m_pipelineLayout, nullptr);
     }
 
     void RenderSystem::createPipelineLayout() {
@@ -54,7 +54,7 @@ namespace Kaamoo {
         pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
         pipelineLayoutCreateInfo.pushConstantRangeCount = pushConstantRange.size == 0 ? 0 : 1;
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
-        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) !=
+        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout");
         }
@@ -75,7 +75,7 @@ namespace Kaamoo {
         }
         
         pipelineConfigureInfo.renderPass = renderPass;
-        pipelineConfigureInfo.pipelineLayout = pipelineLayout;
+        pipelineConfigureInfo.pipelineLayout = m_pipelineLayout;
         pipeline = std::make_unique<Pipeline>(
                 device,
                 pipelineConfigureInfo,
@@ -96,7 +96,7 @@ namespace Kaamoo {
         vkCmdBindDescriptorSets(
                 frameInfo.commandBuffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
+                m_pipelineLayout,
                 0,
                 material.getDescriptorSetLayoutPointers().size(),
                 descriptorSets.data(),
@@ -121,7 +121,7 @@ namespace Kaamoo {
                 pointLightPushConstant.position = glm::vec4(obj.transform->translation, 1.f);
                 pointLightPushConstant.color = glm::vec4(lightComponent->color, lightComponent->lightIntensity);
                 pointLightPushConstant.radius = obj.transform->scale.x;
-                vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout,
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                    sizeof(PointLightPushConstant), &pointLightPushConstant);
                 vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
@@ -130,7 +130,7 @@ namespace Kaamoo {
                 push.modelMatrix = pair.second.transform->mat4();
                 push.normalMatrix = pair.second.transform->normalMatrix();
 
-                vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+                vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout,
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                    0,
                                    sizeof(SimplePushConstantData),

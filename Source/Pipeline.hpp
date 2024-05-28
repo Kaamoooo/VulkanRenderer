@@ -11,13 +11,13 @@
 #include "Material.hpp"
 
 namespace Kaamoo {
-    const struct PipelineCategory{
-        std::string Opaque="Opaque";
-        std::string TessellationGeometry="TessellationGeometry";
+    const struct PipelineCategory {
+        std::string Opaque = "Opaque";
+        std::string TessellationGeometry = "TessellationGeometry";
         std::string SkyBox = "SkyBox";
-        std::string Transparent="Transparent";
-        std::string Shadow="Shadow";
-        std::string Overlay="Overlay";
+        std::string Transparent = "Transparent";
+        std::string Shadow = "Shadow";
+        std::string Overlay = "Overlay";
     } PipelineCategory;
 
     struct PipelineConfigureInfo {
@@ -70,8 +70,14 @@ namespace Kaamoo {
 
     private:
         Device &device;
-        VkPipeline graphicsPipeline;
-        Material &material;
+     
+        VkPipeline m_pipeline;
+     
+        Material &m_material;
+
+#ifdef RAY_TRACING
+        std::vector<VkRayTracingShaderGroupCreateInfoKHR> m_rayTracingGroups{};
+#endif
 
         void createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
 

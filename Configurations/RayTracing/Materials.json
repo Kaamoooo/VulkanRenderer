@@ -1,65 +1,9 @@
 [
   {
-    "id": 0,
-    "pipelineCategory": "Light",
-    "vertexShader": "PointLight.vert.spv",
-    "fragmentShader": "PointLight.frag.spv",
-    "texture": [
-    ]
-  },
-  {
-    "id": 1,
-    "pipelineCategory": "TessellationGeometry",
-    "vertexShader": "Grass/Grass.vert.spv",
-    "fragmentShader": "Grass/Grass.frag.spv",
-    "tessellationControlShader": "Grass/Grass.tesc.spv",
-    "tessellationEvaluationShader": "Grass/Grass.tese.spv",
-    "geometryShader": "Grass/Grass.geom.spv",
-    "texture": [
-      "Grass.jpg"
-    ]
-  },
-  {
     "id": 2,
     "pipelineCategory": "Opaque",
-    "vertexShader": "MyShader.vert.spv",
-    "fragmentShader": "MyShader.frag.spv",
-    "texture": [
-      "Tiles.jpg"
-    ]
-  },
-  {
-    "id": 3,
-    "pipelineCategory": "Shadow",
-    "vertexShader": "Shadow.vert.spv",
-    "fragmentShader": "Shadow.frag.spv",
-    "texture": []
-  },
-  {
-    "id": 4,
-    "pipelineCategory": "Overlay",
-    "vertexShader": "ShadowDisplay.vert.spv",
-    "fragmentShader": "ShadowDisplay.frag.spv",
-    "texture": [
-    ]
-  },
-  {
-    "id": 5,
-    "pipelineCategory": "Opaque",
-    "vertexShader": "MyShader.vert.spv",
-    "fragmentShader": "Grass/Ground.frag.spv",
-    "texture": [
-      "Ground.jpg",
-      "Ground068_1K-JPG_NormalGL.jpg"
-    ]
-  },
-  {
-    "id": 6,
-    "pipelineCategory": "SkyBox",
-    "vertexShader": "SkyBox/SkyBox.vert.spv",
-    "fragmentShader": "SkyBox/SkyBox.frag.spv",
-    "texture": [
-      "Cubemap"
-    ]
+    "rayGenShader" : "RayTracing/raytrace.rgen.spv",
+    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv",
+    "rayMissShader" : "RayTracing/raytrace.rmiss.spv"
   }
 ]

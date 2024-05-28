@@ -9,60 +9,6 @@
     "componentIds":[0,1]
   },
   {
-    "name": "Ground",
-    "transform": {
-      "translation": [0,0,0],
-      "scale": [1,1,1],
-      "rotation": [0,45,0]
-    },
-    "componentIds":[2]
-  },
-  {
-    "name": "Quad",
-    "transform": {
-      "translation": [1,0,0],
-      "scale": [2,2,2],
-      "rotation": [0,45,0]
-    },
-    "componentIds":[3]
-  },
-  {
-    "name": "Cube",
-    "transform": {
-      "translation": [0,0,0],
-      "scale": [2,2,2],
-      "rotation": [0,0,0]
-    },
-    "componentIds":[4]
-  },
-  {
-    "name": "Cube",
-    "transform": {
-      "translation": [1.5,-0.5,0],
-      "scale": [0.1,0.3,0.1],
-      "rotation": [0,0,0]
-    },
-    "componentIds":[5]
-  },
-  {
-    "name": "PointLight",
-    "transform": {
-      "translation": [0, -1.5, 1],
-      "scale": [0.1,1,1],
-      "rotation": [0,0,0]
-    },
-    "componentIds":[6,7]
-  },
-  {
-    "name": "DirectionalLight",
-    "transform": {
-      "translation": [-1, -2, 0],
-      "scale": [0.1,1,1],
-      "rotation": [1,2,0.5]
-    },
-    "componentIds":[7,8]
-  },
-  {
     "name": "MainCamera",
     "transform": {
       "translation": [0, -1, -4],

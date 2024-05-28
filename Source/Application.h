@@ -22,6 +22,7 @@
 #include "RenderSystems/ShadowSystem.h"
 #include "RenderSystems/GrassSystem.h"
 #include "RenderSystems/SkyBoxSystem.hpp"
+#include "RenderSystems/RayTracingSystem.hpp"
 //#include "Components/CameraComponent.hpp"
 //#include "Components/Input/CameraMovementComponent.hpp"
 //#include "Components/Input/ObjectMovementComponent.hpp"

@@ -44,8 +44,12 @@ namespace Kaamoo {
                 renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
                 continue;
             }
-            auto renderSystem = std::make_shared<RenderSystem>(device, renderer.getSwapChainRenderPass(),
-                                                               material.second);
+
+#ifdef RAY_TRACING
+            auto renderSystem = std::make_shared<RayTracingSystem>(device, renderer.getSwapChainRenderPass(), material.second);
+#else
+            auto renderSystem = std::make_shared<RenderSystem>(device, renderer.getSwapChainRenderPass(),m_material.second);
+#endif
             renderSystem->Init();
             renderSystems.push_back(renderSystem);
         }
@@ -172,70 +176,118 @@ namespace Kaamoo {
         ShaderBuilder shaderBuilder(device);
 
 #ifdef RAY_TRACING
-        
-        {
-            //TLAS, offcreen
-            auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
-                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
-                    build();
+        //TLAS, offcreen
+        auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).addBinding(0,
+                                                                                            VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+                                                                                            VK_SHADER_STAGE_RAYGEN_BIT_KHR).addBinding(
+                1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).build();
 
-            auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
+        auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
 
-            auto accelerationStructureInfo = std::make_shared<VkWriteDescriptorSetAccelerationStructureKHR>();
-            accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
-            accelerationStructureInfo->accelerationStructureCount = 1;
-            accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
-            auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
-            offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-            offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
+        auto accelerationStructureInfo = std::make_shared<VkWriteDescriptorSetAccelerationStructureKHR>();
+        accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+        accelerationStructureInfo->accelerationStructureCount = 1;
+        accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
+        auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
+        offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
 
-            DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).
-                    writeTLAS(0, accelerationStructureInfo).
-                    writeImage(1, offScreenImageInfo).
-                    build(rayGenDescriptorSet);
-        };
-        {
-            //Global, Obj, Textures
-            auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_RAYGEN_BIT_KHR).
-                    addBinding(1 ,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
+        DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).writeTLAS(0, accelerationStructureInfo).writeImage(
+                1, offScreenImageInfo).build(rayGenDescriptorSet);
+
+        //Global, Obj, Textures
+        auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+                addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
 //                    addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
-                    build();
+                build();
 
-            //Global
-            auto globalUboBufferPtr = std::make_shared<Buffer>(
-                    device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
-                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
-            globalUboBufferPtr->map();
-            auto bufferInfo = globalUboBufferPtr->descriptorInfo();
-            
-            //Obj
-            std::vector<ModelDesc> modelDescs;
-            for (auto &modelPair: Model::models) {
-                ModelDesc modelDesc{};
-                auto model = modelPair.second;
-                modelDesc.indexReference = model->getIndexReference();
-                modelDesc.vertexBufferAddress = model->getVertexBuffer()->getDeviceAddress();
-                modelDesc.indexBufferAddress = model->getIndexBuffer()->getDeviceAddress();
-                modelDescs.push_back(modelDesc);
+        //Global
+        auto globalUboBufferPtr = std::make_shared<Buffer>(device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
+                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
+        globalUboBufferPtr->map();
+        auto bufferInfo = globalUboBufferPtr->descriptorInfo();
+
+        //Obj
+        std::vector<ModelDesc> modelDescs;
+        for (auto &modelPair: Model::models) {
+            ModelDesc modelDesc{};
+            auto model = modelPair.second;
+            modelDesc.indexReference = model->getIndexReference();
+            modelDesc.vertexBufferAddress = model->getVertexBuffer()->getDeviceAddress();
+            modelDesc.indexBufferAddress = model->getIndexBuffer()->getDeviceAddress();
+            modelDescs.push_back(modelDesc);
+        }
+        auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(ModelDesc), modelDescs.size(),
+                                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
+        objBufferPtr->map();
+
+        //Textures, for now we ignore
+
+        //Build Descriptor Set
+        auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
+        DescriptorWriter(sceneDescriptorSetLayoutPtr, *globalPool).writeBuffer(0, bufferInfo).writeBuffer(1,
+                                                                                                          objBufferPtr->descriptorInfo()).build(
+                sceneDescriptorSet);
+
+        //Load from Json
+        if (materialsDocument.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < materialsDocument.Size(); i++) {
+                const rapidjson::Value &object = materialsDocument[i];
+
+                const int id = object["id"].GetInt();
+                const std::string pipelineCategoryString = object["pipelineCategory"].GetString();
+
+                const std::string rayGenShaderName = object["rayGenShader"].GetString();
+                const std::string rayClosestShaderName = object["rayClosestHitShader"].GetString();
+                const std::string rayMissShaderName = object["rayMissShader"].GetString();
+
+                shaderBuilder.createShaderModule(rayGenShaderName);
+                shaderBuilder.createShaderModule(rayClosestShaderName);
+                shaderBuilder.createShaderModule(rayMissShaderName);
+
+                std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
+                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayGenShaderName),ShaderCategory::rayGen),
+                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayClosestShaderName),ShaderCategory::rayClosestHit),
+                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayMissShaderName),ShaderCategory::rayMiss)};
+
+//                const bool tessEnabled = object.HasMember("tessellationControlShader");
+//                if (tessEnabled) {
+//                    const std::string tessellationControlShaderName = object["tessellationControlShader"].GetString();
+//                    const std::string tessellationEvaluationShaderName = object["tessellationEvaluationShader"].GetString();
+//                    shaderModulePointers.emplace_back(std::make_shared<ShaderModule>(
+//                            shaderBuilder.getShaderModulePointer(tessellationControlShaderName),
+//                            ShaderCategory::tessellationControl));
+//                    shaderModulePointers.emplace_back(std::make_shared<ShaderModule>(
+//                            shaderBuilder.getShaderModulePointer(tessellationEvaluationShaderName),
+//                            ShaderCategory::tessellationEvaluation));
+//                }
+
+
+                std::vector<std::shared_ptr<Image>> imagePointers{};
+                std::vector<std::shared_ptr<Sampler>> samplerPointers{};
+                std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{rayGenDescriptorSet,
+                                                                                    sceneDescriptorSet};
+                std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{
+                        rayGenDescriptorSetLayoutPtr, sceneDescriptorSetLayoutPtr};
+                std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr, objBufferPtr};
+
+//                auto textureNames = object["texture"].GetArray();
+//                for (auto &textureNameGenericValue: textureNames) {
+//                    descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++,
+//                                                          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+//                                                          VK_SHADER_STAGE_ALL_GRAPHICS);
+//                }
+
+
+                Material material(id, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
+                                  imagePointers, samplerPointers, bufferPointers, pipelineCategoryString);
+
+                materials.emplace(id, std::move(material));
             }
-            auto objBufferPtr = std::make_shared<Buffer>(
-                    device, sizeof(ModelDesc), modelDescs.size(),
-                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
-            objBufferPtr->map();
-            
-            //Textures, for now we ignore
-            
-            //Build Descriptor Set
-            auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
-            DescriptorWriter(sceneDescriptorSetLayoutPtr, *globalPool).
-                    writeBuffer(0, bufferInfo).
-                    writeBuffer(1, objBufferPtr->descriptorInfo()).
-                    build(sceneDescriptorSet);
-        };
+        }
 #else
         auto globalUboBufferPtr = std::make_shared<Buffer>(
                 device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
@@ -380,10 +432,10 @@ namespace Kaamoo {
                 descriptorSetPointers.push_back(materialDescriptorSetPointer);
 
 
-                Material material(id, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
+                Material m_material(id, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
                                   imagePointers, samplerPointers, bufferPointers, pipelineCategoryString);
 
-                materials.emplace(id, std::move(material));
+                materials.emplace(id, std::move(m_material));
             }
         }
 #endif

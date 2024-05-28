@@ -61,3 +61,5 @@
 5.25 Created ray tracing descriptor set. Using macro definitions to switch between ray tracing and rasterization.
 
 5.26 Completed ray tracing descriptors.
+
+5.28 Created ray tracing pipeline.

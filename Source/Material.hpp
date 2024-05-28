@@ -19,7 +19,10 @@ namespace Kaamoo {
         fragment,
         tessellationControl,
         tessellationEvaluation,
-        geometry
+        geometry,
+        rayGen,
+        rayClosestHit,
+        rayMiss
     };
     typedef struct ShaderModule {
         std::shared_ptr<VkShaderModule> shaderModule;

@@ -1,4 +1,4 @@
 "E:\Installation Path\Jetbrain ToolBox\apps\CLion\ch-0\241.15989.121\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_MAKE_PROGRAM=E:/Installation Path/Jetbrain ToolBox/apps/CLion/ch-0/241.15989.121/bin/ninja/win/x64/ninja.exe" -G Ninja -S E:\MyProjects\VulkanTestCLion -B E:\MyProjects\VulkanTestCLion\cmake-build-release
--- Configuring done (0.2s)
+-- Configuring done (0.3s)
 -- Generating done (0.0s)
 -- Build files have been written to: E:/MyProjects/VulkanTestClion/cmake-build-release

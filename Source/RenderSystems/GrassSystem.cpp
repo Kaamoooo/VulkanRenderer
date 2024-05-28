@@ -42,7 +42,7 @@ namespace Kaamoo {
         pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
         pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
-        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) !=
+        if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout");
         }
@@ -61,7 +61,7 @@ namespace Kaamoo {
         pipelineConfigureInfo.tessellationStateCreateInfo = tessellationStateCreateInfo;
 
         pipelineConfigureInfo.renderPass = renderPass;
-        pipelineConfigureInfo.pipelineLayout = pipelineLayout;
+        pipelineConfigureInfo.pipelineLayout = m_pipelineLayout;
         pipeline = std::make_unique<Pipeline>(
                 device,
                 pipelineConfigureInfo,
@@ -82,7 +82,7 @@ namespace Kaamoo {
         vkCmdBindDescriptorSets(
                 frameInfo.commandBuffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pipelineLayout,
+                m_pipelineLayout,
                 0,
                 material.getDescriptorSetLayoutPointers().size(),
                 descriptorSets.data(),
@@ -102,7 +102,7 @@ namespace Kaamoo {
             if (moveObject != nullptr)
                 push.vaseModelMatrix = moveObject->transform->mat4();
             push.modelMatrix = pair.second.transform->mat4();
-            vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
+            vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout,
                                VK_SHADER_STAGE_ALL_GRAPHICS,
                                0,
                                sizeof(SimplePushConstantData),
