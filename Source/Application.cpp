@@ -48,7 +48,7 @@ namespace Kaamoo {
 #ifdef RAY_TRACING
             auto renderSystem = std::make_shared<RayTracingSystem>(device, renderer.getSwapChainRenderPass(), material.second);
 #else
-            auto renderSystem = std::make_shared<RenderSystem>(device, renderer.getSwapChainRenderPass(),m_material.second);
+            auto renderSystem = std::make_shared<RenderSystem>(device, renderer.getSwapChainRenderPass(),material.second);
 #endif
             renderSystem->Init();
             renderSystems.push_back(renderSystem);

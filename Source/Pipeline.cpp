@@ -122,7 +122,7 @@ namespace Kaamoo {
                 pipelineCreateInfo.pDynamicState = &pipelineConfigureInfo.dynamicStateCreateInfo;
                 pipelineCreateInfo.pTessellationState = &pipelineConfigureInfo.tessellationStateCreateInfo;
         
-                pipelineCreateInfo.layout = pipelineConfigureInfo.m_pipelineLayout;
+                pipelineCreateInfo.layout = pipelineConfigureInfo.pipelineLayout;
                 pipelineCreateInfo.renderPass = pipelineConfigureInfo.renderPass;
                 pipelineCreateInfo.subpass = pipelineConfigureInfo.subpass;
         
