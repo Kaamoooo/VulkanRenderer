@@ -58,16 +58,9 @@ namespace Kaamoo {
 
         QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }
 
-        VkFormat findSupportedFormat(
-                const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+        VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
-        // Buffer Helper Functions
-        void createBuffer(
-                VkDeviceSize size,
-                VkBufferUsageFlags usage,
-                VkMemoryPropertyFlags properties,
-                VkBuffer &buffer,
-                VkDeviceMemory &bufferMemory);
+        void createBuffer(VkDeviceSize size,VkBufferUsageFlags usage,VkMemoryPropertyFlags properties,VkBuffer &buffer,VkDeviceMemory &bufferMemory);
 
         VkCommandBuffer beginSingleTimeCommands();
 
@@ -75,27 +68,19 @@ namespace Kaamoo {
 
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-        void copyBufferToImage(
-                VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
+        void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
-        void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout,
-                                   VkImageSubresourceRange subresourceRange);
+        void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout,VkImageSubresourceRange subresourceRange);
 
-        void createImageWithInfo(
-                const VkImageCreateInfo &imageInfo,
-                VkMemoryPropertyFlags properties,
-                VkImage &image,
-                VkDeviceMemory &imageMemory);
-
-
+        void createImageWithInfo(const VkImageCreateInfo &imageInfo,VkMemoryPropertyFlags properties,VkImage &image,VkDeviceMemory &imageMemory);
+        
         VkPipelineStageFlagBits pipelineStageForLayout(VkImageLayout layout);
 
         VkAccessFlags accessFlagsForImageLayout(VkImageLayout layout);
 
         VkPhysicalDeviceProperties properties{};
         VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-        VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties{
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
+        VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
 
         static Device *getDeviceSingleton() { return deviceSingleton; }
 
@@ -121,7 +106,6 @@ namespace Kaamoo {
 
         void createCommandPool();
 
-// helper functions
         bool isDeviceSuitable(VkPhysicalDevice device);
 
         std::vector<const char *> getRequiredExtensions();

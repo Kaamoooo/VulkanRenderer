@@ -63,3 +63,5 @@
 5.26 Completed ray tracing descriptors.
 
 5.28 Created ray tracing pipeline.
+
+5.29 Created shader binding table. 

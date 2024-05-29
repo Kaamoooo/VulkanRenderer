@@ -249,9 +249,10 @@ namespace Kaamoo {
                 shaderBuilder.createShaderModule(rayMissShaderName);
 
                 std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
-                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayGenShaderName),ShaderCategory::rayGen),
-                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayClosestShaderName),ShaderCategory::rayClosestHit),
-                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayMissShaderName),ShaderCategory::rayMiss)};
+                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayGenShaderName), ShaderCategory::rayGen),
+                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayClosestShaderName), ShaderCategory::rayClosestHit),
+                        std::make_shared<ShaderModule>(shaderBuilder.getShaderModulePointer(rayMissShaderName), ShaderCategory::rayMiss)
+                };
 
 //                const bool tessEnabled = object.HasMember("tessellationControlShader");
 //                if (tessEnabled) {

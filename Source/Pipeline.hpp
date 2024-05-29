@@ -9,6 +9,7 @@
 #include "Device.hpp"
 #include "Model.hpp"
 #include "Material.hpp"
+#include "Utils/Utils.hpp"
 
 namespace Kaamoo {
     const struct PipelineCategory {
@@ -77,6 +78,14 @@ namespace Kaamoo {
 
 #ifdef RAY_TRACING
         std::vector<VkRayTracingShaderGroupCreateInfoKHR> m_rayTracingGroups{};
+        
+        Buffer* m_shaderBindingTableBuffer;
+        VkStridedDeviceAddressRegionKHR m_genRegion{};
+        VkStridedDeviceAddressRegionKHR m_missRegion{};
+        VkStridedDeviceAddressRegionKHR m_hitRegion{};
+        VkStridedDeviceAddressRegionKHR m_callableRegion{};
+        
+        void createShaderBindingTable();
 #endif
 
         void createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
