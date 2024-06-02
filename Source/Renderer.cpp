@@ -1,8 +1,4 @@
-﻿//
-// Created by asus on 2023/9/16.
-//
-
-#include <glm/fwd.hpp>
+﻿#include <glm/fwd.hpp>
 #include <glm/detail/type_mat4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include "Renderer.h"
@@ -16,9 +12,8 @@ namespace Kaamoo {
 
         recreateSwapChain();
         createCommandBuffers();
-#ifdef RAY_TRACING
         loadOffscreenResources();
-#else
+#ifndef RAY_TRACING
         loadShadow();
 #endif
     }
@@ -27,6 +22,7 @@ namespace Kaamoo {
     Renderer::~Renderer() {
         freeCommandBuffers();
         freeShadowResources();
+        freeOffscreenResources();
     }
 
     VkCommandBuffer Renderer::beginFrame() {
@@ -358,9 +354,8 @@ namespace Kaamoo {
             offscreenImageColor = std::make_shared<Image>(device);
             VkImageCreateInfo imageCreateInfo{};
             Image::setDefaultImageCreateInfo(imageCreateInfo);
-            imageCreateInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-            imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
-                                    | VK_IMAGE_USAGE_STORAGE_BIT;
+            imageCreateInfo.format = offscreenColorFormat;
+            imageCreateInfo.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
             VkExtent3D imageExtent{};
             imageExtent.height = swapChain->getSwapChainExtent().height;
             imageExtent.width = swapChain->getSwapChainExtent().width;
@@ -368,25 +363,27 @@ namespace Kaamoo {
             imageCreateInfo.extent = imageExtent;
             offscreenImageColor->createImage(imageCreateInfo);
 
-            VkImageViewCreateInfo imageViewCreateInfo{};
-            offscreenImageColor->setDefaultImageViewCreateInfo(imageViewCreateInfo);
-            imageViewCreateInfo.format = imageCreateInfo.format;
-            offscreenImageColor->createImageView(imageViewCreateInfo);
+            auto imageViewCreateInfo=std::make_shared<VkImageViewCreateInfo>();
+            offscreenImageColor->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            imageViewCreateInfo->format = imageCreateInfo.format;
+            offscreenImageColor->createImageView(*imageViewCreateInfo);
 
-            Sampler offscreenSampler(device);
-            offscreenSampler.createTextureSampler();
-            offscreenImageColor->sampler = offscreenSampler.getSampler();
+            m_offscreenSampler=std::make_shared<Sampler>(device);
+            m_offscreenSampler->createTextureSampler();
+            offscreenImageColor->sampler = m_offscreenSampler->getSampler();
 
             //depth
             offscreenImageDepth = std::make_shared<Image>(device);
-            imageCreateInfo.format = VK_FORMAT_X8_D24_UNORM_PACK32;
+            offscreenImageDepth->setDefaultImageCreateInfo(imageCreateInfo);
+            imageCreateInfo.format = offscreenDepthFormat;
             imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
             imageCreateInfo.extent = imageExtent;
             offscreenImageDepth->createImage(imageCreateInfo);
 
-            imageViewCreateInfo.format = imageCreateInfo.format;
-            imageViewCreateInfo.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
-            offscreenImageDepth->createImageView(imageViewCreateInfo);
+            offscreenImageDepth->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            imageViewCreateInfo->format = imageCreateInfo.format;
+            imageViewCreateInfo->subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
+            offscreenImageDepth->createImageView(*imageViewCreateInfo);
         }
 
         {

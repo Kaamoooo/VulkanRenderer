@@ -10,6 +10,7 @@ namespace Kaamoo {
     public:
         ~RayTracingManagerComponent() override {
             BLAS::release();
+            TLAS::release();
         };
         
         RayTracingManagerComponent() {

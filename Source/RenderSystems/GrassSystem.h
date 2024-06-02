@@ -5,7 +5,7 @@
 namespace Kaamoo {
     class GrassSystem : public RenderSystem {
     public:
-        GrassSystem(Device &device, VkRenderPass renderPass, Material &material) ;
+        GrassSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) ;
 
     private:
         void createPipelineLayout() override;

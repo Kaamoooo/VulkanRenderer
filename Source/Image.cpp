@@ -114,7 +114,7 @@ namespace Kaamoo {
         defaultCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
         defaultCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         defaultCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        defaultCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        defaultCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
         defaultCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         defaultCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         defaultCreateInfo.flags = 0;
@@ -174,9 +174,10 @@ namespace Kaamoo {
         imageInfo->sampler = sampler;
         imageInfo->imageView = imageView;
         imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        return imageInfo;    }
-    
-    
+        return imageInfo;
+    }
+
+
     void Image::createImage(VkImageCreateInfo createInfo) {
         device.createImageWithInfo(createInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
     }
@@ -184,7 +185,6 @@ namespace Kaamoo {
     const VkImageView *Image::getImageView() const {
         return &imageView;
     }
-
 
 
 }

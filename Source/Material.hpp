@@ -36,16 +36,24 @@ namespace Kaamoo {
 
     class Material {
     public:
-        using id_t = unsigned int;
-        using Map = std::unordered_map<id_t, Material>;
+        using id_t = signed int;
+        using Map = std::unordered_map<id_t, std::shared_ptr<Material>>;
+        
+        ~Material() {
+            auto device = Device::getDeviceSingleton()->device();
+            for (auto &shaderModule: shaderModules) {
+                vkDestroyShaderModule(device, *shaderModule->shaderModule, nullptr);
+            }
+                
+        };
 
         Material(id_t id,
-                 std::vector<std::shared_ptr<ShaderModule>> shaderModules,
-                 std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts,
-                 std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSets,
-                 std::vector<std::shared_ptr<Image>> imagePointers,
-                 std::vector<std::shared_ptr<Sampler>> samplerPointers,
-                 std::vector<std::shared_ptr<Buffer>> bufferPointers,
+                 std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
+                 std::vector<std::shared_ptr<DescriptorSetLayout>>& descriptorSetLayouts,
+                 std::vector<std::shared_ptr<VkDescriptorSet>>& descriptorSets,
+                 std::vector<std::shared_ptr<Image>>& imagePointers,
+                 std::vector<std::shared_ptr<Sampler>>& samplerPointers,
+                 std::vector<std::shared_ptr<Buffer>>& bufferPointers,
                  std::string pipelineCategory) :
                 materialId(id),
                 shaderModules(std::move(shaderModules)),

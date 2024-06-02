@@ -19,6 +19,8 @@ namespace Kaamoo {
         std::string Transparent = "Transparent";
         std::string Shadow = "Shadow";
         std::string Overlay = "Overlay";
+        std::string Post = "Post";
+        std::string RayTracing = "RayTracing";
     } PipelineCategory;
 
     struct PipelineConfigureInfo {
@@ -55,7 +57,7 @@ namespace Kaamoo {
 
     class Pipeline {
     public:
-        Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, Material &material);
+        Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, std::shared_ptr<Material> material);
 
         ~Pipeline();
 
@@ -67,29 +69,51 @@ namespace Kaamoo {
 
         static void enableAlphaBlending(PipelineConfigureInfo &);
 
-        void bind(VkCommandBuffer commandBuffer);
+        void bind(VkCommandBuffer commandBuffer, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS);
 
     private:
         Device &device;
-     
+
         VkPipeline m_pipeline;
-     
-        Material &m_material;
+
+        std::shared_ptr<Material> m_material;
+        
+        void createGraphicsPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
 
 #ifdef RAY_TRACING
         std::vector<VkRayTracingShaderGroupCreateInfoKHR> m_rayTracingGroups{};
-        
-        Buffer* m_shaderBindingTableBuffer;
+
+        std::shared_ptr<Buffer> m_shaderBindingTableBuffer;
         VkStridedDeviceAddressRegionKHR m_genRegion{};
         VkStridedDeviceAddressRegionKHR m_missRegion{};
         VkStridedDeviceAddressRegionKHR m_hitRegion{};
         VkStridedDeviceAddressRegionKHR m_callableRegion{};
-        
+
+
         void createShaderBindingTable();
+
+        void createRayTracingPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
 #endif
 
-        void createPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
+#ifdef RAY_TRACING
+    public:
+    public:
+        const VkStridedDeviceAddressRegionKHR &getGenRegion() const {
+            return m_genRegion;
+        }
 
+        const VkStridedDeviceAddressRegionKHR &getMissRegion() const {
+            return m_missRegion;
+        }
+
+        const VkStridedDeviceAddressRegionKHR &getHitRegion() const {
+            return m_hitRegion;
+        }
+        
+        const VkStridedDeviceAddressRegionKHR &getCallableRegion() const {
+            return m_callableRegion;
+        }
+#endif
 
     };
 

@@ -1,6 +1,4 @@
-﻿#ifndef CAMERA_COMPONENT_INCLUDED
-#define CAMERA_COMPONENT_INCLUDED
-
+﻿#pragma once
 
 #include "Component.hpp"
 
@@ -143,13 +141,15 @@ namespace Kaamoo {
             frameInfo.globalUbo.viewMatrix = getViewMatrix();
             frameInfo.globalUbo.inverseViewMatrix = getInverseViewMatrix();
             frameInfo.globalUbo.projectionMatrix = getProjectionMatrix();
+#ifdef RAY_TRACING
+            frameInfo.globalUbo.inverseProjectionMatrix = glm::inverse(getProjectionMatrix());
+#endif
         }
 
     private:
         glm::mat4 projectionMatrix{1.f};
+        glm::mat4 inverseprojectionMatrix{1.f};
         glm::mat4 viewMatrix{1.f};
         glm::mat4 inverseViewMatrix{1.f};
     };
 }
-
-#endif

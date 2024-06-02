@@ -4,6 +4,7 @@
 #include <iostream>
 #include <set>
 #include <unordered_set>
+#include <sstream>
 
 namespace Kaamoo {
 
@@ -17,15 +18,44 @@ namespace Kaamoo {
 
         return VK_FALSE;
     }
+    
+    static VkBool32 __stdcall debugUtilsMessengerCallback(
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData)
+    {
+        std::string prefix("");
+        if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+            prefix = "WARNING: ";
+        }
+        else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+            prefix = "ERROR: ";
+        }
+
+
+        // Display message to default output (console/logcat)
+        std::stringstream debugMessage;
+        debugMessage << prefix << "[" << pCallbackData->messageIdNumber << "][" << pCallbackData->pMessageIdName << "] : " << pCallbackData->pMessage;
+
+
+
+
+        if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+            std::cout << debugMessage.str() << "\n";
+        } else {
+            std::cout << debugMessage.str() << "\n";
+        }
+        fflush(stdout);
+        return VK_FALSE;
+    }
 
     VkResult CreateDebugUtilsMessengerEXT(
             VkInstance instance,
             const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
             const VkAllocationCallbacks *pAllocator,
             VkDebugUtilsMessengerEXT *pDebugMessenger) {
-        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
-                instance,
-                "vkCreateDebugUtilsMessengerEXT");
+        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance,"vkCreateDebugUtilsMessengerEXT");
         if (func != nullptr) {
             return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
         } else {
@@ -163,12 +193,12 @@ namespace Kaamoo {
 
         VkDeviceCreateInfo createInfo = {};
 
-#pragma region Enable features
         VkPhysicalDeviceVulkan11Features vulkan11Features = {};
         vulkan11Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
         vulkan11Features.multiview = VK_TRUE;
         createInfo.pNext = &vulkan11Features;
 
+#ifdef RAY_TRACING
         VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = {};
         accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
         accelerationStructureFeatures.accelerationStructure = VK_TRUE;
@@ -178,7 +208,21 @@ namespace Kaamoo {
         rayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
         rayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
         accelerationStructureFeatures.pNext = &rayTracingPipelineFeatures;
-#pragma endregion
+        
+//        VkPhysicalDeviceRayTracingValidationFeaturesNV rayTracingValidationFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV};
+//        rayTracingValidationFeatures.rayTracingValidation = VK_TRUE;
+//        rayTracingPipelineFeatures.pNext = &rayTracingValidationFeatures;
+        
+        VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT};
+        bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+//        rayTracingValidationFeatures.pNext = &bufferDeviceAddressFeatures;
+        rayTracingPipelineFeatures.pNext = &bufferDeviceAddressFeatures;
+        
+        VkPhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES};
+        hostQueryResetFeatures.hostQueryReset = VK_TRUE;
+        bufferDeviceAddressFeatures.pNext = &hostQueryResetFeatures;
+        
+#endif
 
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
@@ -234,13 +278,20 @@ namespace Kaamoo {
         VkPhysicalDeviceFeatures supportedFeatures;
         vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-        return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-               supportedFeatures.samplerAnisotropy;
-//  &&supportedFeatures.geometryShader;
+        bool isDeviceSuitable =indices.isComplete() && extensionsSupported && swapChainAdequate &&
+                               supportedFeatures.samplerAnisotropy;
+#ifdef RAY_TRACING
+        VkPhysicalDeviceRayTracingValidationFeaturesNV rayTracingValidationFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV};
+        VkPhysicalDeviceFeatures2 deviceFeatures2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+        deviceFeatures2.pNext = &rayTracingValidationFeatures;
+        vkGetPhysicalDeviceFeatures2(device, &deviceFeatures2);
+        isDeviceSuitable = isDeviceSuitable && rayTracingValidationFeatures.rayTracingValidation;
+#endif
+
+        return isDeviceSuitable;
     }
 
-    void Device::populateDebugMessengerCreateInfo(
-            VkDebugUtilsMessengerCreateInfoEXT &createInfo) {
+    void Device::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo) {
         createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
@@ -249,6 +300,9 @@ namespace Kaamoo {
                                  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         createInfo.pfnUserCallback = debugCallback;
+#ifdef RAY_TRACING
+        createInfo.pfnUserCallback = debugUtilsMessengerCallback;
+#endif
         createInfo.pUserData = nullptr;  // Optional
     }
 
@@ -333,6 +387,7 @@ namespace Kaamoo {
                 nullptr,
                 &extensionCount,
                 availableExtensions.data());
+        
 
         std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 

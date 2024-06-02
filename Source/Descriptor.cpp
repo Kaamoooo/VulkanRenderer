@@ -135,13 +135,13 @@ namespace Kaamoo {
             : setLayout{setLayout}, pool{pool} {}
 
     DescriptorWriter &DescriptorWriter::writeBuffer(
-            uint32_t binding, VkDescriptorBufferInfo bufferInfo) {
+            uint32_t binding, std::shared_ptr<VkDescriptorBufferInfo> bufferInfo) {
         auto &bindingDescription = setLayout->bindings[binding];
         auto write = std::make_shared<VkWriteDescriptorSet>();
         write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write->descriptorType = bindingDescription.descriptorType;
         write->dstBinding = binding;
-        write->pBufferInfo = &bufferInfo;
+        write->pBufferInfo = bufferInfo.get();
         write->descriptorCount = 1;
 
         writes.push_back(write);

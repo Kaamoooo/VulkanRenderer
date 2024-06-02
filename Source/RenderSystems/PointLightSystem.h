@@ -29,7 +29,7 @@ namespace Kaamoo {
         //手动编译Shader，此时读取编译后的文件
         //路径是从可执行文件开始的，并非从根目录
         Device& device;
-//        Pipeline pipeline{device, "../ShaderBuilder/MyShader.vert.spv", "../ShaderBuilder/MyShader.frag.spv",
+//        Pipeline m_pipeline{device, "../ShaderBuilder/MyShader.vert.spv", "../ShaderBuilder/MyShader.frag.spv",
 //                          Pipeline::setDefaultPipelineConfigureInfo(WIDTH,HEIGHT)};
         std::unique_ptr<Pipeline> pipeline;
         VkPipelineLayout pipelineLayout;

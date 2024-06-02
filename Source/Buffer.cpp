@@ -10,6 +10,7 @@
 // std
 #include <cassert>
 #include <cstring>
+#include <memory>
 
 namespace Kaamoo {
 
@@ -50,7 +51,7 @@ namespace Kaamoo {
 
     Buffer::~Buffer() {
         unmap();
-         vkDestroyBuffer(Device.device(), buffer, nullptr);
+        vkDestroyBuffer(Device.device(), buffer, nullptr);
         vkFreeMemory(Device.device(), memory, nullptr);
     }
 
@@ -149,12 +150,12 @@ namespace Kaamoo {
  *
  * @return VkDescriptorBufferInfo of specified offset and range
  */
-    VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) {
-        return VkDescriptorBufferInfo{
-                buffer,
-                offset,
-                size,
-        };
+    std::shared_ptr<VkDescriptorBufferInfo> Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) {
+        auto bufferInfoPtr = std::make_shared<VkDescriptorBufferInfo>();
+        bufferInfoPtr->buffer = buffer;
+        bufferInfoPtr->offset = offset;
+        bufferInfoPtr->range = size;
+        return bufferInfoPtr;
     }
 
 /**
@@ -183,7 +184,7 @@ namespace Kaamoo {
  *
  * @return VkDescriptorBufferInfo for instance at index
  */
-    VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index) {
+    std::shared_ptr<VkDescriptorBufferInfo> Buffer::descriptorInfoForIndex(int index) {
         return descriptorInfo(alignmentSize, index * alignmentSize);
     }
 

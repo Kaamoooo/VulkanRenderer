@@ -21,8 +21,8 @@ namespace Kaamoo {
         float radius;
     };
 
-    RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, Material &material)
-            : device{device}, material{material},renderPass{renderPass} {
+    RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material)
+            : device{device}, m_material{material}, m_renderPass{renderPass} {
 
     }
 
@@ -35,19 +35,19 @@ namespace Kaamoo {
         pushConstantRange.stageFlags =
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
-        if (material.getPipelineCategory() == "Light") {
+        if (m_material->getPipelineCategory() == "Light") {
             pushConstantRange.size = sizeof(PointLightPushConstant);
-        } else if (material.getPipelineCategory() == "Opaque")
+        } else if (m_material->getPipelineCategory() == "Opaque")
             pushConstantRange.size = sizeof(SimplePushConstantData);
-        else if (material.getPipelineCategory() == "Overlay"){
+        else if (m_material->getPipelineCategory() == "Overlay"){
             pushConstantRange.size = 0;
         }
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(material.getDescriptorSetLayoutPointers().size());
+        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(m_material->getDescriptorSetLayoutPointers().size());
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-        for (auto &descriptorSetLayoutPointer: material.getDescriptorSetLayoutPointers()) {
+        for (auto &descriptorSetLayoutPointer: m_material->getDescriptorSetLayoutPointers()) {
             descriptorSetLayouts.push_back(descriptorSetLayoutPointer->getDescriptorSetLayout());
         }
         
@@ -56,7 +56,7 @@ namespace Kaamoo {
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
         if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) !=
             VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout");
+            throw std::runtime_error("failed to create m_pipeline layout");
         }
 
     }
@@ -65,30 +65,30 @@ namespace Kaamoo {
         PipelineConfigureInfo pipelineConfigureInfo{};
         Pipeline::setDefaultPipelineConfigureInfo(pipelineConfigureInfo);
         
-        if (material.getPipelineCategory() == "Light") {
+        if (m_material->getPipelineCategory() == "Light") {
             Pipeline::enableAlphaBlending(pipelineConfigureInfo);
             pipelineConfigureInfo.attributeDescriptions.clear();
             pipelineConfigureInfo.vertexBindingDescriptions.clear();
-        } else if (material.getPipelineCategory() == "Overlay") {
+        } else if (m_material->getPipelineCategory() == "Overlay") {
             pipelineConfigureInfo.attributeDescriptions.clear();
             pipelineConfigureInfo.vertexBindingDescriptions.clear();
         }
         
         pipelineConfigureInfo.renderPass = renderPass;
         pipelineConfigureInfo.pipelineLayout = m_pipelineLayout;
-        pipeline = std::make_unique<Pipeline>(
+        m_pipeline = std::make_unique<Pipeline>(
                 device,
                 pipelineConfigureInfo,
-                material
+                m_material
         );
     }
 
     
     void RenderSystem::render(FrameInfo &frameInfo) {
-        pipeline->bind(frameInfo.commandBuffer);
+        m_pipeline->bind(frameInfo.commandBuffer);
 
         std::vector<VkDescriptorSet> descriptorSets;
-        for (auto &descriptorSetPointer: material.getDescriptorSetPointers()) {
+        for (auto &descriptorSetPointer: m_material->getDescriptorSetPointers()) {
             if (descriptorSetPointer != nullptr) {
                 descriptorSets.push_back(*descriptorSetPointer);
             }
@@ -98,7 +98,7 @@ namespace Kaamoo {
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 m_pipelineLayout,
                 0,
-                material.getDescriptorSetLayoutPointers().size(),
+                m_material->getDescriptorSetLayoutPointers().size(),
                 descriptorSets.data(),
                 0,
                 nullptr
@@ -108,11 +108,11 @@ namespace Kaamoo {
             auto &obj = pair.second;
             MeshRendererComponent* meshRendererComponent;
             if(!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
-            if (meshRendererComponent->GetMaterialID() != material.getMaterialId())continue;
+            if (meshRendererComponent->GetMaterialID() != m_material->getMaterialId())continue;
             
-            if (material.getPipelineCategory()=="Overlay"){
+            if (m_material->getPipelineCategory() == "Overlay"){
                 vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
-            }else if (material.getPipelineCategory()=="Light") {
+            }else if (m_material->getPipelineCategory() == "Light") {
                 PointLightPushConstant pointLightPushConstant{};
                 
                 LightComponent* lightComponent;
@@ -125,7 +125,7 @@ namespace Kaamoo {
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                                    sizeof(PointLightPushConstant), &pointLightPushConstant);
                 vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
-            } else if (material.getPipelineCategory()=="Opaque") {
+            } else if (m_material->getPipelineCategory() == "Opaque") {
                 SimplePushConstantData push{};
                 push.modelMatrix = pair.second.transform->mat4();
                 push.normalMatrix = pair.second.transform->normalMatrix();
@@ -143,7 +143,8 @@ namespace Kaamoo {
 
     void RenderSystem::Init() {
         createPipelineLayout();
-        createPipeline(renderPass);
+        createPipeline(m_renderPass);
     }
+
 
 }

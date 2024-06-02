@@ -23,9 +23,7 @@
 #include "RenderSystems/GrassSystem.h"
 #include "RenderSystems/SkyBoxSystem.hpp"
 #include "RenderSystems/RayTracingSystem.hpp"
-//#include "Components/CameraComponent.hpp"
-//#include "Components/Input/CameraMovementComponent.hpp"
-//#include "Components/Input/ObjectMovementComponent.hpp"
+#include "RenderSystems/PostSystem.hpp"
 
 namespace Kaamoo {
     class Application {
@@ -62,23 +60,36 @@ namespace Kaamoo {
         static const MyWindow &getWindow() { return myWindow; }
 
     private:
-        void loadGameObjects();
-
-        void loadMaterials();
-
-        void UpdateComponents(FrameInfo &frameInfo);
 
         inline static MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
         inline static Device device{myWindow};
         inline static Renderer renderer{myWindow, device};
 
         GameObject::Map gameObjects;
-        Material::Map materials;
-        std::unique_ptr<DescriptorPool> globalPool;
+        ShaderBuilder m_shaderBuilder;
+        Material::Map m_materials;
+        std::shared_ptr<DescriptorPool> globalPool;
         std::shared_ptr<VkRenderPass> shadowPass;
         std::shared_ptr<VkFramebuffer> shadowFramebuffer;
+        
+        std::vector<std::shared_ptr<RenderSystem>> m_renderSystems;
+        std::shared_ptr<PostSystem> m_postSystem;
+        
+#ifdef RAY_TRACING
+        std::shared_ptr<RayTracingSystem> m_rayTracingSystem;
+#else
+        std::shared_ptr<ShadowSystem> m_shadowSystem;
+#endif
 
-        void UpdateUbo(GlobalUbo &ubo, float totalTime, std::shared_ptr<ShadowSystem> shadowSystem);
+        void loadGameObjects();
+
+        void loadMaterials();
+
+        void createRenderSystems();
+        
+        void UpdateComponents(FrameInfo &frameInfo);
+        
+        void UpdateUbo(GlobalUbo &ubo, float totalTime) noexcept;
 
         void Awake();
     };

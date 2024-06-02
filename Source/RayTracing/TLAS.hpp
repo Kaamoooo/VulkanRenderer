@@ -8,6 +8,13 @@ namespace Kaamoo {
     public:
         inline static VkAccelerationStructureKHR tlas{};
         
+        static void release(){
+            Device::pfn_vkDestroyAccelerationStructureKHR(Device::getDeviceSingleton()->device(),tlas, nullptr);
+            for(auto buffer:buffers){
+                delete buffer;
+            }
+        }
+        
         static auto createTLAS(Model &model, glm::mat4 translation = glm::mat4{1.f}) {
             VkAccelerationStructureInstanceKHR instance{};
             //Todo: May encounter a problem here
@@ -35,8 +42,12 @@ namespace Kaamoo {
                     *device, sizeof(VkAccelerationStructureInstanceKHR) * instanceCount,
                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
                     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT|VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT|VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
                     VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
+            instanceBuffer->map();
+            instanceBuffer->writeToBuffer(instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * instanceCount);
+            buffers.emplace_back(instanceBuffer);
+            
             VkBufferDeviceAddressInfo bufferInfo{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
             bufferInfo.buffer = instanceBuffer->getBuffer();
             VkDeviceAddress instanceAddress = vkGetBufferDeviceAddress(device->device(), &bufferInfo);
@@ -61,6 +72,7 @@ namespace Kaamoo {
 
     private:
         inline static std::vector<VkAccelerationStructureInstanceKHR> instances{};
+        inline static std::vector<Buffer*> buffers{};
 
         static void cmdCreateTLAS(VkCommandBuffer &commandBuffer, VkDeviceAddress instanceBufferDeviceAddress,
                                   VkBuildAccelerationStructureFlagsKHR flags, bool update, bool motion) {
@@ -102,9 +114,10 @@ namespace Kaamoo {
                         *Device::getDeviceSingleton(),
                         sizeInfo.accelerationStructureSize,
                         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT|VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
                         VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT
                 );
+                buffers.emplace_back(tlasBuffer);
                 createInfo.buffer = tlasBuffer->getBuffer();
                 Device::pfn_vkCreateAccelerationStructureKHR(
                         Device::getDeviceSingleton()->device(),
@@ -119,9 +132,10 @@ namespace Kaamoo {
                     sizeInfo.buildScratchSize,
                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
                     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT|VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                     VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT
             );
+            buffers.emplace_back(scratchBuffer);
             VkBufferDeviceAddressInfo bufferDeviceAddressInfo{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
             bufferDeviceAddressInfo.buffer = scratchBuffer->getBuffer();
             VkDeviceAddress scratchBufferDeviceAddress = vkGetBufferDeviceAddress(

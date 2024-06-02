@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <memory>
 #include "Device.hpp"
 
 namespace Kaamoo {
@@ -28,7 +29,7 @@ namespace Kaamoo {
 
         VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
-        VkDescriptorBufferInfo descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+        std::shared_ptr<VkDescriptorBufferInfo> descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
         VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
@@ -36,7 +37,7 @@ namespace Kaamoo {
 
         VkResult flushIndex(int index);
 
-        VkDescriptorBufferInfo descriptorInfoForIndex(int index);
+        std::shared_ptr<VkDescriptorBufferInfo> descriptorInfoForIndex(int index);
 
         VkResult invalidateIndex(int index);
 
@@ -61,6 +62,8 @@ namespace Kaamoo {
             bufferDeviceAddressInfo.buffer = buffer;
             return vkGetBufferDeviceAddress(Device.device(), &bufferDeviceAddressInfo);
         };
+        
+        VkDeviceMemory getMemory() const { return memory; }
 
     private:
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);

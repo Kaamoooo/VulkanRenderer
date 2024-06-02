@@ -26,6 +26,14 @@ namespace Kaamoo {
             for (auto &buffer: buffers) {
                 delete buffer;
             }
+            for (auto &blas: blasToDestroy) {
+                Device::pfn_vkDestroyAccelerationStructureKHR(Device::getDeviceSingleton()->device(), blas, nullptr);
+            }
+            
+            for(auto& blasBuildInfo:blasBuildInfoMap){
+                Device::pfn_vkDestroyAccelerationStructureKHR(Device::getDeviceSingleton()->device(), blasBuildInfo.second->as, nullptr);
+            }
+            
             blasInputs.clear();
             blasBuildInfoMap.clear();
         }
@@ -88,6 +96,8 @@ namespace Kaamoo {
                 for (int j = 0; j < blasInputs[i].asBuildRangeInfoArray.size(); ++j) {
                     maxPrimCount[j] = blasInputs[i].asBuildRangeInfoArray[j].primitiveCount;
                 }
+
+                buildInfos[i]->buildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
                 Device::pfn_vkGetAccelerationStructureBuildSizesKHR(
                         Device::getDeviceSingleton()->device(),
                         VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
@@ -147,6 +157,7 @@ namespace Kaamoo {
     private:
         inline static std::vector<BLASInput> blasInputs{};
         inline static std::vector<Buffer*> buffers{};
+        inline static std::vector<VkAccelerationStructureKHR> blasToDestroy{};
 
         static void cmdCreateBLAS(VkCommandBuffer &commandBuffer,
                                   const std::vector<uint32_t> &indices,
@@ -207,7 +218,7 @@ namespace Kaamoo {
                                    std::vector<std::shared_ptr<BLASBuildInfo>> &buildInfos,
                                    VkQueryPool &queryPool) {
             uint32_t queryCount = 0;
-            std::vector<VkAccelerationStructureKHR> cleanUpBLAS(indices.size());
+            std::vector<VkAccelerationStructureKHR> cleanUpBLAS(blasInputs.size());
             std::vector<VkDeviceSize> compactSizes(indices.size());
             vkGetQueryPoolResults(
                     Device::getDeviceSingleton()->device(), queryPool,
@@ -218,8 +229,7 @@ namespace Kaamoo {
                 cleanUpBLAS[idx] = buildInfos[idx]->as;
                 buildInfos[idx]->buildSizesInfo.accelerationStructureSize = compactSizes[queryCount++];
 
-                VkAccelerationStructureCreateInfoKHR compactAsCreateInfo{
-                        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR};
+                VkAccelerationStructureCreateInfoKHR compactAsCreateInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR};
                 compactAsCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
                 compactAsCreateInfo.size = buildInfos[idx]->buildSizesInfo.accelerationStructureSize;
                 auto asBuffer = new Buffer(
@@ -244,8 +254,7 @@ namespace Kaamoo {
                 copyInfo.src = cleanUpBLAS[idx];
                 copyInfo.mode = VK_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT_KHR;
                 Device::pfn_vkCmdCopyAccelerationStructureKHR(commandBuffer, &copyInfo);
-                Device::pfn_vkDestroyAccelerationStructureKHR(Device::getDeviceSingleton()->device(), cleanUpBLAS[idx],
-                                                              nullptr);
+                blasToDestroy.push_back(cleanUpBLAS[idx]);
             }
         }
     };

@@ -27,9 +27,10 @@ namespace Kaamoo {
         glm::mat4 viewMatrix{1.f};
         glm::mat4 inverseViewMatrix{1.f};
         glm::mat4 projectionMatrix{1.f};
-        Light lights[MAX_LIGHT_NUM];
-        alignas(16) int lightNum;
+        glm::mat4 inverseProjectionMatrix{1.f};
         alignas(16) float curTime;
+        alignas(16) int lightNum;
+        alignas(16)Light lights[MAX_LIGHT_NUM];
     };
 #else
     struct GlobalUbo {
@@ -53,6 +54,7 @@ namespace Kaamoo {
         std::unordered_map<id_t, GameObject> &gameObjects;
         Material::Map &materials;
         GlobalUbo& globalUbo;
+        VkExtent2D extent;
     };
     
     struct RendererInfo{

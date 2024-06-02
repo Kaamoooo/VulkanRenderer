@@ -11,7 +11,7 @@ namespace Kaamoo {
         glm::mat4 modelMatrix{};
     };
 
-    ShadowSystem::ShadowSystem(Device &device, VkRenderPass renderPass, Material &material)
+    ShadowSystem::ShadowSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material)
             : device{device}, material{material} {
         createPipelineLayout();
         createPipeline(renderPass);
@@ -30,9 +30,9 @@ namespace Kaamoo {
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(material.getDescriptorSetLayoutPointers().size());
+        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(material->getDescriptorSetLayoutPointers().size());
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-        for (auto &descriptorSetLayoutPointer: material.getDescriptorSetLayoutPointers()) {
+        for (auto &descriptorSetLayoutPointer: material->getDescriptorSetLayoutPointers()) {
             descriptorSetLayouts.push_back(descriptorSetLayoutPointer->getDescriptorSetLayout());
         }
         pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
@@ -40,7 +40,7 @@ namespace Kaamoo {
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
         if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) !=
             VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout");
+            throw std::runtime_error("failed to create m_pipeline layout");
         }
 
     }
@@ -90,7 +90,7 @@ namespace Kaamoo {
         pipeline->bind(frameInfo.commandBuffer);
 
         std::vector<VkDescriptorSet> descriptorSets;
-        for (auto &descriptorSetPointer: material.getDescriptorSetPointers()) {
+        for (auto &descriptorSetPointer: material->getDescriptorSetPointers()) {
             if (*descriptorSetPointer != nullptr) {
                 descriptorSets.push_back(*descriptorSetPointer);
             }
@@ -100,7 +100,7 @@ namespace Kaamoo {
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 pipelineLayout,
                 0,
-                material.getDescriptorSetLayoutPointers().size(),
+                material->getDescriptorSetLayoutPointers().size(),
                 descriptorSets.data(),
                 0,
                 nullptr

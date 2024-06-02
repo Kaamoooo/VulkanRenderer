@@ -32,10 +32,10 @@ namespace Kaamoo {
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(material.getDescriptorSetLayoutPointers().size());
+        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(m_material->getDescriptorSetLayoutPointers().size());
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-        for (auto &descriptorSetLayoutPointer: material.getDescriptorSetLayoutPointers()) {
+        for (auto &descriptorSetLayoutPointer: m_material->getDescriptorSetLayoutPointers()) {
             descriptorSetLayouts.push_back(descriptorSetLayoutPointer->getDescriptorSetLayout());
         }
 
@@ -44,7 +44,7 @@ namespace Kaamoo {
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
         if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) !=
             VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout");
+            throw std::runtime_error("failed to create m_pipeline layout");
         }
     }
 
@@ -62,29 +62,29 @@ namespace Kaamoo {
 
         pipelineConfigureInfo.renderPass = renderPass;
         pipelineConfigureInfo.pipelineLayout = m_pipelineLayout;
-        pipeline = std::make_unique<Pipeline>(
+        m_pipeline = std::make_unique<Pipeline>(
                 device,
                 pipelineConfigureInfo,
-                material
+                m_material
         );
     }
 
 
     void GrassSystem::render(FrameInfo &frameInfo) {
-        pipeline->bind(frameInfo.commandBuffer);
+        m_pipeline->bind(frameInfo.commandBuffer);
 
         std::vector<VkDescriptorSet> descriptorSets;
-        for (auto &descriptorSetPointer: material.getDescriptorSetPointers()) {
+        for (auto &descriptorSetPointer: m_material->getDescriptorSetPointers())
             if (descriptorSetPointer != nullptr) {
                 descriptorSets.push_back(*descriptorSetPointer);
             }
-        }
+
         vkCmdBindDescriptorSets(
                 frameInfo.commandBuffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                 m_pipelineLayout,
                 0,
-                material.getDescriptorSetLayoutPointers().size(),
+                m_material->getDescriptorSetLayoutPointers().size(),
                 descriptorSets.data(),
                 0,
                 nullptr
@@ -98,7 +98,7 @@ namespace Kaamoo {
             }
             MeshRendererComponent *meshRendererComponent;
             if (!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
-            if (meshRendererComponent->GetMaterialID() != material.getMaterialId())continue;
+            if (meshRendererComponent->GetMaterialID() != m_material->getMaterialId())continue;
             if (moveObject != nullptr)
                 push.vaseModelMatrix = moveObject->transform->mat4();
             push.modelMatrix = pair.second.transform->mat4();
@@ -112,9 +112,9 @@ namespace Kaamoo {
         }
     }
 
-    GrassSystem::GrassSystem(Device &device, VkRenderPass renderPass, Material &material) : RenderSystem(device,
-                                                                                                         renderPass,
-                                                                                                         material) {
+    GrassSystem::GrassSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) : RenderSystem(device,
+                                                                                                                         renderPass,
+                                                                                                                         material) {
     }
 
 }

@@ -437,7 +437,7 @@ struct callback_t {
   // if
   // a m_material not found in .mtl
   void (*usemtl_cb)(void *user_data, const char *name, int material_id);
-  // `materials` = parsed m_material data.
+  // `m_materials` = parsed m_material data.
   void (*mtllib_cb)(void *user_data, const material_t *materials,
                     int num_materials);
   // There may be multiple group names
@@ -591,7 +591,7 @@ class ObjReader {
 /// ==>>========= Legacy v1 API =============================================
 
 /// Loads .obj from a file.
-/// 'attrib', 'shapes' and 'materials' will be filled with parsed shape data
+/// 'attrib', 'shapes' and 'm_materials' will be filled with parsed shape data
 /// 'shapes' will be filled with parsed shape data
 /// Returns true when loading .obj become success.
 /// Returns warning message into `warn`, and error message into `err`
@@ -620,7 +620,7 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
                          std::string *warn = NULL, std::string *err = NULL);
 
 /// Loads object from a std::istream, uses `readMatFn` to retrieve
-/// std::istream for materials.
+/// std::istream for m_materials.
 /// Returns true when loading .obj become success.
 /// Returns warning and error message into `err`
 bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
@@ -629,7 +629,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
              MaterialReader *readMatFn = NULL, bool triangulate = true,
              bool default_vcols_fallback = true);
 
-/// Loads materials into std::map
+/// Loads m_materials into std::map
 void LoadMtl(std::map<std::string, int> *material_map,
              std::vector<material_t> *materials, std::istream *inStream,
              std::string *warning, std::string *err);

@@ -13,7 +13,7 @@ namespace Kaamoo {
     public:
 
 
-        ShadowSystem(Device &device, VkRenderPass renderPass, Material &material);
+        ShadowSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material);
 
         ~ShadowSystem();
 
@@ -26,11 +26,11 @@ namespace Kaamoo {
         
         template<class T>
         void UpdateGlobalUboBuffer(T &globalUbo, uint32_t frameIndex) {
-            if (material.getBufferPointers().empty()) {
+            if (material->getBufferPointers().empty()) {
                 return;
             }
-            material.getBufferPointers()[0]->writeToIndex(&globalUbo, frameIndex);
-            material.getBufferPointers()[0]->flushIndex(frameIndex);
+            material->getBufferPointers()[0]->writeToIndex(&globalUbo, frameIndex);
+            material->getBufferPointers()[0]->flushIndex(frameIndex);
         };
         
         glm::mat4 calculateViewMatrixForRotation(glm::vec3 position, glm::vec3 rotation) {
@@ -58,7 +58,7 @@ namespace Kaamoo {
         Device &device;
         std::unique_ptr<Pipeline> pipeline;
         VkPipelineLayout pipelineLayout;
-        Material &material;
+        std::shared_ptr<Material> material;
     };
 
 

@@ -40,7 +40,7 @@ namespace Kaamoo {
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
         if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) !=
             VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout");
+            throw std::runtime_error("failed to create m_pipeline layout");
         }
 
     }
@@ -53,7 +53,7 @@ namespace Kaamoo {
         pipelineConfigureInfo.vertexBindingDescriptions.clear();
         pipelineConfigureInfo.renderPass = renderPass;
         pipelineConfigureInfo.pipelineLayout = pipelineLayout;
-//        pipeline = std::make_unique<Pipeline>(
+//        m_pipeline = std::make_unique<Pipeline>(
 //                device,
 //                m_material
 //        );

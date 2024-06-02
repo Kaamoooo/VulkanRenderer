@@ -15,13 +15,9 @@ namespace Kaamoo {
         public:
             Builder(Device &Device) : Device{Device} {}
 
-            Builder &addBinding(
-                    uint32_t binding,
-                    VkDescriptorType descriptorType,
-                    VkShaderStageFlags stageFlags,
-                    uint32_t count = 1);
+            Builder &addBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags stageFlags, uint32_t count = 1);
 
-            std::shared_ptr<DescriptorSetLayout> build( ) const;
+            std::shared_ptr<DescriptorSetLayout> build() const;
 
         private:
             Device &Device;
@@ -31,8 +27,7 @@ namespace Kaamoo {
             const std::vector<VkDescriptorSetLayoutBinding> &getBindings() const;
         };
 
-        DescriptorSetLayout(
-                Device &Device, const std::vector<VkDescriptorSetLayoutBinding>& bindings);
+        DescriptorSetLayout(Device &Device, const std::vector<VkDescriptorSetLayoutBinding> &bindings);
 
         ~DescriptorSetLayout();
 
@@ -45,7 +40,7 @@ namespace Kaamoo {
     private:
         Device &Device;
         VkDescriptorSetLayout descriptorSetLayout;
-        std::vector< VkDescriptorSetLayoutBinding> bindings;
+        std::vector<VkDescriptorSetLayoutBinding> bindings;
 
         friend class DescriptorWriter;
     };
@@ -101,10 +96,10 @@ namespace Kaamoo {
     public:
         DescriptorWriter(std::shared_ptr<DescriptorSetLayout> setLayout, DescriptorPool &pool);
 
-        DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo bufferInfo);
+        DescriptorWriter &writeBuffer(uint32_t binding, std::shared_ptr<VkDescriptorBufferInfo> bufferInfo);
 
-        DescriptorWriter &writeImage(uint32_t binding, const std::shared_ptr<VkDescriptorImageInfo>& imageInfo);
-        
+        DescriptorWriter &writeImage(uint32_t binding, const std::shared_ptr<VkDescriptorImageInfo> &imageInfo);
+
         DescriptorWriter &writeTLAS(uint32_t binding,
                                     std::shared_ptr<VkWriteDescriptorSetAccelerationStructureKHR> accelerationStructureInfo);
 

@@ -1,9 +1,9 @@
 [
   {
     "id": 2,
-    "pipelineCategory": "Opaque",
+    "pipelineCategory": "RayTracing",
     "rayGenShader" : "RayTracing/raytrace.rgen.spv",
-    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv",
-    "rayMissShader" : "RayTracing/raytrace.rmiss.spv"
+    "rayMissShader" : "RayTracing/raytrace.rmiss.spv",
+    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv"
   }
 ]

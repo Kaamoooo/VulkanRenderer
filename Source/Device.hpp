@@ -89,11 +89,37 @@ namespace Kaamoo {
 #ifdef RAY_TRACING
         VkDeviceAddress getAccelerationStructureAddressKHR(VkAccelerationStructureKHR& accelerationStructure){
             VkAccelerationStructureDeviceAddressInfoKHR addressInfo{};
+            addressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
             addressInfo.accelerationStructure = accelerationStructure;
             return pfn_vkGetAccelerationStructureDeviceAddressKHR(device_, &addressInfo);
         }
 #endif
     private:
+        VkInstance instance;
+        VkDebugUtilsMessengerEXT debugMessenger;
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        MyWindow &window;
+        VkCommandPool commandPool;
+
+        VkDevice device_;
+        VkSurfaceKHR surface_;
+        VkQueue graphicsQueue_;
+        VkQueue presentQueue_;
+
+        inline static Device *deviceSingleton;
+
+        const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+        const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                                                            VK_KHR_MULTIVIEW_EXTENSION_NAME,
+                                                            VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+                                                            VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+                                                            VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+//                                                            VK_NV_RAY_TRACING_VALIDATION_EXTENSION_NAME,
+                                                            VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+                                                            VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,
+                                                            VK_EXT_PIPELINE_CREATION_FEEDBACK_EXTENSION_NAME
+                                                            };
+        
         void createInstance();
 
         void setupDebugMessenger();
@@ -114,7 +140,7 @@ namespace Kaamoo {
 
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
-        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+        static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
 
         void hasGflwRequiredInstanceExtensions();
 
@@ -125,25 +151,7 @@ namespace Kaamoo {
         void loadExtensionFunctions();
 
 
-        VkInstance instance;
-        VkDebugUtilsMessengerEXT debugMessenger;
-        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        MyWindow &window;
-        VkCommandPool commandPool;
-
-        VkDevice device_;
-        VkSurfaceKHR surface_;
-        VkQueue graphicsQueue_;
-        VkQueue presentQueue_;
-
-        inline static Device *deviceSingleton;
-
-        const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-        const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-                                                            VK_KHR_MULTIVIEW_EXTENSION_NAME,
-                                                            VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
-                                                            VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
-                                                            VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME};
+        
     public:
 #ifdef RAY_TRACING
         inline static PFN_vkBuildAccelerationStructuresKHR pfn_vkBuildAccelerationStructuresKHR = 0;
