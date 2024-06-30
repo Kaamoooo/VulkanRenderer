@@ -8,7 +8,6 @@
 
 namespace Kaamoo {
     struct ModelDesc {
-        alignas(16)int indexReference;
         uint64_t vertexBufferAddress;
         uint64_t indexBufferAddress;
     };
@@ -24,9 +23,10 @@ namespace Kaamoo {
         inline static const std::string BaseModelsPath = "../Models/";
 
         struct Vertex {
-            glm::vec3 position;
-            glm::vec3 color;
-            glm::vec3 normal;
+            //Memory alignment for closest hit shader
+            alignas(16) glm::vec3 position;
+            alignas(16) glm::vec3 color;
+            alignas(16) glm::vec3 normal;
             glm::vec2 uv;
 
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();

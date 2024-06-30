@@ -115,9 +115,9 @@ namespace Kaamoo {
                                                             VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
                                                             VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
 //                                                            VK_NV_RAY_TRACING_VALIDATION_EXTENSION_NAME,
-                                                            VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+//                                                            VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
                                                             VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,
-                                                            VK_EXT_PIPELINE_CREATION_FEEDBACK_EXTENSION_NAME
+                                                            VK_EXT_PIPELINE_CREATION_FEEDBACK_EXTENSION_NAME,
                                                             };
         
         void createInstance();

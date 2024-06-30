@@ -187,15 +187,15 @@ namespace Kaamoo {
         for (auto &modelPair: Model::models) {
             ModelDesc modelDesc{};
             auto model = modelPair.second;
-            modelDesc.indexReference = model->getIndexReference();
             modelDesc.vertexBufferAddress = model->getVertexBuffer()->getDeviceAddress();
             modelDesc.indexBufferAddress = model->getIndexBuffer()->getDeviceAddress();
             modelDescs.push_back(modelDesc);
         }
         auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(ModelDesc), modelDescs.size(),
                                                      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
+                                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minOffsetAlignment);
         objBufferPtr->map();
+        objBufferPtr->writeToBuffer(modelDescs.data());
 
         //Textures, for now we ignore
 
