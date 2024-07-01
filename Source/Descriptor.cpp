@@ -161,6 +161,19 @@ namespace Kaamoo {
         writes.push_back(write);
         return *this;
     }
+
+    DescriptorWriter &DescriptorWriter::writeImages(uint32_t binding, std::vector<VkDescriptorImageInfo> &imageInfos){
+        auto &bindingDescription = setLayout->bindings[binding];
+        auto write = std::make_shared<VkWriteDescriptorSet>();
+        write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write->descriptorType = bindingDescription.descriptorType;
+        write->dstBinding = binding;
+        write->pImageInfo = imageInfos.data();
+        write->descriptorCount = imageInfos.size();
+        writes.push_back(write);
+        return *this;
+    }
+    
 #ifdef RAY_TRACING
     DescriptorWriter &DescriptorWriter::writeTLAS(uint32_t binding,
                                                   std::shared_ptr<VkWriteDescriptorSetAccelerationStructureKHR> accelerationStructureInfo) {

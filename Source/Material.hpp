@@ -22,7 +22,8 @@ namespace Kaamoo {
         geometry,
         rayGen,
         rayClosestHit,
-        rayMiss
+        rayMiss,
+        rayMiss2
     };
     typedef struct ShaderModule {
         std::shared_ptr<VkShaderModule> shaderModule;

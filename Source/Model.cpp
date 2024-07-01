@@ -36,7 +36,6 @@ namespace Kaamoo {
     }
 
     void Model::draw(VkCommandBuffer commandBuffer) {
-        //有index buffer就使用
         if (hasIndexBuffer) {
             vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
         } else {

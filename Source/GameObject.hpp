@@ -6,6 +6,11 @@
 #include "Components/TransformComponent.hpp"
 
 namespace Kaamoo {
+    struct GameObjectDesc {
+        uint64_t vertexBufferAddress;
+        uint64_t indexBufferAddress;
+        glm::i32vec2 textureEntry;
+    };
     class Component;
     class GameObject {
     public:

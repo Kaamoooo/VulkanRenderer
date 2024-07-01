@@ -25,8 +25,7 @@ namespace Kaamoo {
         //Shader
         uint32_t shaderStageCount = m_material->getShaderModulePointers().size();
         VkPipelineShaderStageCreateInfo shaderStageCreateInfo[shaderStageCount];
-
-
+        
         for (int i = 0; i < m_material->getShaderModulePointers().size(); i++) {
             VkRayTracingShaderGroupCreateInfoKHR group{VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR};
             group.anyHitShader = VK_SHADER_UNUSED_KHR;
@@ -55,6 +54,12 @@ namespace Kaamoo {
                     group.generalShader = i;
                     m_rayTracingGroups.push_back(group);
                     break;
+                case rayMiss2:
+                    shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
+                    group.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+                    group.generalShader = i;
+                    m_rayTracingGroups.push_back(group);
+                    break;
             }
             shaderStageCreateInfo[i].module = *m_material->getShaderModulePointers()[i]->shaderModule;
             shaderStageCreateInfo[i].pName = "main";
@@ -68,13 +73,67 @@ namespace Kaamoo {
         rayTracingPipelineCreateInfo.pStages = shaderStageCreateInfo;
         rayTracingPipelineCreateInfo.groupCount = static_cast<uint32_t>(m_rayTracingGroups.size());
         rayTracingPipelineCreateInfo.pGroups = m_rayTracingGroups.data();
-        rayTracingPipelineCreateInfo.maxPipelineRayRecursionDepth = 1;
+        rayTracingPipelineCreateInfo.maxPipelineRayRecursionDepth = 2;
         rayTracingPipelineCreateInfo.layout = pipelineConfigureInfo.pipelineLayout;
         Device::pfn_vkCreateRayTracingPipelinesKHR(device.device(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &rayTracingPipelineCreateInfo, nullptr, &m_pipeline);
 
         createShaderBindingTable();
     }
+    
+    void Pipeline::createShaderBindingTable() {
+        uint32_t missCount{2}, hitCount{1};
+        uint32_t handleCount = 1 + missCount + hitCount;
+        uint32_t handleSize = device.rayTracingPipelineProperties.shaderGroupHandleSize;
+        uint32_t handleSizeAligned = Utils::alighUp(handleSize, device.rayTracingPipelineProperties.shaderGroupHandleAlignment);
 
+        m_genRegion.stride = Utils::alighUp(handleSizeAligned, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+        m_genRegion.size = m_genRegion.stride;
+        m_missRegion.stride = handleSizeAligned;
+        m_missRegion.size = Utils::alighUp(handleSizeAligned * missCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+        m_hitRegion.stride = handleSizeAligned;
+        m_hitRegion.size = Utils::alighUp(handleSizeAligned * hitCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+
+        uint32_t dataSize = handleCount * handleSize;
+        std::vector<uint8_t> shaderHandles(dataSize);
+        Device::pfn_vkGetRayTracingShaderGroupHandlesKHR(device.device(), m_pipeline, 0, handleCount, dataSize, shaderHandles.data());
+
+        VkDeviceSize sbtSize = m_genRegion.size + m_missRegion.size + m_hitRegion.size + m_callableRegion.size;
+        m_shaderBindingTableBuffer =std::make_shared<Buffer>(device, sbtSize, 1,
+                                                             VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_shaderBindingTableBuffer->map();
+
+        VkDeviceAddress sbtAddress = m_shaderBindingTableBuffer->getDeviceAddress();
+        m_genRegion.deviceAddress = sbtAddress;
+        m_missRegion.deviceAddress = sbtAddress + m_genRegion.size;
+        m_hitRegion.deviceAddress = m_missRegion.deviceAddress + m_missRegion.size;
+
+        auto getHandle = [&](uint32_t groupIndex) -> const uint8_t * { return shaderHandles.data() + groupIndex * handleSize; };
+
+        auto *pSbtBufferData = static_cast<uint8_t *>(m_shaderBindingTableBuffer->getMappedMemory());
+        uint8_t *pData = nullptr;
+        uint32_t handleIndex = 0;
+
+        {
+            //Ray Gen
+            pData = pSbtBufferData;
+            memcpy(pData, getHandle(handleIndex++), handleSize);
+
+            //Miss
+            pData = pSbtBufferData + m_genRegion.size;
+            for (uint32_t i = 0; i < missCount; i++) {
+                memcpy(pData, getHandle(handleIndex++), handleSize);
+                pData += m_missRegion.stride;
+            }
+
+            //Hit
+            pData = pSbtBufferData + m_genRegion.size + m_missRegion.size;
+            for (uint32_t i = 0; i < hitCount; i++) {
+                memcpy(pData, getHandle(handleIndex++), handleSize);
+                pData += m_hitRegion.stride;
+            }
+        }
+    }
 #endif
 
     void Pipeline::createGraphicsPipeline(const PipelineConfigureInfo &pipelineConfigureInfo) {
@@ -251,62 +310,4 @@ namespace Kaamoo {
         configureInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;              // Optional
     }
 
-#ifdef RAY_TRACING
-
-    void Pipeline::createShaderBindingTable() {
-        uint32_t missCount{1}, hitCount{1};
-        uint32_t handleCount = 1 + missCount + hitCount;
-        uint32_t handleSize = device.rayTracingPipelineProperties.shaderGroupHandleSize;
-        uint32_t handleSizeAligned = Utils::alighUp(handleSize, device.rayTracingPipelineProperties.shaderGroupHandleAlignment);
-
-        m_genRegion.stride = Utils::alighUp(handleSizeAligned, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
-        m_genRegion.size = m_genRegion.stride;
-        m_missRegion.stride = handleSizeAligned;
-        m_missRegion.size = Utils::alighUp(handleSizeAligned * missCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
-        m_hitRegion.stride = handleSizeAligned;
-        m_hitRegion.size = Utils::alighUp(handleSizeAligned * hitCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
-
-        uint32_t dataSize = handleCount * handleSize;
-        std::vector<uint8_t> shaderHandles(dataSize);
-        Device::pfn_vkGetRayTracingShaderGroupHandlesKHR(device.device(), m_pipeline, 0, handleCount, dataSize, shaderHandles.data());
-
-        VkDeviceSize sbtSize = m_genRegion.size + m_missRegion.size + m_hitRegion.size + m_callableRegion.size;
-        m_shaderBindingTableBuffer =std::make_shared<Buffer>(device, sbtSize, 1,
-                                                VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        m_shaderBindingTableBuffer->map();
-
-        VkDeviceAddress sbtAddress = m_shaderBindingTableBuffer->getDeviceAddress();
-        m_genRegion.deviceAddress = sbtAddress;
-        m_missRegion.deviceAddress = sbtAddress + m_genRegion.size;
-        m_hitRegion.deviceAddress = m_missRegion.deviceAddress + m_missRegion.size;
-
-        auto getHandle = [&](uint32_t groupIndex) -> const uint8_t * { return shaderHandles.data() + groupIndex * handleSize; };
-
-        auto *pSbtBufferData = static_cast<uint8_t *>(m_shaderBindingTableBuffer->getMappedMemory());
-        uint8_t *pData = nullptr;
-        uint32_t handleIndex = 0;
-
-        {
-            //Ray Gen
-            pData = pSbtBufferData;
-            memcpy(pData, getHandle(handleIndex++), handleSize);
-
-            //Miss
-            pData = pSbtBufferData + m_genRegion.size;
-            for (uint32_t i = 0; i < missCount; i++) {
-                memcpy(pData, getHandle(handleIndex++), handleSize);
-                pData += m_missRegion.stride;
-            }
-
-            //Hit
-            pData = pSbtBufferData + m_genRegion.size + m_missRegion.size;
-            for (uint32_t i = 0; i < hitCount; i++) {
-                memcpy(pData, getHandle(handleIndex++), handleSize);
-                pData += m_hitRegion.stride;
-            }
-        }
-    }
-
-#endif
 }

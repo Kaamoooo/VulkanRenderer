@@ -69,3 +69,5 @@
 6.2 Started rendering by very basic ray tracing.
 
 6.30 Added simplest lighting. Fixed the problem that vertex memory alignment does not match between host and device. 
+
+7.1 Added directional light shadow.

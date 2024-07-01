@@ -7,11 +7,6 @@
 #include <unordered_map>
 
 namespace Kaamoo {
-    struct ModelDesc {
-        uint64_t vertexBufferAddress;
-        uint64_t indexBufferAddress;
-    };
-
     class Model {
     public:
         inline static std::unordered_map<std::string, std::shared_ptr<Model>> models{};
@@ -27,7 +22,7 @@ namespace Kaamoo {
             alignas(16) glm::vec3 position;
             alignas(16) glm::vec3 color;
             alignas(16) glm::vec3 normal;
-            glm::vec2 uv;
+            alignas(16) glm::vec2 uv;
 
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
 

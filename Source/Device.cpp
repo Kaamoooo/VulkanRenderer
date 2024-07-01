@@ -213,6 +213,7 @@ namespace Kaamoo {
         VkPhysicalDeviceVulkan12Features vulkan12Features = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
         vulkan12Features.bufferDeviceAddress = VK_TRUE;
         vulkan12Features.hostQueryReset = VK_TRUE;
+        vulkan12Features.runtimeDescriptorArray = VK_TRUE;
         rayTracingPipelineFeatures.pNext = &vulkan12Features;
         
 //        VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT};

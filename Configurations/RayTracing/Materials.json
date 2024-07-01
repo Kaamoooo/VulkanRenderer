@@ -2,8 +2,9 @@
   {
     "id": 2,
     "pipelineCategory": "RayTracing",
-    "rayGenShader" : "RayTracing/raytrace.rgen.spv",
-    "rayMissShader" : "RayTracing/raytrace.rmiss.spv",
-    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv"
+    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv",
+    "texture": [
+      "Tiles.jpg"
+    ]
   }
 ]
