@@ -9,6 +9,15 @@
     "componentIds":[0,1]
   },
   {
+    "name": "Cube",
+    "transform": {
+      "translation": [0,1,0],
+      "scale": [2.5,0.1,2.5],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[2]
+  },
+  {
     "name": "MainCamera",
     "transform": {
       "translation": [0, -1, -4],

@@ -30,6 +30,8 @@ namespace Kaamoo {
                     this->model = modelFromFile;
                     Model::models.emplace(modelName, modelFromFile);
 #ifdef RAY_TRACING
+                    static int tlasIdStatic = 0;
+                    tlasId = tlasIdStatic++;
                     BLAS::modelToBLASInput(model);
 #endif
                 }
@@ -47,7 +49,7 @@ namespace Kaamoo {
                 return;
             }
 #ifdef RAY_TRACING
-            TLAS::createTLAS(*model, gameObject->transform->mat4());
+            TLAS::createTLAS(*model, GetTLASId(),gameObject->transform->mat4());
 #endif
         }
 
@@ -62,9 +64,12 @@ namespace Kaamoo {
             }
         };
 
+        id_t GetTLASId() const {
+            return tlasId;
+        }
 
     private:
-
+        id_t tlasId;
         id_t materialId;
         std::shared_ptr<Model> model = nullptr;
         glm::mat4 lastTransform = glm::mat4{-10000000.f};

@@ -17,7 +17,9 @@ namespace Kaamoo {
 
         std::shared_ptr<VkShaderModule> createShaderModule(const std::string& shaderName);
 
+#ifndef RAY_TRACING
         std::shared_ptr<VkShaderModule> getShaderModulePointer(const std::string& shaderName);
+#endif
 
         std::vector<char> readFile(const std::string &filepath);
 

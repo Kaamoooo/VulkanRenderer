@@ -71,3 +71,5 @@
 6.30 Added simplest lighting. Fixed the problem that vertex memory alignment does not match between host and device. 
 
 7.1 Added directional light shadow.
+
+7.2 Completed multiple game objects, materials (shaders, textures) ray tracing.

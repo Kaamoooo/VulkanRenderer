@@ -3,6 +3,7 @@
 #include <numeric>
 #include <rapidjson/document.h>
 #include <glm/ext/matrix_clip_space.hpp>
+#include <algorithm>
 
 namespace Kaamoo {
     Application::~Application() {
@@ -178,37 +179,27 @@ namespace Kaamoo {
                     build(rayGenDescriptorSet);
 
             //Global, Obj, Textures
-            auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
-                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
-                    addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
-                    build();
-
-            auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
 
             //Textures
             //Load from Json
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{};
             std::vector<std::shared_ptr<Image>> imagePointers{renderer.getOffscreenImageColor()};
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
-            std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{rayGenDescriptorSet, sceneDescriptorSet};
-            std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{rayGenDescriptorSetLayoutPtr, sceneDescriptorSetLayoutPtr};
+            std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{rayGenDescriptorSet};
+            std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{rayGenDescriptorSetLayoutPtr};
             std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
             std::vector<VkDescriptorImageInfo> imageInfos;
             std::unordered_map<int, glm::vec2> textureEntries{};
 
             //Generate Shader
             const std::string rayGenShaderPath = "RayTracing/raytrace.rgen.spv";
-            m_shaderBuilder.createShaderModule(rayGenShaderPath);
-            shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.getShaderModulePointer(rayGenShaderPath), ShaderCategory::rayGen));
+            shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayGenShaderPath), ShaderCategory::rayGen));
 
             //Miss Shader
-            const std::string  rayMissShaderPath = "RayTracing/raytrace.rmiss.spv";
-            m_shaderBuilder.createShaderModule(rayMissShaderPath);
-            shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.getShaderModulePointer(rayMissShaderPath), ShaderCategory::rayMiss));
-            const std::string  rayMiss2ShaderPath = "RayTracing/raytraceShadow.rmiss.spv";
-            m_shaderBuilder.createShaderModule(rayMiss2ShaderPath);
-            shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.getShaderModulePointer(rayMiss2ShaderPath), ShaderCategory::rayMiss2));
+            const std::string rayMissShaderPath = "RayTracing/raytrace.rmiss.spv";
+            shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayMissShaderPath), ShaderCategory::rayMiss));
+            const std::string rayMiss2ShaderPath = "RayTracing/raytraceShadow.rmiss.spv";
+            shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayMiss2ShaderPath), ShaderCategory::rayMiss2));
 
 
             if (materialsDocument.IsArray()) {
@@ -218,8 +209,8 @@ namespace Kaamoo {
                     const int id = object["id"].GetInt();
                     const std::string rayClosestShaderName = object["rayClosestHitShader"].GetString();
                     //Closest Hit Shader, Hit group
-                    m_shaderBuilder.createShaderModule(rayClosestShaderName);
-                    shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.getShaderModulePointer(rayClosestShaderName), ShaderCategory::rayClosestHit));
+                    //Todo: What if there is only material but no game object using it?
+                    shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayClosestShaderName), ShaderCategory::rayClosestHit));
 
                     auto textureNames = object["texture"].GetArray();
                     glm::i32vec2 textureEntry{};
@@ -243,7 +234,15 @@ namespace Kaamoo {
 
 
             //Obj
-            std::vector<GameObjectDesc> modelDescs;
+            int meshRendererCount = 0;
+            for (auto &modelPair: gameObjects) {
+                auto &gameObject = modelPair.second;
+                MeshRendererComponent *meshRendererComponent;
+                if (gameObject.TryGetComponent(meshRendererComponent)) {
+                    meshRendererCount++;
+                }
+            }
+            std::vector<GameObjectDesc> gameObjectDescs(meshRendererCount);
             for (auto &modelPair: gameObjects) {
                 GameObjectDesc modelDesc{};
                 auto &gameObject = modelPair.second;
@@ -255,19 +254,33 @@ namespace Kaamoo {
                     if (entry != textureEntries.end()) {
                         modelDesc.textureEntry = entry->second;
                     }
-                    modelDescs.push_back(modelDesc);
+                    gameObjectDescs[meshRendererComponent->GetTLASId()] = modelDesc;
                 }
             }
-            auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(GameObjectDesc), modelDescs.size(),
+
+            auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(GameObjectDesc), gameObjectDescs.size(),
                                                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minOffsetAlignment);
             objBufferPtr->map();
-            objBufferPtr->writeToBuffer(modelDescs.data());
+            objBufferPtr->writeToBuffer(gameObjectDescs.data());
             bufferPointers.push_back(objBufferPtr);
+            std::vector<VkDescriptorBufferInfo> bufferInfos{};
+            for (int i = 0; i < gameObjectDescs.size(); i++) {
+                bufferInfos.push_back(*objBufferPtr->descriptorInfoForIndex(i));
+            }
 
+            auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
+                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, bufferInfos.size()).
+                    addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, imageInfos.size()).
+                    build();
+            descriptorSetLayoutPointers.push_back(sceneDescriptorSetLayoutPtr);
+
+            auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
+            descriptorSetPointers.push_back(sceneDescriptorSet);
             DescriptorWriter(sceneDescriptorSetLayoutPtr, *globalPool).
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo(globalUboBufferPtr->getBufferSize())).
-                    writeBuffer(1, objBufferPtr->descriptorInfo(objBufferPtr->getBufferSize())).
+                    writeBuffers(1, bufferInfos).
                     writeImages(2, imageInfos).
                     build(sceneDescriptorSet);
             auto material = std::make_shared<Material>(-2, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
@@ -294,11 +307,9 @@ namespace Kaamoo {
                     writeBuffer(1, globalUboBufferPtr->descriptorInfo()).
                     build(postDescriptorSet);
 
-            m_shaderBuilder.createShaderModule(PostVertexShaderName);
-            m_shaderBuilder.createShaderModule(PostFragmentShaderName);
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
-                    std::make_shared<ShaderModule>(m_shaderBuilder.getShaderModulePointer(PostVertexShaderName), ShaderCategory::vertex),
-                    std::make_shared<ShaderModule>(m_shaderBuilder.getShaderModulePointer(PostFragmentShaderName), ShaderCategory::fragment),
+                    std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(PostVertexShaderName), ShaderCategory::vertex),
+                    std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(PostFragmentShaderName), ShaderCategory::fragment),
             };
             std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{postSystemDescriptorSetLayoutPtr};
             std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{postDescriptorSet};

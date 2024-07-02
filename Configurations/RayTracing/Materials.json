@@ -6,5 +6,13 @@
     "texture": [
       "Tiles.jpg"
     ]
+  },
+  {
+    "id": 3,
+    "pipelineCategory": "RayTracing",
+    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv",
+    "texture": [
+      "water.jpg"
+    ]
   }
 ]

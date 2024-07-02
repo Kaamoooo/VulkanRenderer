@@ -81,8 +81,10 @@ namespace Kaamoo {
     }
     
     void Pipeline::createShaderBindingTable() {
-        uint32_t missCount{2}, hitCount{1};
-        uint32_t handleCount = 1 + missCount + hitCount;
+        uint32_t genCount{1};
+        uint32_t missCount{2};
+        uint32_t hitCount = m_material->getShaderModulePointers().size()-genCount-missCount;
+        uint32_t handleCount = genCount + missCount + hitCount;
         uint32_t handleSize = device.rayTracingPipelineProperties.shaderGroupHandleSize;
         uint32_t handleSizeAligned = Utils::alighUp(handleSize, device.rayTracingPipelineProperties.shaderGroupHandleAlignment);
 

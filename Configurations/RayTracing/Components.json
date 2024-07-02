@@ -10,6 +10,12 @@
     "materialId": 2
   },
   {
+    "id": 2,
+    "type": "MeshRendererComponent",
+    "model": "cube.obj",
+    "materialId": 3
+  },
+  {
     "id": 9,
     "type": "CameraComponent"
   },

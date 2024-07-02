@@ -97,6 +97,8 @@ namespace Kaamoo {
         DescriptorWriter(std::shared_ptr<DescriptorSetLayout> setLayout, DescriptorPool &pool);
 
         DescriptorWriter &writeBuffer(uint32_t binding, std::shared_ptr<VkDescriptorBufferInfo> bufferInfo);
+        
+        DescriptorWriter &writeBuffers(uint32_t binding, std::vector<VkDescriptorBufferInfo>& bufferInfos);
 
         DescriptorWriter &writeImage(uint32_t binding, const std::shared_ptr<VkDescriptorImageInfo> &imageInfo);
         

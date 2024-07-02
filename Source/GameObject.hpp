@@ -11,28 +11,30 @@ namespace Kaamoo {
         uint64_t indexBufferAddress;
         glm::i32vec2 textureEntry;
     };
+
     class Component;
+
     class GameObject {
     public:
         using Map = std::unordered_map<id_t, GameObject>;
 
-        TransformComponent* transform;
+        TransformComponent *transform;
 
-        ~GameObject(){
-            for(auto& component: components){
+        ~GameObject() {
+            for (auto &component: components) {
                 delete component;
             }
         }
-        
+
         static GameObject &createGameObject(std::string name = "GameObject") {
             static id_t currentID = 0;
             auto *gameObject = new GameObject(currentID++, std::move(name));
-            auto* t = new TransformComponent();
+            auto *t = new TransformComponent();
             gameObject->TryAddComponent(t);
             gameObject->transform = t;
             return *gameObject;
         }
-        
+
         id_t getId() { return id; }
 
         //移动构造函数
@@ -47,9 +49,9 @@ namespace Kaamoo {
         void setName(std::string name) { GameObject::name = std::move(name); }
 
         template<typename T, typename std::enable_if<std::is_base_of<Component, T>::value, int>::type = 0>
-        void TryAddComponent(T* component) {
+        void TryAddComponent(T *component) {
             for (auto &item: components) {
-                if (item->GetName()==component->GetName()) {
+                if (item->GetName() == component->GetName()) {
                     throw std::runtime_error(
                             "Game Object " + name + " already has component type " + component->GetName());
                 }
@@ -58,8 +60,8 @@ namespace Kaamoo {
         }
 
         template<typename T>
-        bool TryGetComponent(T*& component) {
-            for (auto& item: components) {
+        bool TryGetComponent(T *&component) {
+            for (auto &item: components) {
                 T *targetComponent = dynamic_cast<T *>(item);
                 if (targetComponent != nullptr) {
                     component = targetComponent;
@@ -68,45 +70,45 @@ namespace Kaamoo {
             }
             return false;
         }
-        
-        void OnLoad(){
-            for(auto& component: components){
+
+        void OnLoad() {
+            for (auto &component: components) {
                 component->OnLoad(this);
             }
         }
-        
-        void Loaded(){
-            for(auto& component: components){
+
+        void Loaded() {
+            for (auto &component: components) {
                 component->Loaded(this);
             }
         }
-        
-        void Awake(ComponentAwakeInfo awakeInfo){
-            for(auto& component: components){
+
+        void Awake(ComponentAwakeInfo awakeInfo) {
+            for (auto &component: components) {
                 component->Awake(awakeInfo);
             }
         }
-        
-        void Start(const ComponentUpdateInfo& updateInfo){
-            for(auto& component: components){
+
+        void Start(const ComponentUpdateInfo &updateInfo) {
+            for (auto &component: components) {
                 component->Start(updateInfo);
             }
         }
-        
-        void Update(const ComponentUpdateInfo& updateInfo){
-            for(auto& component: components){
+
+        void Update(const ComponentUpdateInfo &updateInfo) {
+            for (auto &component: components) {
                 component->Update(updateInfo);
             }
         }
-        
-        void LateUpdate(const ComponentUpdateInfo& updateInfo){
-            for(auto& component: components){
+
+        void LateUpdate(const ComponentUpdateInfo &updateInfo) {
+            for (auto &component: components) {
                 component->LateUpdate(updateInfo);
             }
         }
 
     private:
-        std::vector<Component*> components;
+        std::vector<Component *> components;
 
         id_t id;
 
