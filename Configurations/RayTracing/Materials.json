@@ -10,7 +10,7 @@
   {
     "id": 3,
     "pipelineCategory": "RayTracing",
-    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv",
+    "rayClosestHitShader" : "RayTracing/raytrace1.rchit.spv",
     "texture": [
       "water.jpg"
     ]

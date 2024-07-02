@@ -25,7 +25,7 @@ namespace Kaamoo {
             instance.accelerationStructureReference = Device::getDeviceSingleton()->
                     getAccelerationStructureAddressKHR(BLAS::blasBuildInfoMap[model.getIndexReference()]->as);
             instance.mask = 0xFF;
-            instance.instanceShaderBindingTableRecordOffset = 0;
+            instance.instanceShaderBindingTableRecordOffset = tlasId;
             instances.emplace_back(instance);
         }
 
