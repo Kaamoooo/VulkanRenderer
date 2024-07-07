@@ -15,6 +15,7 @@ namespace Kaamoo {
         globalPool = DescriptorPool::Builder(device).
                 setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
                 addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
+                addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
                 addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).build();
         loadGameObjects();
         loadMaterials();
@@ -123,7 +124,7 @@ namespace Kaamoo {
                 gameObject.setName(object["name"].GetString());
                 gameObject.transform->translation = translation;
                 gameObject.transform->scale = scale;
-                gameObject.transform->rotation = rotation;
+                gameObject.transform->rotation = glm::radians(rotation);
 
                 gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
@@ -145,6 +146,7 @@ namespace Kaamoo {
 
         uint32_t minOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,
                                                device.properties.limits.nonCoherentAtomSize);
+        uint32_t minStorageBufferOffsetAlignment = device.properties2.properties.limits.minStorageBufferOffsetAlignment;
         std::string materialsString = JsonUtils::ReadJsonFile(BasePath + "Materials.json");
         rapidjson::Document materialsDocument;
         materialsDocument.Parse(materialsString.c_str());
@@ -189,7 +191,6 @@ namespace Kaamoo {
             std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{rayGenDescriptorSetLayoutPtr};
             std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
             std::vector<VkDescriptorImageInfo> imageInfos;
-            std::unordered_map<int, glm::vec2> textureEntries{};
 
             //Generate Shader
             const std::string rayGenShaderPath = "RayTracing/raytrace.rgen.spv";
@@ -201,16 +202,19 @@ namespace Kaamoo {
             const std::string rayMiss2ShaderPath = "RayTracing/raytraceShadow.rmiss.spv";
             shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayMiss2ShaderPath), ShaderCategory::rayMiss2));
 
-
+            //Load materials
+            std::unordered_map<int, glm::vec2> textureEntries{};
+            std::unordered_map<int, PBR> pbrMaterials{};
             if (materialsDocument.IsArray()) {
                 for (rapidjson::SizeType i = 0; i < materialsDocument.Size(); i++) {
                     const rapidjson::Value &object = materialsDocument[i];
 
                     const int id = object["id"].GetInt();
                     const std::string rayClosestShaderName = object["rayClosestHitShader"].GetString();
-                    //Closest Hit Shader, Hit group
-                    //Todo: What if there is only material but no game object using it?
+                    //Todo:What if there is only material but no game object using it?   
                     shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayClosestShaderName), ShaderCategory::rayClosestHit));
+
+                    //Todo: Support non-PBR material
 
                     auto textureNames = object["texture"].GetArray();
                     glm::i32vec2 textureEntry{};
@@ -228,6 +232,13 @@ namespace Kaamoo {
                         imageInfos.emplace_back(*imageInfo);
                     }
                     textureEntry.y = imageInfos.size() - textureEntry.x;
+                    if (object.HasMember("PBR")) {
+                        auto pbr = PBRLoader::loadPBR(object["PBR"]);
+                        if (PBRParametersCount - PBRLoader::getValidPropertyCount(pbr) != textureEntry.y) {
+                            throw std::runtime_error("Texture count does not match with PBR properties");
+                        }
+                        pbrMaterials.emplace(id, pbr);
+                    }
                     textureEntries.emplace(id, textureEntry);
                 }
             }
@@ -242,7 +253,8 @@ namespace Kaamoo {
                     meshRendererCount++;
                 }
             }
-            std::vector<GameObjectDesc> gameObjectDescs(meshRendererCount);
+//            std::vector<GameObjectDesc> gameObjectDescs(meshRendererCount);
+            m_gameObjectDescs.resize(meshRendererCount);
             for (auto &modelPair: gameObjects) {
                 GameObjectDesc modelDesc{};
                 auto &gameObject = modelPair.second;
@@ -254,35 +266,44 @@ namespace Kaamoo {
                     if (entry != textureEntries.end()) {
                         modelDesc.textureEntry = entry->second;
                     }
-                    gameObjectDescs[meshRendererComponent->GetTLASId()] = modelDesc;
+                    auto pbrEntry = pbrMaterials.find(meshRendererComponent->GetMaterialID());
+                    if (pbrEntry != pbrMaterials.end()) {
+                        modelDesc.pbr = pbrEntry->second;
+                    }
+                    m_gameObjectDescs[meshRendererComponent->GetTLASId()] = modelDesc;
                 }
             }
 
-            auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(GameObjectDesc), gameObjectDescs.size(),
-                                                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minOffsetAlignment);
-            objBufferPtr->map();
-            objBufferPtr->writeToBuffer(gameObjectDescs.data());
+            auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(GameObjectDesc), m_gameObjectDescs.size(),
+                                                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,minStorageBufferOffsetAlignment);
+            objBufferPtr->map(objBufferPtr->getBufferSize());
+            objBufferPtr->writeToBuffer(m_gameObjectDescs.data(), m_gameObjectDescs.size() * sizeof(GameObjectDesc));
+//            for (int i = 0; i < m_gameObjectDescs.size(); ++i) {
+//                objBufferPtr->writeToIndex(&(m_gameObjectDescs[i]), i);
+//            }
+
             bufferPointers.push_back(objBufferPtr);
-            std::vector<VkDescriptorBufferInfo> bufferInfos{};
-            for (int i = 0; i < gameObjectDescs.size(); i++) {
-                bufferInfos.push_back(*objBufferPtr->descriptorInfoForIndex(i));
-            }
+//            std::vector<VkDescriptorBufferInfo> bufferInfos{};
+//            for (int i = 0; i < m_gameObjectDescs.size(); i++) {
+//                bufferInfos.push_back(*(objBufferPtr->descriptorInfoForIndex(i)));
+//            }
 
             auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
-                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, bufferInfos.size()).
+                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, 1).
                     addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, imageInfos.size()).
                     build();
             descriptorSetLayoutPointers.push_back(sceneDescriptorSetLayoutPtr);
 
             auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
-            descriptorSetPointers.push_back(sceneDescriptorSet);
             DescriptorWriter(sceneDescriptorSetLayoutPtr, *globalPool).
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo(globalUboBufferPtr->getBufferSize())).
-                    writeBuffers(1, bufferInfos).
+//                    writeBuffers(1, bufferInfos).
+                    writeBuffer(1, objBufferPtr->descriptorInfo(objBufferPtr->getBufferSize())).
                     writeImages(2, imageInfos).
                     build(sceneDescriptorSet);
+            descriptorSetPointers.push_back(sceneDescriptorSet);
             auto material = std::make_shared<Material>(-2, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
                                                        imagePointers, samplerPointers, bufferPointers, "RayTracing");
             m_materials.emplace(-2, std::move(material));

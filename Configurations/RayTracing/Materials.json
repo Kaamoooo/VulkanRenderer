@@ -2,17 +2,61 @@
   {
     "id": 2,
     "pipelineCategory": "RayTracing",
-    "rayClosestHitShader" : "RayTracing/raytrace.rchit.spv",
+    "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
+    "PBR": {
+      "albedo": [0.0,1.0,0.0],
+      "normal": [],
+      "metallic": 0.5,
+      "roughness": 0.2,
+      "opacity": 1.0,
+      "ao": 0
+    },
     "texture": [
-      "Tiles.jpg"
     ]
   },
   {
     "id": 3,
     "pipelineCategory": "RayTracing",
-    "rayClosestHitShader" : "RayTracing/raytrace1.rchit.spv",
+    "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
+    "PBR": {
+      "opacity": 1.0,
+      "ao": 0
+    },
     "texture": [
-      "water.jpg"
+      "PBR/BlackMetal/MetalPlates006_1K_Color.jpg",
+      "PBR/BlackMetal/MetalPlates006_1K_NormalDX.jpg",
+      "PBR/BlackMetal/MetalPlates006_1K_Metalness.jpg",
+      "PBR/BlackMetal/MetalPlates006_1K_Roughness.jpg"
+    ]
+  },
+  {
+    "id": 4,
+    "pipelineCategory": "RayTracing",
+    "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
+    "PBR": {
+      "metallic": 0.5,
+      "opacity": 1.0,
+      "ao": 0
+    },
+    "texture": [
+      "PBR/Wood014_1K-PNG/Wood014_1K_Color.png",
+      "PBR/Wood014_1K-PNG/Wood014_1K_NormalDX.png",
+      "PBR/Wood014_1K-PNG/Wood014_1K_Roughness.png"
+    ]
+  },
+  {
+    "id": 5,
+    "pipelineCategory": "RayTracing",
+    "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
+    "PBR": {
+      "albedo": [0.0,1.0,1.0],
+      "metallic": 0.2,
+      "roughness": 0.1,
+      "opacity": 1.0,
+      "ao": 0
+    },
+    "texture": [
+      "PBR/BlackMetal/MetalPlates006_1K_NormalGL.jpg"
     ]
   }
 ]

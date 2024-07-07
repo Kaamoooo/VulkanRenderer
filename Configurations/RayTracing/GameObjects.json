@@ -9,13 +9,31 @@
     "componentIds":[0,1]
   },
   {
-    "name": "Cube",
+    "name": "Ground",
     "transform": {
       "translation": [0,1,0],
-      "scale": [2.5,0.1,2.5],
-      "rotation": [0,0,0]
+      "scale": [4,1,4],
+      "rotation": [0,0,180]
     },
     "componentIds":[2]
+  },
+  {
+    "name": "Cube",
+    "transform": {
+      "translation": [-1,0,0],
+      "scale": [0.3,0.3,0.3],
+      "rotation": [45,45,45]
+    },
+    "componentIds":[13]
+  },
+  {
+    "name": "Vase 2",
+    "transform": {
+      "translation": [1,0,0],
+      "scale": [2,2,2],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[12]
   },
   {
     "name": "MainCamera",

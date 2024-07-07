@@ -7,9 +7,10 @@
 
 namespace Kaamoo {
     struct GameObjectDesc {
-        uint64_t vertexBufferAddress;
-        uint64_t indexBufferAddress;
-        glm::i32vec2 textureEntry;
+        uint64_t vertexBufferAddress;//0~8
+        uint64_t indexBufferAddress; //8~16
+        PBR pbr; //16~64
+        glm::i32vec2 textureEntry; //64~72
     };
 
     class Component;

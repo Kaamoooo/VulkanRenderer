@@ -12,7 +12,7 @@
   {
     "id": 2,
     "type": "MeshRendererComponent",
-    "model": "cube.obj",
+    "model": "quad.obj",
     "materialId": 3
   },
   {
@@ -26,5 +26,17 @@
   {
     "id": 11,
     "type": "RayTracingManagerComponent"
+  },
+  {
+    "id": 12,
+    "type": "MeshRendererComponent",
+    "model": "flat_vase.obj",
+    "materialId": 4
+  },
+  {
+    "id": 13,
+    "type": "MeshRendererComponent",
+    "model": "cube.obj",
+    "materialId": 5
   }
 ]

@@ -41,6 +41,8 @@ namespace Kaamoo {
 
         Device &operator=(Device &&) = delete;
 
+        static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
+
         VkCommandPool getCommandPool() { return commandPool; }
 
         VkDevice device() { return device_; }
@@ -60,7 +62,7 @@ namespace Kaamoo {
 
         VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
-        void createBuffer(VkDeviceSize size,VkBufferUsageFlags usage,VkMemoryPropertyFlags properties,VkBuffer &buffer,VkDeviceMemory &bufferMemory);
+        void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 
         VkCommandBuffer beginSingleTimeCommands();
 
@@ -70,29 +72,32 @@ namespace Kaamoo {
 
         void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
-        void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout,VkImageSubresourceRange subresourceRange);
+        void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange);
 
-        void createImageWithInfo(const VkImageCreateInfo &imageInfo,VkMemoryPropertyFlags properties,VkImage &image,VkDeviceMemory &imageMemory);
-        
+        void createImageWithInfo(const VkImageCreateInfo &imageInfo, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
+
         VkPipelineStageFlagBits pipelineStageForLayout(VkImageLayout layout);
 
         VkAccessFlags accessFlagsForImageLayout(VkImageLayout layout);
 
         VkPhysicalDeviceProperties properties{};
         VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-        VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
 
         static Device *getDeviceSingleton() { return deviceSingleton; }
 
         MyWindow &getWindow() { return window; }
 
 #ifdef RAY_TRACING
-        VkDeviceAddress getAccelerationStructureAddressKHR(VkAccelerationStructureKHR& accelerationStructure){
+        VkPhysicalDeviceExternalMemoryHostPropertiesEXT externalMemoryHostProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT};
+        VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
+
+        VkDeviceAddress getAccelerationStructureAddressKHR(VkAccelerationStructureKHR &accelerationStructure) {
             VkAccelerationStructureDeviceAddressInfoKHR addressInfo{};
             addressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
             addressInfo.accelerationStructure = accelerationStructure;
             return pfn_vkGetAccelerationStructureDeviceAddressKHR(device_, &addressInfo);
         }
+
 #endif
     private:
         VkInstance instance;
@@ -118,8 +123,10 @@ namespace Kaamoo {
 //                                                            VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
                                                             VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,
                                                             VK_EXT_PIPELINE_CREATION_FEEDBACK_EXTENSION_NAME,
-                                                            };
-        
+                                                            VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME
+        };
+
+
         void createInstance();
 
         void setupDebugMessenger();
@@ -151,7 +158,6 @@ namespace Kaamoo {
         void loadExtensionFunctions();
 
 
-        
     public:
 #ifdef RAY_TRACING
         inline static PFN_vkBuildAccelerationStructuresKHR pfn_vkBuildAccelerationStructuresKHR = 0;

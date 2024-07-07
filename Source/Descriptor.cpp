@@ -222,4 +222,4 @@ namespace Kaamoo {
         vkUpdateDescriptorSets(pool.Device.device(), writes.size(), writeVector.data(), 0, nullptr);
     }
 
-}  // namespace 
+} 

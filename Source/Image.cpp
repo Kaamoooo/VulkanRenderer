@@ -105,13 +105,13 @@ namespace Kaamoo {
         defaultCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         defaultCreateInfo.imageType = VK_IMAGE_TYPE_2D;
         VkExtent3D extent3D{};
-        extent3D.width = 512;
-        extent3D.height = 512;
+        extent3D.width = 1024;
+        extent3D.height = 1024;
         extent3D.depth = 1;
         defaultCreateInfo.extent = extent3D;
         defaultCreateInfo.mipLevels = 1;
         defaultCreateInfo.arrayLayers = 1;
-        defaultCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+        defaultCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
         defaultCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         defaultCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         defaultCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -129,7 +129,7 @@ namespace Kaamoo {
     void Image::setDefaultImageViewCreateInfo(VkImageViewCreateInfo &imageViewCreateInfo) {
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         imageViewCreateInfo.image = image;
-        imageViewCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+        imageViewCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
         imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageViewCreateInfo.subresourceRange.layerCount = 1;

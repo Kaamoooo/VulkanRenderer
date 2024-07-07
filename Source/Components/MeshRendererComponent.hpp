@@ -7,7 +7,7 @@
 namespace Kaamoo {
     class MeshRendererComponent : public Component {
     public:
-        
+
         ~MeshRendererComponent() override {
             Model::models.clear();
         };
@@ -21,20 +21,22 @@ namespace Kaamoo {
                 this->model = nullptr;
             } else {
                 const std::string modelName = object["model"].GetString();
+#ifdef RAY_TRACING
+                std::shared_ptr<Model> modelFromFile = Model::createModelFromFile(*Device::getDeviceSingleton(), Model::BaseModelsPath + modelName);
+                this->model = modelFromFile;
+                Model::models.emplace(modelName, modelFromFile);
+                static int tlasIdStatic = 0;
+                tlasId = tlasIdStatic++;
+                BLAS::modelToBLASInput(model);
+#else
                 if (Model::models.count(modelName) > 0) {
                     this->model = Model::models.at(modelName);
                 } else {
-                    std::shared_ptr<Model> modelFromFile = Model::createModelFromFile(*Device::getDeviceSingleton(),
-                                                                                      Model::BaseModelsPath +
-                                                                                      modelName);
+                    std::shared_ptr<Model> modelFromFile = Model::createModelFromFile(*Device::getDeviceSingleton(), Model::BaseModelsPath + modelName);
                     this->model = modelFromFile;
                     Model::models.emplace(modelName, modelFromFile);
-#ifdef RAY_TRACING
-                    static int tlasIdStatic = 0;
-                    tlasId = tlasIdStatic++;
-                    BLAS::modelToBLASInput(model);
-#endif
                 }
+#endif
             }
             this->materialId = object["materialId"].GetInt();
             name = "MeshRendererComponent";
@@ -49,7 +51,7 @@ namespace Kaamoo {
                 return;
             }
 #ifdef RAY_TRACING
-            TLAS::createTLAS(*model, GetTLASId(),gameObject->transform->mat4());
+            TLAS::createTLAS(*model, GetTLASId(), gameObject->transform->mat4());
 #endif
         }
 

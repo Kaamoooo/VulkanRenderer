@@ -13,24 +13,7 @@
 #include <memory>
 
 namespace Kaamoo {
-
-/**
- * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
- *
- * @param instanceSize The size of an instance
- * @param minOffsetAlignment The minimum required alignment, in bytes, for the offset member (eg
- * minUniformBufferOffsetAlignment)
- *
- * @return VkResult of the buffer mapping call
- */
-    VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
-        if (minOffsetAlignment > 0) {
-            //(instanceSize + minOffsetAlignment - 1) 防止instanceSize小于alignment时计算结果为0，因此加上minOffsetAlignment-1保证其结果有效，同时-1是为了防止计算结果偏大
-            //~(minOffsetAlignment-1)即取minOffsetAlignment的公倍数
-            return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
-        }
-        return instanceSize;
-    }
+    
 
     Buffer::Buffer(
             class Device &device,
@@ -44,7 +27,7 @@ namespace Kaamoo {
               instanceCount{instanceCount},
               usageFlags{usageFlags},
               memoryPropertyFlags{memoryPropertyFlags} {
-        alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+        alignmentSize = Device::getAlignment(instanceSize, minOffsetAlignment);
         bufferSize = alignmentSize * instanceCount;
         device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
     }
@@ -185,7 +168,8 @@ namespace Kaamoo {
  * @return VkDescriptorBufferInfo for instance at index
  */
     std::shared_ptr<VkDescriptorBufferInfo> Buffer::descriptorInfoForIndex(int index) {
-        return descriptorInfo(alignmentSize, index * alignmentSize);
+        return descriptorInfo(instanceSize, index * alignmentSize);
+//        return descriptorInfo(alignmentSize, index * alignmentSize);
     }
 
 /**

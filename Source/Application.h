@@ -77,6 +77,7 @@ namespace Kaamoo {
         
 #ifdef RAY_TRACING
         std::shared_ptr<RayTracingSystem> m_rayTracingSystem;
+        std::vector<GameObjectDesc> m_gameObjectDescs;
 #else
         std::shared_ptr<ShadowSystem> m_shadowSystem;
 #endif

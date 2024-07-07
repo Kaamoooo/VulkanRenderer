@@ -66,7 +66,6 @@ namespace Kaamoo {
         VkDeviceMemory getMemory() const { return memory; }
 
     private:
-        static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
         Device &Device;
         void *mapped = nullptr;

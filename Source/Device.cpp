@@ -161,6 +161,7 @@ namespace Kaamoo {
 
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
         properties2.pNext = &rayTracingPipelineProperties;
+        rayTracingPipelineProperties.pNext = &externalMemoryHostProperties;
         vkGetPhysicalDeviceProperties2(physicalDevice, &properties2);
         std::cout << "physical device: " << properties.deviceName << std::endl;
     }
@@ -285,14 +286,15 @@ namespace Kaamoo {
                                 supportedFeatures.samplerAnisotropy;
 #ifdef RAY_TRACING
         VkPhysicalDeviceFeatures2 deviceFeatures2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-        VkPhysicalDeviceRayTracingValidationFeaturesNV rayTracingValidationFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV};
+//        VkPhysicalDeviceRayTracingValidationFeaturesNV rayTracingValidationFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV};
         VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT};
 
-        deviceFeatures2.pNext = &rayTracingValidationFeatures;
-        rayTracingValidationFeatures.pNext = &bufferDeviceAddressFeatures;
+//        deviceFeatures2.pNext = &rayTracingValidationFeatures;
+        deviceFeatures2.pNext = &bufferDeviceAddressFeatures;
 
         vkGetPhysicalDeviceFeatures2(device, &deviceFeatures2);
-        isDeviceSuitable = isDeviceSuitable && rayTracingValidationFeatures.rayTracingValidation && bufferDeviceAddressFeatures.bufferDeviceAddress;
+//        isDeviceSuitable = isDeviceSuitable && rayTracingValidationFeatures.rayTracingValidation && bufferDeviceAddressFeatures.bufferDeviceAddress;
+        isDeviceSuitable = isDeviceSuitable && bufferDeviceAddressFeatures.bufferDeviceAddress;
 #endif
 
         return isDeviceSuitable;
@@ -516,7 +518,8 @@ namespace Kaamoo {
         
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
+        
+        allocInfo.allocationSize = getAlignment(memRequirements.size,externalMemoryHostProperties.minImportedHostPointerAlignment) ;
         allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
         allocInfo.pNext = &memoryAllocateFlagsInfo;
 
@@ -726,4 +729,21 @@ namespace Kaamoo {
         }
     }
 
-}  // namespace lve
+    /**
+ * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
+ *
+ * @param instanceSize The size of an instance
+ * @param minOffsetAlignment The minimum required alignment, in bytes, for the offset member (eg
+ * minUniformBufferOffsetAlignment)
+ *
+ * @return VkResult of the buffer mapping call
+ */
+    VkDeviceSize Device::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
+        if (minOffsetAlignment > 0) {
+            //(instanceSize + minOffsetAlignment - 1) 防止instanceSize小于alignment时计算结果为0，因此加上minOffsetAlignment-1保证其结果有效，同时-1是为了防止计算结果偏大
+            //~(minOffsetAlignment-1)即取minOffsetAlignment的公倍数
+            return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
+        }
+        return instanceSize;
+    }
+} 

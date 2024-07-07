@@ -9,6 +9,7 @@
 namespace Kaamoo {
     class Model {
     public:
+        
         inline static std::unordered_map<std::string, std::shared_ptr<Model>> models{};
 
         Model(const Model &model) = delete;
@@ -22,7 +23,7 @@ namespace Kaamoo {
             alignas(16) glm::vec3 position;
             alignas(16) glm::vec3 color;
             alignas(16) glm::vec3 normal;
-            alignas(16) glm::vec2 uv;
+            alignas(8) glm::vec2 uv;
 
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
 
