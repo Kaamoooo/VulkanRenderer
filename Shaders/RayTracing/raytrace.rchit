@@ -1,8 +1,9 @@
 #version 460
 
 #include "RayTracingGlobal.glsl"
+#include "../PBR.glsl"
 
-layout (location = 0) rayPayloadInEXT vec3 hitValue;
+layout (location = 0) rayPayloadInEXT hitPayLoad payLoad;
 layout (location = 1) rayPayloadEXT bool isShadowed;
 
 hitAttributeEXT vec3 attribs;
@@ -23,6 +24,7 @@ struct PBR {
     float opacity;//36~40
     float AO;//40~44
     int padding;//44~48
+    vec3 emissive;//48~60
 };
 
 struct GameObjectDesc {
@@ -30,7 +32,7 @@ struct GameObjectDesc {
     uint64_t indicesAddress;//8~16
     PBR pbr;//16~64
     ivec2 textureEntry;//64~72
-//    int padding[2];//72~80 causes error in NSight
+    //    int padding[2];//72~80 causes error in NSight
     int padding0;//72~76
     int padding1;//76~80
 };
@@ -39,7 +41,7 @@ struct GameObjectDesc {
 layout (buffer_reference, std430) buffer VerticesBuffer {Vertex vertices[];};
 layout (buffer_reference, std430) buffer IndicesBuffer { uint indices[]; };
 layout (set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
-layout (set = 1, binding = 1,std430) readonly buffer GameObjectDescBuffer {GameObjectDesc gameObjectDescs[];} gameObjectDescBuffer;
+layout (set = 1, binding = 1, std430) readonly buffer GameObjectDescBuffer {GameObjectDesc gameObjectDescs[];} gameObjectDescBuffer;
 layout (set = 1, binding = 2) uniform sampler2D textureSamplers[];
 
 PBR reloadPBR(PBR rawPBR, ivec2 textureEntry, vec2 uv, vec3 normal, mat3 TBN) {
@@ -76,7 +78,6 @@ PBR reloadPBR(PBR rawPBR, ivec2 textureEntry, vec2 uv, vec3 normal, mat3 TBN) {
     } else {
         pbr.roughness = rawPBR.roughness;
         pbr.roughness = 0.5;
-        
     }
 
     if (rawPBR.opacity == -1) {
@@ -90,6 +91,12 @@ PBR reloadPBR(PBR rawPBR, ivec2 textureEntry, vec2 uv, vec3 normal, mat3 TBN) {
         pbr.AO = texture(textureSamplers[textureIndex], uv).x;
     } else {
         pbr.AO = 1;
+    }
+
+    if (rawPBR.emissive == vec3(-1, -1, -1)) {
+        pbr.emissive = texture(textureSamplers[textureIndex], uv).xyz;
+    } else {
+        pbr.emissive = rawPBR.emissive;
     }
 
     return pbr;
@@ -127,33 +134,59 @@ void main()
     PBR pbr = reloadPBR(gameObjectDesc.pbr, gameObjectDesc.textureEntry, uv, normal, TBN);
     vec3 worldNormal = normalize(vec3(pbr.normal * gl_WorldToObjectEXT));
 
-    //Temporarily difined here
-    vec3 lightDir = normalize(vec3(0, 1, 1));
-    float lightIntensity = max(dot(worldNormal, -lightDir), 0.0);
-    if (lightIntensity > 0.001) {
-        float tMin = 0.0001;
-        //Todo: This is directional light hence the tMax is set to a large value
-        float tMax = 10000;
-        vec3 origin = worldPos + 0.001 * worldNormal;
-        vec3 direction = -lightDir;
-        uint flags = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
-        isShadowed = true;
-        traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 1, origin, tMin, direction, tMax, 1);
-    }
-    float attenuation = 1;
-    if (isShadowed) {
-        attenuation = 0.1;
+    vec3 lo = vec3(0, 0, 0);
+    for (int i = 0; i < ubo.lightNum; i++) {
+        //Directional Light for now
+        Light light = ubo.lights[i];
+        vec3 pixelToLight;
+        float attenuation = 1;
+        float shadowRayDistance = 10000;
+        switch (light.lightCategory) {
+            case 0:
+                float distance = length(light.position.xyz - worldPos);
+                shadowRayDistance = 100;
+                attenuation = min(1, 1.0f / (distance * distance));
+                pixelToLight = normalize(light.position.xyz - worldPos);
+                break;
+            case 1:
+                pixelToLight = normalize(-light.direction.xyz);
+                break;
+            case 2:
+                pixelToLight = normalize(light.position.xyz);
+                break;
+        }
+        const vec3 pixelToView = -gl_WorldRayDirectionEXT;
+        const vec3 brdf = cookTorrenceBRDF(worldNormal, pixelToView, pixelToLight, pbr.albedo, pbr.roughness, pbr.metallic);
+        const vec3 radiance = light.color.xyz * light.color.w;
+        const float geometry = clamp(dot(pixelToLight, worldNormal), 0, 1);
+
+        float shadowMask = 1;
+        if (geometry > 0.001) {
+            float tMin = 0.0001;
+            float tMax = shadowRayDistance;
+            vec3 origin = worldPos + 0.0001 * worldNormal;
+            vec3 direction = pixelToLight;
+            uint flags = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
+            isShadowed = true;
+            traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 1, origin, tMin, direction, tMax, 1);
+        }
+        if (isShadowed) {
+            shadowMask = 0.1;
+        }
+
+        lo += pbr.emissive + radiance * brdf * geometry * shadowMask * attenuation;
     }
 
-    hitValue = lightIntensity * attenuation * pbr.albedo;
-//    hitValue = vec3(uv.xy, 0);
-//    hitValue = worldNormal;
-//    hitValue = pbr.normal;
-//    hitValue = vec3(pbr.albedo);
-//    hitValue = vec3(pbr.roughness);
-//    hitValue = vec3(pbr.opacity);
-//    hitValue = vec3(gameObjectDesc.pbr.metallic);
-//    hitValue = vec3(gameObjectDesc.pbr.opacity);
-//    hitValue = worldPos;
-//    hitValue = pos;
+    payLoad.hitValue = lo;
+    //    payLoad.hitValue = viewDirection;
+    //    hitValue = vec3(uv.xy, 0);
+    //    hitValue = worldNormal;
+    //    hitValue = pbr.normal;
+    //    hitValue = vec3(pbr.albedo);
+    //    hitValue = vec3(pbr.roughness);
+    //    hitValue = vec3(pbr.opacity);
+    //    hitValue = vec3(gameObjectDesc.pbr.metallic);
+    //    hitValue = vec3(gameObjectDesc.pbr.opacity);
+    //    hitValue = worldPos;
+    //    hitValue = pos;
 }   

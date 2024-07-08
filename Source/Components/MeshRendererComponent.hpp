@@ -46,7 +46,7 @@ namespace Kaamoo {
 
         std::shared_ptr<Model> GetModelPtr() { return model; }
 
-        void OnLoad(GameObject *gameObject) override {
+        void Loaded(GameObject *gameObject) override {
             if (model == nullptr) {
                 return;
             }

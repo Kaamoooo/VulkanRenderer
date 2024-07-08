@@ -11,25 +11,27 @@ namespace Kaamoo {
     class GameObject;
 
     enum LightCategory {
+        NONE = -1,
         POINT_LIGHT = 0,
         DIRECTIONAL_LIGHT = 1
     };
     
     struct Light {
         glm::vec4 position{};
-        glm::vec4 rotation{};
+        glm::vec4 direction{};
         glm::vec4 color{};
         // 0: point lights, 1: directional lights
         alignas(16) LightCategory lightCategory;
     };
+    
 #ifdef RAY_TRACING
     struct GlobalUbo {
         glm::mat4 viewMatrix{1.f};
         glm::mat4 inverseViewMatrix{1.f};
         glm::mat4 projectionMatrix{1.f};
         glm::mat4 inverseProjectionMatrix{1.f};
-        alignas(16) float curTime;
-        alignas(16) int lightNum;
+        float curTime;
+        int lightNum;
         alignas(16)Light lights[MAX_LIGHT_NUM];
     };
 #else

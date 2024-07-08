@@ -1,12 +1,30 @@
 [
   {
-    "name": "Vase",
+    "name": "Sphere0",
     "transform": {
-      "translation": [0,0,0],
-      "scale": [2.5,2.5,2.5],
+      "translation": [-1,0,0],
+      "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
     "componentIds":[0,1]
+  },
+  {
+    "name": "Sphere1",
+    "transform": {
+      "translation": [0,0,0],
+      "scale": [0.4,0.4,0.4],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[13]
+  },
+  {
+    "name": "Sphere2",
+    "transform": {
+      "translation": [1,0,0],
+      "scale": [0.4,0.4,0.4],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[12]
   },
   {
     "name": "Ground",
@@ -16,24 +34,6 @@
       "rotation": [0,0,180]
     },
     "componentIds":[2]
-  },
-  {
-    "name": "Cube",
-    "transform": {
-      "translation": [-1,0,0],
-      "scale": [0.3,0.3,0.3],
-      "rotation": [45,45,45]
-    },
-    "componentIds":[13]
-  },
-  {
-    "name": "Vase 2",
-    "transform": {
-      "translation": [1,0,0],
-      "scale": [2,2,2],
-      "rotation": [0,0,0]
-    },
-    "componentIds":[12]
   },
   {
     "name": "MainCamera",
@@ -52,5 +52,23 @@
       "rotation": [0,0,0]
     },
     "componentIds":[11]
+  },
+  {
+    "name": "PointLight",
+    "transform": {
+      "translation": [-1, -1, -1],
+      "scale": [0.02,0.02,0.02],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[51]
+  },
+  {
+    "name": "DirectionalLight",
+    "transform": {
+    "translation": [0, 0, 0],
+    "scale": [1,1,1],
+    "rotation": [-30,-30,0]
+    },
+    "componentIds":[50]
   }
 ]

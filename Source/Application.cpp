@@ -129,6 +129,10 @@ namespace Kaamoo {
                 gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
         }
+        
+#ifdef RAY_TRACING
+        BLAS::buildBLAS(VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
+#endif
 
         for (auto &pair: gameObjects) {
             auto &gameObject = pair.second;
@@ -140,12 +144,16 @@ namespace Kaamoo {
             gameObject.Loaded();
         }
 
+#ifdef RAY_TRACING
+        TLAS::buildTLAS();
+#endif
+
     }
 
     void Application::loadMaterials() {
 
-        uint32_t minOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,
-                                               device.properties.limits.nonCoherentAtomSize);
+        uint32_t minUniformOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,
+                                                      device.properties.limits.nonCoherentAtomSize);
         uint32_t minStorageBufferOffsetAlignment = device.properties2.properties.limits.minStorageBufferOffsetAlignment;
         std::string materialsString = JsonUtils::ReadJsonFile(BasePath + "Materials.json");
         rapidjson::Document materialsDocument;
@@ -154,7 +162,7 @@ namespace Kaamoo {
         auto globalUboBufferPtr = std::make_shared<Buffer>(
                 device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minOffsetAlignment);
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minUniformOffsetAlignment);
         globalUboBufferPtr->map();
 
 #ifdef RAY_TRACING
@@ -242,9 +250,8 @@ namespace Kaamoo {
                     textureEntries.emplace(id, textureEntry);
                 }
             }
-
-
-            //Obj
+            
+            //ObjectDesc
             int meshRendererCount = 0;
             for (auto &modelPair: gameObjects) {
                 auto &gameObject = modelPair.second;
@@ -253,7 +260,6 @@ namespace Kaamoo {
                     meshRendererCount++;
                 }
             }
-//            std::vector<GameObjectDesc> gameObjectDescs(meshRendererCount);
             m_gameObjectDescs.resize(meshRendererCount);
             for (auto &modelPair: gameObjects) {
                 GameObjectDesc modelDesc{};
@@ -276,18 +282,10 @@ namespace Kaamoo {
 
             auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(GameObjectDesc), m_gameObjectDescs.size(),
                                                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,minStorageBufferOffsetAlignment);
+                                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minStorageBufferOffsetAlignment);
             objBufferPtr->map(objBufferPtr->getBufferSize());
             objBufferPtr->writeToBuffer(m_gameObjectDescs.data(), m_gameObjectDescs.size() * sizeof(GameObjectDesc));
-//            for (int i = 0; i < m_gameObjectDescs.size(); ++i) {
-//                objBufferPtr->writeToIndex(&(m_gameObjectDescs[i]), i);
-//            }
-
             bufferPointers.push_back(objBufferPtr);
-//            std::vector<VkDescriptorBufferInfo> bufferInfos{};
-//            for (int i = 0; i < m_gameObjectDescs.size(); i++) {
-//                bufferInfos.push_back(*(objBufferPtr->descriptorInfoForIndex(i)));
-//            }
 
             auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
@@ -299,7 +297,6 @@ namespace Kaamoo {
             auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
             DescriptorWriter(sceneDescriptorSetLayoutPtr, *globalPool).
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo(globalUboBufferPtr->getBufferSize())).
-//                    writeBuffers(1, bufferInfos).
                     writeBuffer(1, objBufferPtr->descriptorInfo(objBufferPtr->getBufferSize())).
                     writeImages(2, imageInfos).
                     build(sceneDescriptorSet);
@@ -458,7 +455,7 @@ namespace Kaamoo {
                                                                     SwapChain::MAX_FRAMES_IN_FLIGHT,
                                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-                                                                    minOffsetAlignment);
+                                                                    minUniformOffsetAlignment);
                     bufferPointers.push_back(shadowUboBuffer);
                     auto shadowUboBufferInfo = shadowUboBuffer->descriptorInfo();
                     descriptorWriter.writeBuffer(writerBindingPoint++, shadowUboBufferInfo);
@@ -524,7 +521,7 @@ namespace Kaamoo {
     }
 
     void Application::UpdateUbo(GlobalUbo &ubo, float totalTime) noexcept {
-        ubo.lightNum = LightComponent::lightNum;
+        ubo.lightNum = LightComponent::GetLightNum();
         ubo.curTime = totalTime;
 #ifndef RAY_TRACING
         ubo.shadowViewMatrix[0] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 90, 180));

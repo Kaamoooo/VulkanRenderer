@@ -29,13 +29,12 @@ namespace Kaamoo {
 
     struct alignas(16) PBR{
         glm::vec3 albedo;//0~12
-        int padding0; //12~16
         alignas(16) glm::vec3 normal;//16~28
         alignas(4)  float metallic; //28~32
         float roughness; //32~36
         float opacity;  //36~40
         float AO;   //40~44
-        int padding; //44~48
+        alignas(16)glm::vec3 emissive; //48~60
     };
 
     typedef struct ShaderModule {
@@ -48,7 +47,7 @@ namespace Kaamoo {
         }
     } ShaderModule;
 
-    const int PBRParametersCount = 6;
+    const int PBRParametersCount = 7;
 
     class PBRLoader {
     public:
@@ -90,6 +89,13 @@ namespace Kaamoo {
             } else {
                 pbr.AO = -1;
             }
+            
+            if (value.HasMember("emissive")) {
+                auto &emissive = value["emissive"];
+                pbr.emissive = glm::vec3(emissive[0].GetFloat(), emissive[1].GetFloat(), emissive[2].GetFloat());
+            } else {
+                pbr.emissive = glm::vec3(-1, -1, -1);
+            }
             return pbr;
         }
 
@@ -111,6 +117,9 @@ namespace Kaamoo {
                 count++;
             }
             if (pbr.AO!= -1.f) {
+                count++;
+            }
+            if (pbr.emissive != glm::vec3(-1, -1, -1)) {
                 count++;
             }
             return count;

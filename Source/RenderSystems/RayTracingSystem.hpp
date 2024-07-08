@@ -5,9 +5,6 @@
 namespace Kaamoo {
     struct PushConstantRay {
         glm::vec4 clearColor;
-        glm::vec3 lightPosition;
-        float lightIntensity;
-        int lightType;
     };
 
     const std::string RayGenShaderName = "rayGenShader";
@@ -25,9 +22,6 @@ namespace Kaamoo {
 
             //Todo: Temporarily hard code the push constant
             m_pushConstantRay.clearColor = {0.0f, 0.1f, 0.1f, 1.0f};
-            m_pushConstantRay.lightPosition = {0.0f, 0.0f, 0.0f};
-            m_pushConstantRay.lightIntensity = 1.0f;
-            m_pushConstantRay.lightType = 0;
 
             std::vector<VkDescriptorSet> descriptorSets;
             for (auto &descriptorSetPointer: m_material->getDescriptorSetPointers()) {

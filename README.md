@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-<img src="./README.assets/image-20240424145416560.png" alt="image-20240424145416560" style="zoom:50%;" />
+![image-20240708170523860](./README.assets/image-20240708170523860.png)
 
 ## 进度
 
@@ -73,3 +73,5 @@
 7.1 Added directional light shadow.
 
 7.2 Completed multiple game objects, materials (shaders, textures) ray tracing.
+
+7.8 Completed PBR rendering.

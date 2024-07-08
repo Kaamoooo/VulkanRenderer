@@ -36,11 +36,11 @@ namespace Kaamoo {
         glm::mat4 calculateViewMatrixForRotation(glm::vec3 position, glm::vec3 rotation) {
             glm::mat4 mat{1.0};
             float rx = glm::radians(rotation.x);
-//            float rx = rotation.x;
+//            float rx = direction.x;
             float ry = glm::radians(rotation.y);
-//            float ry = rotation.y;
+//            float ry = direction.y;
             float rz = glm::radians(rotation.z);
-//            float rz = rotation.z;
+//            float rz = direction.z;
             mat = glm::rotate(mat, -rx, glm::vec3(1, 0, 0));
             mat = glm::rotate(mat, -ry, glm::vec3(0, 1, 0));
             mat = glm::rotate(mat, -rz, glm::vec3(0, 0, 1));

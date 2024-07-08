@@ -18,7 +18,6 @@ namespace Kaamoo {
 
         static auto createTLAS(Model &model, id_t tlasId,glm::mat4 translation = glm::mat4{1.f}) {
             VkAccelerationStructureInstanceKHR instance{};
-            //Todo: May encounter a problem here
             instance.transform = Utils::GlmMatrixToVulkanMatrix(translation);
             instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
             instance.instanceCustomIndex = tlasId;

@@ -6,7 +6,7 @@
   {
     "id": 1,
     "type": "MeshRendererComponent",
-    "model": "smooth_vase.obj",
+    "model": "sphere.obj",
     "materialId": 2
   },
   {
@@ -24,19 +24,39 @@
     "type": "CameraMovementComponent"
   },
   {
-    "id": 11,
-    "type": "RayTracingManagerComponent"
-  },
-  {
     "id": 12,
     "type": "MeshRendererComponent",
-    "model": "flat_vase.obj",
+    "model": "sphere.obj",
     "materialId": 4
   },
   {
     "id": 13,
     "type": "MeshRendererComponent",
-    "model": "cube.obj",
+    "model": "sphere.obj",
     "materialId": 5
+  },
+  {
+    "id": 50,
+    "type": "LightComponent",
+    "category": "Directional",
+    "color": [1, 1, 1],
+    "intensity": 0.1
+  },
+  {
+    "id": 51,
+    "type": "LightComponent",
+    "category": "Point",
+    "color": [0, 1, 1],
+    "intensity": 1
+  },
+  {
+    "id": 60,
+    "type": "MeshRendererComponent",
+    "model": "sphere.obj",
+    "materialId": 60
+  },
+  {
+    "id": 11,
+    "type": "RayTracingManagerComponent"
   }
 ]
