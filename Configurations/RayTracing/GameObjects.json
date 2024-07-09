@@ -15,7 +15,7 @@
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
-    "componentIds":[13]
+    "componentIds":[12]
   },
   {
     "name": "Sphere2",
@@ -24,7 +24,16 @@
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
-    "componentIds":[12]
+    "componentIds":[13]
+  },
+  {
+    "name": "Sphere3",
+    "transform": {
+      "translation": [2,0,0],
+      "scale": [0.4,0.4,0.4],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[60]
   },
   {
     "name": "Ground",

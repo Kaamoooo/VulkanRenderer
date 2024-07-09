@@ -55,7 +55,7 @@ namespace Kaamoo {
             VkAccelerationStructureGeometryKHR asGeometry{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR};
             asGeometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
             asGeometry.geometry.triangles = asGeometryTrianglesData;
-            asGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+            asGeometry.flags = VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR;
 
             VkAccelerationStructureBuildRangeInfoKHR asBuildRangeInfo{};
             asBuildRangeInfo.primitiveCount = primitiveCount;

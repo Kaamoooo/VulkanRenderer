@@ -31,6 +31,7 @@ namespace Kaamoo {
         glm::mat4 projectionMatrix{1.f};
         glm::mat4 inverseProjectionMatrix{1.f};
         float curTime;
+        int TAAFrameIndex;
         int lightNum;
         alignas(16)Light lights[MAX_LIGHT_NUM];
     };

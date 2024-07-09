@@ -60,6 +60,10 @@ namespace Kaamoo {
                     group.generalShader = i;
                     m_rayTracingGroups.push_back(group);
                     break;
+                case rayAnyHit:
+                    shaderStageCreateInfo[i].stage = VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+                    m_rayTracingGroups.back().anyHitShader = i;
+                    break;
             }
             shaderStageCreateInfo[i].module = *m_material->getShaderModulePointers()[i]->shaderModule;
             shaderStageCreateInfo[i].pName = "main";
@@ -73,7 +77,7 @@ namespace Kaamoo {
         rayTracingPipelineCreateInfo.pStages = shaderStageCreateInfo;
         rayTracingPipelineCreateInfo.groupCount = static_cast<uint32_t>(m_rayTracingGroups.size());
         rayTracingPipelineCreateInfo.pGroups = m_rayTracingGroups.data();
-        rayTracingPipelineCreateInfo.maxPipelineRayRecursionDepth = 2;
+        rayTracingPipelineCreateInfo.maxPipelineRayRecursionDepth = 5;
         rayTracingPipelineCreateInfo.layout = pipelineConfigureInfo.pipelineLayout;
         Device::pfn_vkCreateRayTracingPipelinesKHR(device.device(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &rayTracingPipelineCreateInfo, nullptr, &m_pipeline);
 
@@ -83,7 +87,7 @@ namespace Kaamoo {
     void Pipeline::createShaderBindingTable() {
         uint32_t genCount{1};
         uint32_t missCount{2};
-        uint32_t hitCount = m_material->getShaderModulePointers().size()-genCount-missCount;
+        uint32_t hitCount = m_rayTracingGroups.size()-genCount-missCount;
         uint32_t handleCount = genCount + missCount + hitCount;
         uint32_t handleSize = device.rayTracingPipelineProperties.shaderGroupHandleSize;
         uint32_t handleSizeAligned = Utils::alighUp(handleSize, device.rayTracingPipelineProperties.shaderGroupHandleAlignment);

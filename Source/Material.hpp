@@ -24,7 +24,8 @@ namespace Kaamoo {
         rayGen,
         rayClosestHit,
         rayMiss,
-        rayMiss2
+        rayMiss2,
+        rayAnyHit,
     };
 
     struct alignas(16) PBR{

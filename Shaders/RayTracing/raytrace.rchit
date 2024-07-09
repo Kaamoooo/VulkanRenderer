@@ -8,38 +8,6 @@ layout (location = 1) rayPayloadEXT bool isShadowed;
 
 hitAttributeEXT vec3 attribs;
 
-struct Vertex {
-    vec3 position;
-    vec3 color;
-    vec3 normal;
-    vec2 uv;
-};
-
-struct PBR {
-    vec3 albedo;//0~12
-    int padding0;//12~16
-    vec3 normal;//16~28
-    float metallic;//28~32
-    float roughness;//32~36
-    float opacity;//36~40
-    float AO;//40~44
-    int padding;//44~48
-    vec3 emissive;//48~60
-};
-
-struct GameObjectDesc {
-    uint64_t verticesAddress;//0~8
-    uint64_t indicesAddress;//8~16
-    PBR pbr;//16~64
-    ivec2 textureEntry;//64~72
-    //    int padding[2];//72~80 causes error in NSight
-    int padding0;//72~76
-    int padding1;//76~80
-};
-
-
-layout (buffer_reference, std430) buffer VerticesBuffer {Vertex vertices[];};
-layout (buffer_reference, std430) buffer IndicesBuffer { uint indices[]; };
 layout (set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 layout (set = 1, binding = 1, std430) readonly buffer GameObjectDescBuffer {GameObjectDesc gameObjectDescs[];} gameObjectDescBuffer;
 layout (set = 1, binding = 2) uniform sampler2D textureSamplers[];
@@ -164,9 +132,9 @@ void main()
         if (geometry > 0.001) {
             float tMin = 0.0001;
             float tMax = shadowRayDistance;
-            vec3 origin = worldPos + 0.0001 * worldNormal;
+            vec3 origin = worldPos;
             vec3 direction = pixelToLight;
-            uint flags = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
+            uint flags = gl_RayFlagsSkipClosestHitShaderEXT;
             isShadowed = true;
             traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 1, origin, tMin, direction, tMax, 1);
         }
@@ -176,17 +144,18 @@ void main()
 
         lo += pbr.emissive + radiance * brdf * geometry * shadowMask * attenuation;
     }
+    
+    lo = (1 - payLoad.opacity) * lo * pbr.opacity;
+    payLoad.opacity += (1 - payLoad.opacity) * pbr.opacity;
+    payLoad.hitValue += lo;
 
-    payLoad.hitValue = lo;
-    //    payLoad.hitValue = viewDirection;
-    //    hitValue = vec3(uv.xy, 0);
-    //    hitValue = worldNormal;
-    //    hitValue = pbr.normal;
-    //    hitValue = vec3(pbr.albedo);
-    //    hitValue = vec3(pbr.roughness);
-    //    hitValue = vec3(pbr.opacity);
-    //    hitValue = vec3(gameObjectDesc.pbr.metallic);
-    //    hitValue = vec3(gameObjectDesc.pbr.opacity);
-    //    hitValue = worldPos;
-    //    hitValue = pos;
+    if (pbr.opacity < 0.99 && payLoad.opacity < 0.99) {
+        float tMin = 0.001;
+        float tMax = 1000;
+        vec3 origin = worldPos;
+        vec3 direction = gl_WorldRayDirectionEXT;
+        uint flags = gl_RayFlagsNoneEXT;
+        traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 0, origin, tMin, direction, tMax, 0);
+    }
+
 }   

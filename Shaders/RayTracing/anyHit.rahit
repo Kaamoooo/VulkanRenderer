@@ -1,0 +1,25 @@
+#version 460
+
+#include "RayTracingGlobal.glsl"
+#include "../PBR.glsl"
+#include "../Utils/random.glsl"
+
+layout (location = 0) rayPayloadInEXT hitPayLoad payLoad;
+layout (location = 1) rayPayloadEXT bool isShadowed;
+
+hitAttributeEXT vec3 attribs;
+
+layout (set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
+layout (set = 1, binding = 1, std430) readonly buffer GameObjectDescBuffer {GameObjectDesc gameObjectDescs[];} gameObjectDescBuffer;
+layout (set = 1, binding = 2) uniform sampler2D textureSamplers[];
+
+void main()
+{
+    GameObjectDesc gameObjectDesc = gameObjectDescBuffer.gameObjectDescs[gl_InstanceCustomIndexEXT];
+    if (0.99f < gameObjectDesc.pbr.opacity) {
+        return;
+    } else {
+        ignoreIntersectionEXT;
+    }
+
+}   

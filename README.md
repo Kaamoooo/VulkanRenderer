@@ -75,3 +75,5 @@
 7.2 Completed multiple game objects, materials (shaders, textures) ray tracing.
 
 7.8 Completed PBR rendering.
+
+7.10 Completed transparent object rendering.

@@ -129,7 +129,7 @@ namespace Kaamoo {
                 gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
         }
-        
+
 #ifdef RAY_TRACING
         BLAS::buildBLAS(VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 #endif
@@ -169,7 +169,7 @@ namespace Kaamoo {
         {
             //TLAS, offscreen
             auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
                     build();
 
@@ -219,9 +219,12 @@ namespace Kaamoo {
 
                     const int id = object["id"].GetInt();
                     const std::string rayClosestShaderName = object["rayClosestHitShader"].GetString();
-                    //Todo:What if there is only material but no game object using it?   
                     shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayClosestShaderName), ShaderCategory::rayClosestHit));
-
+                    if (object.HasMember("rayAnyHitShader")) {
+                        const std::string rayAnyHitShaderName = object["rayAnyHitShader"].GetString();
+                        shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayAnyHitShaderName), ShaderCategory::rayAnyHit));
+                    }
+                    //Todo:What if there is only material but no game object using it?   
                     //Todo: Support non-PBR material
 
                     auto textureNames = object["texture"].GetArray();
@@ -250,7 +253,7 @@ namespace Kaamoo {
                     textureEntries.emplace(id, textureEntry);
                 }
             }
-            
+
             //ObjectDesc
             int meshRendererCount = 0;
             for (auto &modelPair: gameObjects) {
@@ -288,9 +291,10 @@ namespace Kaamoo {
             bufferPointers.push_back(objBufferPtr);
 
             auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR).
-                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, 1).
-                    addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, imageInfos.size()).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
+                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+                               1).
+                    addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, imageInfos.size()).
                     build();
             descriptorSetLayoutPointers.push_back(sceneDescriptorSetLayoutPtr);
 

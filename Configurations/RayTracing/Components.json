@@ -53,7 +53,7 @@
     "id": 60,
     "type": "MeshRendererComponent",
     "model": "sphere.obj",
-    "materialId": 60
+    "materialId": 6
   },
   {
     "id": 11,

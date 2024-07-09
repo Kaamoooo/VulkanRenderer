@@ -75,26 +75,22 @@ namespace Kaamoo {
 
         static void cmdCreateTLAS(VkCommandBuffer &commandBuffer, VkDeviceAddress instanceBufferDeviceAddress,
                                   VkBuildAccelerationStructureFlagsKHR flags, bool update, bool motion) {
-            VkAccelerationStructureGeometryInstancesDataKHR instancesData{
-                    VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR};
+            VkAccelerationStructureGeometryInstancesDataKHR instancesData{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR};
             instancesData.data.deviceAddress = instanceBufferDeviceAddress;
 
             VkAccelerationStructureGeometryKHR geometry{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR};
             geometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
             geometry.geometry.instances = instancesData;
 
-            VkAccelerationStructureBuildGeometryInfoKHR buildInfo{
-                    VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
+            VkAccelerationStructureBuildGeometryInfoKHR buildInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
             buildInfo.flags = flags;
             buildInfo.geometryCount = 1;
             buildInfo.pGeometries = &geometry;
-            buildInfo.mode = update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR
-                                    : VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+            buildInfo.mode = update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR: VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
             buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
             buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
 
-            VkAccelerationStructureBuildSizesInfoKHR sizeInfo{
-                    VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
+            VkAccelerationStructureBuildSizesInfoKHR sizeInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR};
             auto instancesCount = static_cast<uint32_t>(instances.size());
             Device::pfn_vkGetAccelerationStructureBuildSizesKHR(
                     Device::getDeviceSingleton()->device(),
@@ -105,8 +101,7 @@ namespace Kaamoo {
             );
 
             if (!update) {
-                VkAccelerationStructureCreateInfoKHR createInfo{
-                        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR};
+                VkAccelerationStructureCreateInfoKHR createInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR};
                 createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
                 createInfo.size = sizeInfo.accelerationStructureSize;
                 auto tlasBuffer = new Buffer(
