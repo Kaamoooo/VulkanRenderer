@@ -7,6 +7,7 @@
 namespace Kaamoo {
     class TLAS {
     public:
+        inline static bool shouldUpdate = false;
         inline static VkAccelerationStructureKHR tlas{};
 
         static void release() {
@@ -16,16 +17,22 @@ namespace Kaamoo {
             }
         }
 
-        static auto createTLAS(Model &model, id_t tlasId,id_t shaderOffset,glm::mat4 translation = glm::mat4{1.f}) {
+        static void updateTLAS(id_t tlasId, glm::mat4 translation) {
+            id_t instanceIndex = tlasIdToInstanceIndexMap[tlasId];
+            instances[instanceIndex].transform = Utils::GlmMatrixToVulkanMatrix(translation);
+            shouldUpdate = true;
+        }
+
+        static auto createTLAS(Model &model, id_t tlasId, id_t shaderOffset, glm::mat4 translation = glm::mat4{1.f}) {
             VkAccelerationStructureInstanceKHR instance{};
             instance.transform = Utils::GlmMatrixToVulkanMatrix(translation);
             instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
             instance.instanceCustomIndex = tlasId;
-            instance.accelerationStructureReference = Device::getDeviceSingleton()->
-                    getAccelerationStructureAddressKHR(BLAS::blasBuildInfoMap[model.getIndexReference()]->as);
+            instance.accelerationStructureReference = Device::getDeviceSingleton()->getAccelerationStructureAddressKHR(BLAS::blasBuildInfoMap[model.getIndexReference()]->as);
             instance.mask = 0xFF;
             instance.instanceShaderBindingTableRecordOffset = shaderOffset;
             instances.emplace_back(instance);
+            tlasIdToInstanceIndexMap[tlasId] = instances.size() - 1;
         }
 
         //Motion for motion blur, not be used for now
@@ -72,6 +79,7 @@ namespace Kaamoo {
     private:
         inline static std::vector<VkAccelerationStructureInstanceKHR> instances{};
         inline static std::vector<Buffer *> buffers{};
+        inline static std::unordered_map<id_t, id_t> tlasIdToInstanceIndexMap{};
 
         static void cmdCreateTLAS(VkCommandBuffer &commandBuffer, VkDeviceAddress instanceBufferDeviceAddress,
                                   VkBuildAccelerationStructureFlagsKHR flags, bool update, bool motion) {
@@ -83,10 +91,10 @@ namespace Kaamoo {
             geometry.geometry.instances = instancesData;
 
             VkAccelerationStructureBuildGeometryInfoKHR buildInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR};
-            buildInfo.flags = flags;
+            buildInfo.flags = flags | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
             buildInfo.geometryCount = 1;
             buildInfo.pGeometries = &geometry;
-            buildInfo.mode = update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR: VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+            buildInfo.mode = update ? VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR : VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
             buildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
             buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
 
@@ -106,10 +114,9 @@ namespace Kaamoo {
                 createInfo.size = sizeInfo.accelerationStructureSize;
                 auto tlasBuffer = new Buffer(
                         *Device::getDeviceSingleton(),
-                        sizeInfo.accelerationStructureSize,
+                        sizeInfo.accelerationStructureSize, 1,
                         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-                        VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT
+                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
                 );
                 buffers.emplace_back(tlasBuffer);
                 createInfo.buffer = tlasBuffer->getBuffer();
@@ -123,19 +130,20 @@ namespace Kaamoo {
 
             auto scratchBuffer = new Buffer(
                     *Device::getDeviceSingleton(),
-                    sizeInfo.buildScratchSize,
-                    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                    VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT
+                    sizeInfo.buildScratchSize, 1,
+                    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
             );
             buffers.emplace_back(scratchBuffer);
             VkBufferDeviceAddressInfo bufferDeviceAddressInfo{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
             bufferDeviceAddressInfo.buffer = scratchBuffer->getBuffer();
-            VkDeviceAddress scratchBufferDeviceAddress = vkGetBufferDeviceAddress(
-                    Device::getDeviceSingleton()->device(), &bufferDeviceAddressInfo);
+            VkDeviceAddress scratchBufferDeviceAddress = vkGetBufferDeviceAddress(Device::getDeviceSingleton()->device(), &bufferDeviceAddressInfo);
 
-            buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+            if (update) {
+                buildInfo.srcAccelerationStructure = tlas;
+            } else {
+                buildInfo.srcAccelerationStructure = VK_NULL_HANDLE;
+            }
             buildInfo.dstAccelerationStructure = tlas;
             buildInfo.scratchData.deviceAddress = scratchBufferDeviceAddress;
 

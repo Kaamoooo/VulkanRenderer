@@ -59,7 +59,7 @@ namespace Kaamoo {
             }
             if (lastTransform != updateInfo.gameObject->transform->mat4()) {
                 lastTransform = updateInfo.gameObject->transform->mat4();
-//                TLAS::createTLAS(*model, lastTransform);
+                TLAS::updateTLAS(tlasId, lastTransform);
             }
         };
 

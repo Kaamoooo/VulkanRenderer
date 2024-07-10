@@ -2,7 +2,7 @@
 
 ![image-20240710164854780](./README.assets/image-20240710164854780.png)
 
-## 进度
+## Progress
 
 ---------------2023----------------
 
@@ -76,4 +76,4 @@
 
 7.8 Completed PBR rendering.
 
-7.10 Completed transparent object rendering. Completed semi-transparent object and shadow.
+7.10 Completed transparent object rendering. Completed semi-transparent object and shadow. Supported dynamic acceleration structure. 

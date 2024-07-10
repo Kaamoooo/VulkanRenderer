@@ -12,7 +12,7 @@ namespace Kaamoo {
             BLAS::release();
             TLAS::release();
         };
-        
+
         RayTracingManagerComponent() {
             name = "RayTracingManagerComponent";
         }
@@ -20,14 +20,18 @@ namespace Kaamoo {
         explicit RayTracingManagerComponent(const rapidjson::Value &object) {
             name = "RayTracingManagerComponentComponent";
         }
-        
-        void OnLoad(GameObject*gameObject) override {
+
+        void OnLoad(GameObject *gameObject) override {
         }
 
-        void Loaded(GameObject*gameObject) override {
+        void Loaded(GameObject *gameObject) override {
         };
 
         void LateUpdate(const ComponentUpdateInfo &updateInfo) override {
+            if (TLAS::shouldUpdate) {
+                TLAS::buildTLAS(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, true);
+                TLAS::shouldUpdate= false;
+            }
         };
 
 
