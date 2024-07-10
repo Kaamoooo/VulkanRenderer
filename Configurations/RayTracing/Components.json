@@ -36,6 +36,12 @@
     "materialId": 5
   },
   {
+    "id": 14,
+    "type": "MeshRendererComponent",
+    "model": "sphere.obj",
+    "materialId": 6
+  },
+  {
     "id": 50,
     "type": "LightComponent",
     "category": "Directional",
@@ -46,17 +52,17 @@
     "id": 51,
     "type": "LightComponent",
     "category": "Point",
-    "color": [0, 1, 1],
+    "color": [1, 1, 1],
     "intensity": 1
+  },
+  {
+    "id": 11,
+    "type": "RayTracingManagerComponent"
   },
   {
     "id": 60,
     "type": "MeshRendererComponent",
     "model": "sphere.obj",
-    "materialId": 6
-  },
-  {
-    "id": 11,
-    "type": "RayTracingManagerComponent"
+    "materialId": 60
   }
 ]

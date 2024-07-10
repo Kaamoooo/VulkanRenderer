@@ -50,9 +50,6 @@ namespace Kaamoo {
             if (model == nullptr) {
                 return;
             }
-#ifdef RAY_TRACING
-            TLAS::createTLAS(*model, GetTLASId(), gameObject->transform->mat4());
-#endif
         }
 
 

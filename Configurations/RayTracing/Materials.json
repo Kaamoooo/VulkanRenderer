@@ -4,14 +4,10 @@
     "pipelineCategory": "RayTracing",
     "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
     "PBR": {
-      "albedo": [
-        1.0,
-        0.0,
-        0.0
-      ],
+      "albedo": [1.0, 0.0, 0.0],
       "normal": [],
-      "metallic": 1.0,
-      "roughness": 0.0,
+      "metallic": 0.5,
+      "roughness": 1.0,
       "opacity": 1.0,
       "ao": 0,
       "emissive": [0.0, 0.0, 0.0]
@@ -54,6 +50,7 @@
   {
     "id": 5,
     "pipelineCategory": "RayTracing",
+    "rayAnyHitShader": "RayTracing/anyHit.rahit.spv",
     "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
     "PBR": {
       "albedo": [0.0, 0.0, 1.0],
@@ -70,15 +67,33 @@
   {
     "id": 6,
     "pipelineCategory": "RayTracing",
+    "rayAnyHitShader": "RayTracing/anyHit.rahit.spv",
     "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
     "PBR": {
-      "albedo": [1.0, 0.0, 0.0],
+      "albedo": [1.0, 1.0, 0.0],
       "normal": [],
       "metallic": 0.5,
       "roughness": 0.5,
       "opacity": 0.3,
       "ao": 0,
       "emissive": [0.0, 0.0, 0.0]
+    },
+    "texture": [
+    ]
+  },
+  {
+    "id": 60,
+    "pipelineCategory": "RayTracing",    
+    "rayAnyHitShader": "RayTracing/anyHit.rahit.spv",
+    "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
+    "PBR": {
+      "albedo": [1.0, 0.0, 0.0],
+      "normal": [],
+      "metallic": 1,
+      "roughness": 0,
+      "opacity": 0.3,
+      "ao": 0,
+      "emissive": [1.0, 1.0, 1.0]
     },
     "texture": [
     ]

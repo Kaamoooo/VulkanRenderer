@@ -57,6 +57,9 @@ namespace Kaamoo {
 
     class Pipeline {
     public:
+        const uint32_t GenShaderCount{1};
+        const uint32_t MissShaderCount{2};
+
         Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, std::shared_ptr<Material> material);
 
         ~Pipeline();
@@ -77,7 +80,7 @@ namespace Kaamoo {
         VkPipeline m_pipeline;
 
         std::shared_ptr<Material> m_material;
-        
+
         void createGraphicsPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
 
 #ifdef RAY_TRACING
@@ -93,6 +96,7 @@ namespace Kaamoo {
         void createShaderBindingTable();
 
         void createRayTracingPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
+
 #endif
 
 #ifdef RAY_TRACING
@@ -109,10 +113,11 @@ namespace Kaamoo {
         const VkStridedDeviceAddressRegionKHR &getHitRegion() const {
             return m_hitRegion;
         }
-        
+
         const VkStridedDeviceAddressRegionKHR &getCallableRegion() const {
             return m_callableRegion;
         }
+
 #endif
 
     };

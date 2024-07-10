@@ -4,7 +4,7 @@
 #include "../PBR.glsl"
 
 layout (location = 0) rayPayloadInEXT hitPayLoad payLoad;
-layout (location = 1) rayPayloadEXT bool isShadowed;
+layout (location = 1) rayPayloadEXT ShadowPayload shadowPayload;
 
 hitAttributeEXT vec3 attribs;
 
@@ -112,7 +112,7 @@ void main()
         switch (light.lightCategory) {
             case 0:
                 float distance = length(light.position.xyz - worldPos);
-                shadowRayDistance = 100;
+                shadowRayDistance = distance;
                 attenuation = min(1, 1.0f / (distance * distance));
                 pixelToLight = normalize(light.position.xyz - worldPos);
                 break;
@@ -128,24 +128,27 @@ void main()
         const vec3 radiance = light.color.xyz * light.color.w;
         const float geometry = clamp(dot(pixelToLight, worldNormal), 0, 1);
 
-        float shadowMask = 1;
-        if (geometry > 0.001) {
+        float shadowMask = 0;
+        if (geometry > 0.001 || pbr.opacity < 0.99) {
             float tMin = 0.0001;
             float tMax = shadowRayDistance;
             vec3 origin = worldPos;
             vec3 direction = pixelToLight;
             uint flags = gl_RayFlagsSkipClosestHitShaderEXT;
-            isShadowed = true;
+            shadowPayload.opaqueShadowed = true;
+            shadowPayload.opacity = 0;
             traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 1, origin, tMin, direction, tMax, 1);
-        }
-        if (isShadowed) {
-            shadowMask = 0.1;
+            if (shadowPayload.opaqueShadowed) {
+                shadowMask = 0;
+            } else {
+                shadowMask = 1 - shadowPayload.opacity;
+            }
         }
 
-        lo += pbr.emissive + radiance * brdf * geometry * shadowMask * attenuation;
+        lo += radiance * brdf * geometry * shadowMask * attenuation;
     }
-    
-    lo = (1 - payLoad.opacity) * lo * pbr.opacity;
+
+    lo = (1 - payLoad.opacity) * (lo + pbr.emissive) * pbr.opacity;
     payLoad.opacity += (1 - payLoad.opacity) * pbr.opacity;
     payLoad.hitValue += lo;
 

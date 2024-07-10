@@ -65,7 +65,7 @@ namespace Kaamoo {
         inline static Device device{myWindow};
         inline static Renderer renderer{myWindow, device};
 
-        GameObject::Map gameObjects;
+        GameObject::Map m_gameObjects;
         ShaderBuilder m_shaderBuilder;
         Material::Map m_materials;
         std::shared_ptr<DescriptorPool> globalPool;

@@ -1,9 +1,11 @@
 #version 460
 #extension GL_EXT_ray_tracing : require
 
-layout(location = 1) rayPayloadInEXT bool isShadowed;
+#include "RayTracingGlobal.glsl"
+
+layout(location = 1) rayPayloadInEXT ShadowPayload shadowPayload;
 
 void main()
 {
-    isShadowed = false;
+    shadowPayload.opaqueShadowed = false;
 }

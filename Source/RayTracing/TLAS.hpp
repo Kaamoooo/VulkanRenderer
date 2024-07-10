@@ -16,7 +16,7 @@ namespace Kaamoo {
             }
         }
 
-        static auto createTLAS(Model &model, id_t tlasId,glm::mat4 translation = glm::mat4{1.f}) {
+        static auto createTLAS(Model &model, id_t tlasId,id_t shaderOffset,glm::mat4 translation = glm::mat4{1.f}) {
             VkAccelerationStructureInstanceKHR instance{};
             instance.transform = Utils::GlmMatrixToVulkanMatrix(translation);
             instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
@@ -24,7 +24,7 @@ namespace Kaamoo {
             instance.accelerationStructureReference = Device::getDeviceSingleton()->
                     getAccelerationStructureAddressKHR(BLAS::blasBuildInfoMap[model.getIndexReference()]->as);
             instance.mask = 0xFF;
-            instance.instanceShaderBindingTableRecordOffset = tlasId;
+            instance.instanceShaderBindingTableRecordOffset = shaderOffset;
             instances.emplace_back(instance);
         }
 

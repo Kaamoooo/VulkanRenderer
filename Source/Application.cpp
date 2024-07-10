@@ -7,7 +7,7 @@
 
 namespace Kaamoo {
     Application::~Application() {
-        gameObjects.clear();
+        m_gameObjects.clear();
         m_materials.clear();
     }
 
@@ -37,7 +37,7 @@ namespace Kaamoo {
 
             if (auto commandBuffer = renderer.beginFrame()) {
                 int frameIndex = renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, gameObjects, m_materials, ubo, myWindow.getExtent()};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, myWindow.getExtent()};
 
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
@@ -126,7 +126,7 @@ namespace Kaamoo {
                 gameObject.transform->scale = scale;
                 gameObject.transform->rotation = glm::radians(rotation);
 
-                gameObjects.emplace(gameObject.getId(), std::move(gameObject));
+                m_gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
         }
 
@@ -134,19 +134,15 @@ namespace Kaamoo {
         BLAS::buildBLAS(VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 #endif
 
-        for (auto &pair: gameObjects) {
+        for (auto &pair: m_gameObjects) {
             auto &gameObject = pair.second;
             gameObject.OnLoad();
         }
 
-        for (auto &pair: gameObjects) {
+        for (auto &pair: m_gameObjects) {
             auto &gameObject = pair.second;
             gameObject.Loaded();
         }
-
-#ifdef RAY_TRACING
-        TLAS::buildTLAS();
-#endif
 
     }
 
@@ -167,38 +163,14 @@ namespace Kaamoo {
 
 #ifdef RAY_TRACING
         {
-            //TLAS, offscreen
-            auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
-                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
-                    build();
-
-            auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
-
-            auto accelerationStructureInfo = std::make_shared<VkWriteDescriptorSetAccelerationStructureKHR>();
-            accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
-            accelerationStructureInfo->accelerationStructureCount = 1;
-            accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
-            auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
-            offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-            offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
-
-            DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).
-                    writeTLAS(0, accelerationStructureInfo).
-                    writeImage(1, offScreenImageInfo).
-                    build(rayGenDescriptorSet);
-
-            //Global, Obj, Textures
-
-            //Textures
-            //Load from Json
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{};
             std::vector<std::shared_ptr<Image>> imagePointers{renderer.getOffscreenImageColor()};
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
-            std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{rayGenDescriptorSet};
-            std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{rayGenDescriptorSetLayoutPtr};
+            std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{};
+            std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{};
             std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
             std::vector<VkDescriptorImageInfo> imageInfos;
+
 
             //Generate Shader
             const std::string rayGenShaderPath = "RayTracing/raytrace.rgen.spv";
@@ -213,10 +185,11 @@ namespace Kaamoo {
             //Load materials
             std::unordered_map<int, glm::vec2> textureEntries{};
             std::unordered_map<int, PBR> pbrMaterials{};
+            std::unordered_map<int, int> idShaderOffsetMap{};
+            int shaderGroupOffset = 0;
             if (materialsDocument.IsArray()) {
                 for (rapidjson::SizeType i = 0; i < materialsDocument.Size(); i++) {
                     const rapidjson::Value &object = materialsDocument[i];
-
                     const int id = object["id"].GetInt();
                     const std::string rayClosestShaderName = object["rayClosestHitShader"].GetString();
                     shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayClosestShaderName), ShaderCategory::rayClosestHit));
@@ -224,6 +197,10 @@ namespace Kaamoo {
                         const std::string rayAnyHitShaderName = object["rayAnyHitShader"].GetString();
                         shaderModulePointers.push_back(std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(rayAnyHitShaderName), ShaderCategory::rayAnyHit));
                     }
+
+                    idShaderOffsetMap.emplace(id, shaderGroupOffset);
+                    shaderGroupOffset++;
+
                     //Todo:What if there is only material but no game object using it?   
                     //Todo: Support non-PBR material
 
@@ -253,10 +230,41 @@ namespace Kaamoo {
                     textureEntries.emplace(id, textureEntry);
                 }
             }
+            for (auto &gameObjectPair: m_gameObjects) {
+                auto &gameObject = gameObjectPair.second;
+                MeshRendererComponent *meshRendererComponent;
+                if (gameObject.TryGetComponent(meshRendererComponent)) {
+                    auto model = meshRendererComponent->GetModelPtr();
+                    TLAS::createTLAS(*model, meshRendererComponent->GetTLASId(),idShaderOffsetMap[meshRendererComponent->GetMaterialID()],gameObject.transform->mat4());
+                }
+            }
+            TLAS::buildTLAS();
+
+            //TLAS, offscreen
+            auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
+                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                    build();
+            auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
+            descriptorSetLayoutPointers.push_back(rayGenDescriptorSetLayoutPtr);
+            descriptorSetPointers.push_back(rayGenDescriptorSet);
+
+            auto accelerationStructureInfo = std::make_shared<VkWriteDescriptorSetAccelerationStructureKHR>();
+            accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+            accelerationStructureInfo->accelerationStructureCount = 1;
+            accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
+            auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
+            offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
+
+            DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).
+                    writeTLAS(0, accelerationStructureInfo).
+                    writeImage(1, offScreenImageInfo).
+                    build(rayGenDescriptorSet);
 
             //ObjectDesc
             int meshRendererCount = 0;
-            for (auto &modelPair: gameObjects) {
+            for (auto &modelPair: m_gameObjects) {
                 auto &gameObject = modelPair.second;
                 MeshRendererComponent *meshRendererComponent;
                 if (gameObject.TryGetComponent(meshRendererComponent)) {
@@ -264,7 +272,7 @@ namespace Kaamoo {
                 }
             }
             m_gameObjectDescs.resize(meshRendererCount);
-            for (auto &modelPair: gameObjects) {
+            for (auto &modelPair: m_gameObjects) {
                 GameObjectDesc modelDesc{};
                 auto &gameObject = modelPair.second;
                 MeshRendererComponent *meshRendererComponent;
@@ -292,8 +300,7 @@ namespace Kaamoo {
 
             auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
-                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
-                               1).
+                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, imageInfos.size()).
                     build();
             descriptorSetLayoutPointers.push_back(sceneDescriptorSetLayoutPtr);
@@ -492,7 +499,7 @@ namespace Kaamoo {
 
     void Application::Awake() {
         ComponentAwakeInfo awakeInfo{};
-        for (auto &pair: gameObjects) {
+        for (auto &pair: m_gameObjects) {
             awakeInfo.gameObject = &pair.second;
             pair.second.Awake(awakeInfo);
         }
@@ -506,19 +513,19 @@ namespace Kaamoo {
 
         static bool firstFrame = true;
         if (firstFrame) {
-            for (auto &pair: gameObjects) {
+            for (auto &pair: m_gameObjects) {
                 updateInfo.gameObject = &pair.second;
                 pair.second.Start(updateInfo);
             }
             firstFrame = false;
         }
 
-        for (auto &pair: gameObjects) {
+        for (auto &pair: m_gameObjects) {
             updateInfo.gameObject = &pair.second;
             pair.second.Update(updateInfo);
         }
 
-        for (auto &pair: gameObjects) {
+        for (auto &pair: m_gameObjects) {
             updateInfo.gameObject = &pair.second;
             pair.second.LateUpdate(updateInfo);
         }

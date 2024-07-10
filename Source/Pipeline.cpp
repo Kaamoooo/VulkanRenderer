@@ -77,7 +77,7 @@ namespace Kaamoo {
         rayTracingPipelineCreateInfo.pStages = shaderStageCreateInfo;
         rayTracingPipelineCreateInfo.groupCount = static_cast<uint32_t>(m_rayTracingGroups.size());
         rayTracingPipelineCreateInfo.pGroups = m_rayTracingGroups.data();
-        rayTracingPipelineCreateInfo.maxPipelineRayRecursionDepth = 5;
+        rayTracingPipelineCreateInfo.maxPipelineRayRecursionDepth = 16;
         rayTracingPipelineCreateInfo.layout = pipelineConfigureInfo.pipelineLayout;
         Device::pfn_vkCreateRayTracingPipelinesKHR(device.device(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &rayTracingPipelineCreateInfo, nullptr, &m_pipeline);
 
@@ -85,17 +85,15 @@ namespace Kaamoo {
     }
     
     void Pipeline::createShaderBindingTable() {
-        uint32_t genCount{1};
-        uint32_t missCount{2};
-        uint32_t hitCount = m_rayTracingGroups.size()-genCount-missCount;
-        uint32_t handleCount = genCount + missCount + hitCount;
+        uint32_t hitCount = m_rayTracingGroups.size() - GenShaderCount - MissShaderCount;
+        uint32_t handleCount = GenShaderCount + MissShaderCount + hitCount;
         uint32_t handleSize = device.rayTracingPipelineProperties.shaderGroupHandleSize;
         uint32_t handleSizeAligned = Utils::alighUp(handleSize, device.rayTracingPipelineProperties.shaderGroupHandleAlignment);
 
         m_genRegion.stride = Utils::alighUp(handleSizeAligned, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
         m_genRegion.size = m_genRegion.stride;
         m_missRegion.stride = handleSizeAligned;
-        m_missRegion.size = Utils::alighUp(handleSizeAligned * missCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+        m_missRegion.size = Utils::alighUp(handleSizeAligned * MissShaderCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
         m_hitRegion.stride = handleSizeAligned;
         m_hitRegion.size = Utils::alighUp(handleSizeAligned * hitCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
 
@@ -127,7 +125,7 @@ namespace Kaamoo {
 
             //Miss
             pData = pSbtBufferData + m_genRegion.size;
-            for (uint32_t i = 0; i < missCount; i++) {
+            for (uint32_t i = 0; i < MissShaderCount; i++) {
                 memcpy(pData, getHandle(handleIndex++), handleSize);
                 pData += m_missRegion.stride;
             }

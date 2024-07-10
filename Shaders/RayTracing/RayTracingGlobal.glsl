@@ -10,6 +10,11 @@ struct hitPayLoad {
     float opacity;
 };
 
+struct ShadowPayload{
+    bool opaqueShadowed;
+    float opacity;
+};
+
 struct Light {
     vec4 position;
     vec4 direction;
