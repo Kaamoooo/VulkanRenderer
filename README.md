@@ -77,3 +77,5 @@
 7.8 Completed PBR rendering.
 
 7.10 Completed transparent object rendering. Completed semi-transparent object and shadow. Supported dynamic acceleration structure. 
+
+7.13 Added a basic GUI, using ImGUI framework.

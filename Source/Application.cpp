@@ -2,17 +2,17 @@
 #include "ComponentFactory.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
-#include <glm/ext/matrix_clip_space.hpp>
 #include <algorithm>
 
 namespace Kaamoo {
     Application::~Application() {
+        GUI::Destroy();
         m_gameObjects.clear();
         m_materials.clear();
     }
 
     Application::Application() : m_shaderBuilder(device) {
-        globalPool = DescriptorPool::Builder(device).
+        m_globalPool = DescriptorPool::Builder(device).
                 setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
                 addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
                 addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
@@ -20,6 +20,7 @@ namespace Kaamoo {
         loadGameObjects();
         loadMaterials();
         createRenderSystems();
+        GUI::Init(renderer, myWindow);
     }
 
     void Application::run() {
@@ -29,7 +30,6 @@ namespace Kaamoo {
         Awake();
         while (!myWindow.shouldClose()) {
             glfwPollEvents();
-
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             totalTime += frameTime;
@@ -47,8 +47,10 @@ namespace Kaamoo {
                 m_rayTracingSystem->rayTrace(frameInfo);
 
                 renderer.beginSwapChainRenderPass(commandBuffer);
+                GUI::BeginFrame();
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_postSystem->render(frameInfo);
+                GUI::EndFrame(commandBuffer);
                 renderer.endSwapChainRenderPass(commandBuffer);
 #else
                 renderer.beginShadowRenderPass(commandBuffer);
@@ -59,10 +61,12 @@ namespace Kaamoo {
                 renderer.setShadowMapSynchronization(commandBuffer);
 
                 renderer.beginSwapChainRenderPass(commandBuffer);
+                GUI::BeginFrame();
                 for (const auto &item: m_renderSystems) {
                     item->UpdateGlobalUboBuffer(ubo, frameIndex);
                     item->render(frameInfo);
                 }
+                GUI::EndFrame(commandBuffer);
                 renderer.endSwapChainRenderPass(commandBuffer);
 #endif
 
@@ -257,7 +261,7 @@ namespace Kaamoo {
             offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
 
-            DescriptorWriter(rayGenDescriptorSetLayoutPtr, *globalPool).
+            DescriptorWriter(rayGenDescriptorSetLayoutPtr, *m_globalPool).
                     writeTLAS(0, accelerationStructureInfo).
                     writeImage(1, offScreenImageInfo).
                     build(rayGenDescriptorSet);
@@ -306,7 +310,7 @@ namespace Kaamoo {
             descriptorSetLayoutPointers.push_back(sceneDescriptorSetLayoutPtr);
 
             auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
-            DescriptorWriter(sceneDescriptorSetLayoutPtr, *globalPool).
+            DescriptorWriter(sceneDescriptorSetLayoutPtr, *m_globalPool).
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo(globalUboBufferPtr->getBufferSize())).
                     writeBuffer(1, objBufferPtr->descriptorInfo(objBufferPtr->getBufferSize())).
                     writeImages(2, imageInfos).
@@ -331,7 +335,7 @@ namespace Kaamoo {
             offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
             auto postDescriptorSet = std::make_shared<VkDescriptorSet>();
-            DescriptorWriter(postSystemDescriptorSetLayoutPtr, *globalPool).
+            DescriptorWriter(postSystemDescriptorSetLayoutPtr, *m_globalPool).
                     writeImage(0, offScreenPostImageInfo).
                     writeBuffer(1, globalUboBufferPtr->descriptorInfo()).
                     build(postDescriptorSet);
@@ -359,7 +363,7 @@ namespace Kaamoo {
                 build();
 
         std::shared_ptr<VkDescriptorSet> globalDescriptorSetPointer = std::make_shared<VkDescriptorSet>();
-        DescriptorWriter(globalDescriptorSetLayoutPointer, *globalPool).
+        DescriptorWriter(globalDescriptorSetLayoutPointer, *m_globalPool).
                 writeBuffer(0, bufferInfo).
                 writeImage(1, renderer.getShadowImageInfo()).
                 build(globalDescriptorSetPointer);
@@ -435,7 +439,7 @@ namespace Kaamoo {
 
                 auto materialDescriptorSetLayoutPointer = descriptorSetLayoutBuilder.build();
 
-                DescriptorWriter descriptorWriter(materialDescriptorSetLayoutPointer, *globalPool);
+                DescriptorWriter descriptorWriter(materialDescriptorSetLayoutPointer, *m_globalPool);
 
                 //Write Descriptors
                 int writerBindingPoint = 0;

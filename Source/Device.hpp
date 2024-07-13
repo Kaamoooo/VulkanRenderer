@@ -27,12 +27,13 @@ namespace Kaamoo {
     class Device {
     public:
         const bool enableValidationLayers = true;
+        VkPhysicalDeviceProperties properties{};
+        VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
 
         Device(MyWindow &window);
 
         ~Device();
 
-        // Not copyable or movable
         Device(const Device &) = delete;
 
         void operator=(const Device &) = delete;
@@ -43,17 +44,26 @@ namespace Kaamoo {
 
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
+        static Device *getDeviceSingleton() { return deviceSingleton; }
+
+        VkInstance getInstance() { return instance; }
+
+        VkPhysicalDevice getPhysicalDevice() { return physicalDevice; }
+
+        QueueFamilyIndices getQueueFamilyIndices() { return indices; }
+
+        MyWindow &getWindow() { return window; }
+
         VkCommandPool getCommandPool() { return commandPool; }
 
         VkDevice device() { return device_; }
-
 
         VkSurfaceKHR surface() { return surface_; }
 
         VkQueue graphicsQueue() { return graphicsQueue_; }
 
         VkQueue presentQueue() { return presentQueue_; }
-
+        
         SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -80,12 +90,6 @@ namespace Kaamoo {
 
         VkAccessFlags accessFlagsForImageLayout(VkImageLayout layout);
 
-        VkPhysicalDeviceProperties properties{};
-        VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-
-        static Device *getDeviceSingleton() { return deviceSingleton; }
-
-        MyWindow &getWindow() { return window; }
 
 #ifdef RAY_TRACING
         VkPhysicalDeviceExternalMemoryHostPropertiesEXT externalMemoryHostProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT};
@@ -100,9 +104,12 @@ namespace Kaamoo {
 
 #endif
     private:
+        inline static Device *deviceSingleton;
         VkInstance instance;
-        VkDebugUtilsMessengerEXT debugMessenger;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        QueueFamilyIndices indices;
+
+        VkDebugUtilsMessengerEXT debugMessenger;
         MyWindow &window;
         VkCommandPool commandPool;
 
@@ -111,7 +118,6 @@ namespace Kaamoo {
         VkQueue graphicsQueue_;
         VkQueue presentQueue_;
 
-        inline static Device *deviceSingleton;
 
         const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
         const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,

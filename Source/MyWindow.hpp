@@ -33,7 +33,7 @@ namespace Kaamoo {
         MyWindow(const MyWindow &) = delete;
         MyWindow operator=(const MyWindow &) = delete;
         
-        [[nodiscard]] GLFWwindow* getGLFWwindow() const {
+        static GLFWwindow* getGLFWwindow() {
             return window;
         }
 
@@ -42,7 +42,7 @@ namespace Kaamoo {
         
         void initWindow();
 
-        GLFWwindow *window;
+        inline static GLFWwindow *window;
         std::string windowName;
 
         int width;

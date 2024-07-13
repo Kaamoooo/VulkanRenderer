@@ -6,11 +6,13 @@ set(CMAKE_EXE_LINKER_FLAGS "-static")
 
 include_directories("E:\\Vulkan\\glfw-3.3.8.bin.WIN64\\include")
 include_directories("E:\\Vulkan\\SDK\\Include")
+
 include_directories("External")
 
 file(GLOB_RECURSE SOURCES
         ${PROJECT_SOURCE_DIR}/Source/*.cpp
         ${PROJECT_SOURCE_DIR}/Source/*.hpp
+        ${PROJECT_SOURCE_DIR}/External/Imgui/*.cpp
         )
 add_executable(${PROJECT_NAME} ${SOURCES})
 

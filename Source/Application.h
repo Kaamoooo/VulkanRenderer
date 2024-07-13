@@ -3,10 +3,10 @@
 #include <memory>
 #include <glm/gtc/constants.hpp>
 #include <chrono>
+#include "Device.hpp"
 #include "MyWindow.hpp"
 #include "Pipeline.hpp"
 #include "Renderer.h"
-#include "Device.hpp"
 #include "Model.hpp"
 #include "GameObject.hpp"
 #include "RenderSystems/RenderSystem.h"
@@ -17,6 +17,10 @@
 #include "ShaderBuilder.h"
 #include "Utils/JsonUtils.hpp"
 
+#include <Imgui/imgui.h>
+#include <Imgui/imgui_impl_vulkan.h>
+#include <Imgui/imgui_impl_glfw.h>
+
 #include "Sampler.h"
 #include "ShaderBuilder.h"
 #include "RenderSystems/ShadowSystem.h"
@@ -24,6 +28,8 @@
 #include "RenderSystems/SkyBoxSystem.hpp"
 #include "RenderSystems/RayTracingSystem.hpp"
 #include "RenderSystems/PostSystem.hpp"
+
+#include "GUI.hpp"
 
 namespace Kaamoo {
     class Application {
@@ -65,12 +71,12 @@ namespace Kaamoo {
         inline static Device device{myWindow};
         inline static Renderer renderer{myWindow, device};
 
+        std::shared_ptr<DescriptorPool> m_globalPool;
         GameObject::Map m_gameObjects;
         ShaderBuilder m_shaderBuilder;
         Material::Map m_materials;
-        std::shared_ptr<DescriptorPool> globalPool;
-        std::shared_ptr<VkRenderPass> shadowPass;
-        std::shared_ptr<VkFramebuffer> shadowFramebuffer;
+        std::shared_ptr<VkRenderPass> m_shadowPass;
+        std::shared_ptr<VkFramebuffer> m_shadowFramebuffer;
         
         std::vector<std::shared_ptr<RenderSystem>> m_renderSystems;
         std::shared_ptr<PostSystem> m_postSystem;

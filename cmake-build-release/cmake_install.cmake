@@ -34,7 +34,7 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "E:/Installation Path/Jetbrain ToolBox/apps/CLion/ch-0/241.15989.121/bin/mingw/bin/objdump.exe")
+  set(CMAKE_OBJDUMP "E:/Installation Path/Jetbrain ToolBox/CLion/bin/mingw/bin/objdump.exe")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)

@@ -408,8 +408,6 @@ namespace Kaamoo {
     }
 
     QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) {
-        QueueFamilyIndices indices;
-
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
