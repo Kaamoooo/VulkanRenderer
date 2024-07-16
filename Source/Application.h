@@ -20,9 +20,9 @@
 #include <Imgui/imgui.h>
 #include <Imgui/imgui_impl_vulkan.h>
 #include <Imgui/imgui_impl_glfw.h>
+#include "ComponentFactory.hpp"
 
 #include "Sampler.h"
-#include "ShaderBuilder.h"
 #include "RenderSystems/ShadowSystem.h"
 #include "RenderSystems/GrassSystem.h"
 #include "RenderSystems/SkyBoxSystem.hpp"
@@ -59,7 +59,7 @@ namespace Kaamoo {
 
     private:
 
-        MyWindow m_window{SCENE_WIDTH + UI_LEFT_WIDTH, SCENE_HEIGHT, "VulkanTest"};
+        MyWindow m_window{SCENE_WIDTH + UI_LEFT_WIDTH + UI_LEFT_WIDTH_2, SCENE_HEIGHT, "VulkanTest"};
         Device m_device{m_window};
         Renderer m_renderer{m_window, m_device};
 

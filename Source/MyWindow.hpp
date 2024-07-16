@@ -7,9 +7,10 @@
 #include <stdexcept>
 
 namespace Kaamoo {
-    const int UI_LEFT_WIDTH = 400;
-    static constexpr int SCENE_WIDTH = 800;
-    static constexpr int SCENE_HEIGHT = 800;
+    const int UI_LEFT_WIDTH = 250;
+    const int UI_LEFT_WIDTH_2 = 280;
+    const int SCENE_WIDTH = 800;
+    const int SCENE_HEIGHT = 800;
 
     class MyWindow {
     public:
@@ -27,8 +28,9 @@ namespace Kaamoo {
             return {static_cast<uint32_t>(m_windowWidth), static_cast<uint32_t>(m_windowHeight)};
         };
         
+        
         VkExtent2D getCurrentSceneExtent() {
-            return {static_cast<uint32_t>(m_windowWidth - UI_LEFT_WIDTH), static_cast<uint32_t>(m_windowHeight)};
+            return {static_cast<uint32_t>(m_windowWidth - UI_LEFT_WIDTH - UI_LEFT_WIDTH_2), static_cast<uint32_t>(m_windowHeight)};
         };
 
         bool isWindowResized() {

@@ -22,7 +22,7 @@ namespace Kaamoo {
         TransformComponent *transform;
 
         ~GameObject() {
-            for (auto &component: components) {
+            for (auto &component: m_components) {
                 delete component;
             }
         }
@@ -49,20 +49,22 @@ namespace Kaamoo {
 
         void setName(std::string name) { GameObject::name = std::move(name); }
 
+        std::vector<Component *> getComponents() { return m_components; }
+
         template<typename T, typename std::enable_if<std::is_base_of<Component, T>::value, int>::type = 0>
         void TryAddComponent(T *component) {
-            for (auto &item: components) {
+            for (auto &item: m_components) {
                 if (item->GetName() == component->GetName()) {
                     throw std::runtime_error(
                             "Game Object " + name + " already has component type " + component->GetName());
                 }
             }
-            components.push_back(component);
+            m_components.push_back(component);
         }
 
         template<typename T>
         bool TryGetComponent(T *&component) {
-            for (auto &item: components) {
+            for (auto &item: m_components) {
                 T *targetComponent = dynamic_cast<T *>(item);
                 if (targetComponent != nullptr) {
                     component = targetComponent;
@@ -73,43 +75,43 @@ namespace Kaamoo {
         }
 
         void OnLoad() {
-            for (auto &component: components) {
+            for (auto &component: m_components) {
                 component->OnLoad(this);
             }
         }
 
         void Loaded() {
-            for (auto &component: components) {
+            for (auto &component: m_components) {
                 component->Loaded(this);
             }
         }
 
         void Awake(ComponentAwakeInfo awakeInfo) {
-            for (auto &component: components) {
+            for (auto &component: m_components) {
                 component->Awake(awakeInfo);
             }
         }
 
         void Start(const ComponentUpdateInfo &updateInfo) {
-            for (auto &component: components) {
+            for (auto &component: m_components) {
                 component->Start(updateInfo);
             }
         }
 
         void Update(const ComponentUpdateInfo &updateInfo) {
-            for (auto &component: components) {
+            for (auto &component: m_components) {
                 component->Update(updateInfo);
             }
         }
 
         void LateUpdate(const ComponentUpdateInfo &updateInfo) {
-            for (auto &component: components) {
+            for (auto &component: m_components) {
                 component->LateUpdate(updateInfo);
             }
         }
 
     private:
-        std::vector<Component *> components;
+        std::vector<Component *> m_components;
 
         id_t id;
 

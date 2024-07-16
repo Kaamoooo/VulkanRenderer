@@ -56,7 +56,7 @@ namespace Kaamoo {
         }
 
         float getAspectRatio() const {
-            return static_cast<float>(myWindow.getCurrentExtent().width - UI_LEFT_WIDTH) / static_cast<float> (myWindow.getCurrentExtent().height);
+            return static_cast<float>(myWindow.getCurrentExtent().width - UI_LEFT_WIDTH - UI_LEFT_WIDTH_2) / static_cast<float> (myWindow.getCurrentExtent().height);
         }
 
         const std::shared_ptr<Image> &getShadowImage() const;

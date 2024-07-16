@@ -1,4 +1,6 @@
-﻿namespace Kaamoo {
+﻿#include <iomanip>
+
+namespace Kaamoo {
     class GUI {
     public:
         GUI() = delete;
@@ -56,10 +58,11 @@
             ImGui_ImplVulkan_Init(&init_info);
             ImGui_ImplVulkan_CreateFontsTexture();
 
-            ImGuiStyle& style = ImGui::GetStyle();
+            ImGuiStyle &style = ImGui::GetStyle();
             style.FramePadding = ImVec2(0, 0);
-            style.ItemSpacing = ImVec2(0, 6); 
-            style.WindowPadding = ImVec2(0, 0); 
+            style.ItemSpacing = ImVec2(0, 6);
+            style.WindowPadding = ImVec2(10, 0);
+            style.IndentSpacing = 8;
 //            style.ItemInnerSpacing = ImVec2(0, 0);
         };
 
@@ -72,30 +75,79 @@
             ImGui::NewFrame();
         }
 
+/*
+ *  | UI_LEFT_WIDTH_2 | UI_LEFT_WIDTH | SCENE_WIDTH     
+ *       Inspector        Hierarchy       Scene
+ * */
+
         static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap) {
             ImGuiWindowFlags window_flags = 0;
-            window_flags |= ImGuiWindowFlags_MenuBar;
             window_flags |= ImGuiWindowFlags_NoMove;
             window_flags |= ImGuiWindowFlags_NoResize;
-            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+
+            ImGui::SetNextWindowPos(ImVec2(UI_LEFT_WIDTH_2, 0), ImGuiCond_Always);
             ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH, windowExtent.y), ImGuiCond_Always);
-            
-            if (!ImGui::Begin("Scene", nullptr, window_flags)) {
-                ImGui::End();
-                return;
-            }
+
+            ImGui::Begin("Scene", nullptr, window_flags);
             if (ImGui::TreeNode("Hierarchy")) {
                 if (ImGui::BeginListBox("##Hierarchy", ImVec2(-1, -1))) {
                     for (auto &gameObjectPair: *pGameObjectsMap) {
                         auto &gameObject = gameObjectPair.second;
-                        ImGui::Selectable(gameObject.getName().c_str(), false);
+                        if (ImGui::Selectable(gameObject.getName().c_str())) {
+                            selectedId = gameObjectPair.first;
+                            bSelected = true;
+                        }
                     }
                     ImGui::EndListBox();
                 }
                 ImGui::TreePop();
             }
             ImGui::End();
-//            ImGui::PopStyleVar(2);
+
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH_2, windowExtent.y), ImGuiCond_Always);
+            ImGui::Begin("Inspector", nullptr, window_flags);
+            if (bSelected) {
+                auto &gameObject = pGameObjectsMap->at(selectedId);
+                ImGui::Text("Name:");
+                ImGui::SameLine(70);
+                ImGui::Text(gameObject.getName().c_str());
+
+                //Todo: Set transform by UI and write back to JSON
+                //Todo: Ray tracing sky box
+                if (ImGui::TreeNode("Transform")) {
+                    ImGui::Text("Position:");
+                    ImGui::SameLine(90);
+                    ImGui::Text(Utils::Vec3ToString(gameObject.transform->translation).c_str());
+
+                    ImGui::Text("Rotation:");
+                    ImGui::SameLine(90);
+                    ImGui::Text(Utils::Vec3ToString(gameObject.transform->rotation).c_str());
+
+                    ImGui::Text("Scale:");
+                    ImGui::SameLine(90);
+                    ImGui::Text(Utils::Vec3ToString(gameObject.transform->scale).c_str());
+
+                    ImGui::TreePop();
+                }
+
+                if (ImGui::TreeNode("Components")) {
+                    for (auto &component: gameObject.getComponents()) {
+                        if (component->GetName() == ComponentName::TransformComponent)continue;
+                        if (ImGui::TreeNode(component->GetName().c_str())) {
+                            auto fieldValueMap = component->GetFieldValueMap();
+                            for (auto &fieldValuePair: fieldValueMap) {
+                                ImGui::Text((fieldValuePair.first + ":").c_str());
+                                ImGui::SameLine(120);
+                                ImGui::Text(fieldValuePair.second.c_str());
+                            }
+                            ImGui::TreePop();
+                        }
+                    }
+                    ImGui::TreePop();
+                }
+            }
+            ImGui::End();
         }
 
         static void EndFrame(VkCommandBuffer &commandBuffer) {
@@ -106,5 +158,7 @@
 
     private:
         inline static VkDescriptorPool imguiDescPool{};
+        inline static bool bSelected;
+        inline static id_t selectedId;
     };
 }

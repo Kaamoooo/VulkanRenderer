@@ -1,5 +1,4 @@
 ﻿#include "Application.h"
-#include "ComponentFactory.hpp"
 #include <numeric>
 #include <rapidjson/document.h>
 #include <algorithm>

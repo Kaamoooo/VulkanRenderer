@@ -30,9 +30,9 @@ namespace Kaamoo {
         virtual ~Component() = default;
 
         virtual void OnLoad(GameObject *gameObject) {};
-        
+
         virtual void Loaded(GameObject *gameObject) {};
-        
+
         virtual void Awake(const ComponentAwakeInfo &awakeInfo) {};
 
         virtual void Start(const ComponentUpdateInfo &updateInfo) {};
@@ -40,6 +40,10 @@ namespace Kaamoo {
         virtual void Update(const ComponentUpdateInfo &updateInfo) {};
 
         virtual void LateUpdate(const ComponentUpdateInfo &updateInfo) {};
+
+        virtual std::unordered_map<std::string, std::string> GetFieldValueMap() {
+            return std::unordered_map<std::string, std::string>(0);
+        }
 
     protected:
         std::string name = "Component";

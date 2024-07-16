@@ -9,7 +9,7 @@
 namespace Kaamoo {
     class Model {
     public:
-        
+
         inline static std::unordered_map<std::string, std::shared_ptr<Model>> models{};
 
         Model(const Model &model) = delete;
@@ -61,6 +61,10 @@ namespace Kaamoo {
 
         uint32_t getIndexReference() const { return indexReference; }
 
+        std::string SetName(const std::string &name) { return this->name = name; }
+        
+        std::string GetName() const { return name; }
+        
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
 
@@ -72,7 +76,7 @@ namespace Kaamoo {
                 flags | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 #endif
-        
+
         Device &device;
 
         std::unique_ptr<Buffer> vertexBuffer;
@@ -83,5 +87,7 @@ namespace Kaamoo {
         uint32_t indexCount{};
 
         uint32_t indexReference;
+        
+        std::string name;
     };
 }

@@ -126,7 +126,7 @@ namespace Kaamoo {
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         VkViewport viewport{};
-        viewport.x = UI_LEFT_WIDTH;
+        viewport.x = UI_LEFT_WIDTH + UI_LEFT_WIDTH_2;
         viewport.y = 0.0f;
         viewport.width = static_cast<float>(myWindow.getCurrentSceneExtent().width);
         viewport.height = static_cast<float>(myWindow.getCurrentSceneExtent().height);

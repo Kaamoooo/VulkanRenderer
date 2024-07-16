@@ -8,17 +8,18 @@
 #include "Components/RayTracingManagerComponent.hpp"
 
 namespace Kaamoo {
+    struct ComponentName {
+        inline static const std::string TransformComponent = "TransformComponent";
+        inline static const std::string ObjectMovementComponent = "ObjectMovementComponent";
+        inline static const std::string CameraMovementComponent = "CameraMovementComponent";
+        inline static const std::string MeshRendererComponent = "MeshRendererComponent";
+        inline static const std::string CameraComponent = "CameraComponent";
+        inline static const std::string LightComponent = "LightComponent";
+        inline static const std::string RayTracingManagerComponent = "RayTracingManagerComponent";
+    };
 
     class ComponentFactory {
     public:
-        struct ComponentName {
-            inline static const std::string ObjectMovementComponent = "ObjectMovementComponent";
-            inline static const std::string CameraMovementComponent = "CameraMovementComponent";
-            inline static const std::string MeshRendererComponent = "MeshRendererComponent";
-            inline static const std::string CameraComponent = "CameraComponent";
-            inline static const std::string LightComponent = "LightComponent";
-            inline static const std::string RayTracingManagerComponent = "RayTracingManagerComponent";
-        };
 
         //Initialize some global parameters
         Component* CreateComponent(std::unordered_map<int, rapidjson::Value>& componentsMap,const int componentId) {

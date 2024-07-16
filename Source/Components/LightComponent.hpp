@@ -23,8 +23,9 @@ namespace Kaamoo {
             name = "LightComponent";
             auto colorArray = object["color"].GetArray();
             color = glm::vec3(colorArray[0].GetFloat(), colorArray[1].GetFloat(), colorArray[2].GetFloat());
-            auto colorCategoryString = object["category"].GetString();
-            lightCategory = lightCategoryMap[colorCategoryString];
+            auto jsonLightTypeStr = object["category"].GetString();
+            lightCategory = lightCategoryMap[jsonLightTypeStr];
+            lightTypeStr = jsonLightTypeStr;
             lightIntensity = object["intensity"].GetFloat();
             lightIndex = lightNum;
             lightNum++;
@@ -55,6 +56,14 @@ namespace Kaamoo {
             updateInfo.frameInfo->globalUbo.lights[lightIndex] = light;
         }
 
+        std::unordered_map<std::string, std::string> GetFieldValueMap() override {
+            std::unordered_map<std::string, std::string> map{};
+            map.emplace("Color",Utils::Vec3ToString(color));
+            map.emplace("Intensity", Utils::FloatToString(lightIntensity));
+            map.emplace("Type", lightTypeStr);
+            return map;
+        }
+
         static int GetLightNum() {
             return lightNum;
         }
@@ -65,7 +74,7 @@ namespace Kaamoo {
         int lightIndex = 0;
         float lightIntensity = 1.0f;
         int lightCategory = 0;
-    private:
+        std::string lightTypeStr;
         glm::vec3 color{};
 
         std::unordered_map<std::string, int> lightCategoryMap = {

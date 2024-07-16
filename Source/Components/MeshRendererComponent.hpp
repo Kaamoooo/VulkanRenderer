@@ -24,6 +24,7 @@ namespace Kaamoo {
 #ifdef RAY_TRACING
                 std::shared_ptr<Model> modelFromFile = Model::createModelFromFile(*Device::getDeviceSingleton(), Model::BaseModelsPath + modelName);
                 this->model = modelFromFile;
+                this->model->SetName(modelName);
                 Model::models.emplace(modelName, modelFromFile);
                 static int tlasIdStatic = 0;
                 tlasId = tlasIdStatic++;
@@ -52,7 +53,6 @@ namespace Kaamoo {
             }
         }
 
-
         void Update(const ComponentUpdateInfo &updateInfo) override {
             if (model == nullptr) {
                 return;
@@ -62,6 +62,13 @@ namespace Kaamoo {
                 TLAS::updateTLAS(tlasId, lastTransform);
             }
         };
+
+        std::unordered_map<std::string, std::string> GetFieldValueMap() override {
+            std::unordered_map<std::string, std::string> map{};
+            map["Model"] = model->GetName();
+            map["MaterialId"] = std::to_string(materialId);
+            return map;
+        }
 
         id_t GetTLASId() const {
             return tlasId;
