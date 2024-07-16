@@ -7,6 +7,10 @@
 #include <stdexcept>
 
 namespace Kaamoo {
+    const int UI_LEFT_WIDTH = 400;
+    static constexpr int SCENE_WIDTH = 800;
+    static constexpr int SCENE_HEIGHT = 800;
+
     class MyWindow {
     public:
         MyWindow(int w, int h, std::string name);
@@ -19,36 +23,42 @@ namespace Kaamoo {
 
         void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
 
-        VkExtent2D getExtent() {
-            return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+        VkExtent2D getCurrentExtent() {
+            return {static_cast<uint32_t>(m_windowWidth), static_cast<uint32_t>(m_windowHeight)};
         };
-        bool isWindowResized(){
+        
+        VkExtent2D getCurrentSceneExtent() {
+            return {static_cast<uint32_t>(m_windowWidth - UI_LEFT_WIDTH), static_cast<uint32_t>(m_windowHeight)};
+        };
+
+        bool isWindowResized() {
             return isFrameBufferResized;
         }
-        void resetWindowResizedFlag(){
-            isFrameBufferResized= false;
+
+        void resetWindowResizedFlag() {
+            isFrameBufferResized = false;
         }
 
         //禁用窗口的赋值
         MyWindow(const MyWindow &) = delete;
+
         MyWindow operator=(const MyWindow &) = delete;
-        
-        static GLFWwindow* getGLFWwindow() {
+
+        static GLFWwindow *getGLFWwindow() {
             return window;
         }
 
     private:
-        static void frameBufferResizedCallback(GLFWwindow* myWindow, int width, int height);
-        
+        static void frameBufferResizedCallback(GLFWwindow *myWindow, int width, int height);
+
         void initWindow();
 
         inline static GLFWwindow *window;
         std::string windowName;
 
-        int width;
-        int height;
+        int m_windowWidth;
+        int m_windowHeight;
         bool isFrameBufferResized = false;
-        
         bool frameBufferResized = false;
     };
 

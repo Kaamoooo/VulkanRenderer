@@ -956,7 +956,7 @@ enum ImGuiSelectableFlagsPrivate_
     ImGuiSelectableFlags_SelectOnNav            = 1 << 21,  // (WIP) Auto-select when moved into. This is not exposed in public API as to handle multi-select and modifiers we will need user to explicitly control focus scope. May be replaced with a BeginSelection() API.
     ImGuiSelectableFlags_SelectOnClick          = 1 << 22,  // Override button behavior to react on Click (default is Click+Release)
     ImGuiSelectableFlags_SelectOnRelease        = 1 << 23,  // Override button behavior to react on Release (default is Click+Release)
-    ImGuiSelectableFlags_SpanAvailWidth         = 1 << 24,  // Span all avail width even if we declared less for layout purpose. FIXME: We may be able to remove this (added in 6251d379, 2bcafc86 for menus)
+    ImGuiSelectableFlags_SpanAvailWidth         = 1 << 24,  // Span all avail m_windowWidth even if we declared less for layout purpose. FIXME: We may be able to remove this (added in 6251d379, 2bcafc86 for menus)
     ImGuiSelectableFlags_SetNavIdOnHover        = 1 << 25,  // Set Nav/Focus ID on mouse hover (used by MenuItem)
     ImGuiSelectableFlags_NoPadWithHalfSpacing   = 1 << 26,  // Disable padding each side with ItemSpacing * 0.5f
     ImGuiSelectableFlags_NoSetKeyOwner          = 1 << 27,  // Don't set key/input owner on the initial click (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!)
@@ -1662,9 +1662,9 @@ enum ImGuiOldColumnFlags_
     ImGuiOldColumnFlags_None                    = 0,
     ImGuiOldColumnFlags_NoBorder                = 1 << 0,   // Disable column dividers
     ImGuiOldColumnFlags_NoResize                = 1 << 1,   // Disable resizing columns when clicking on the dividers
-    ImGuiOldColumnFlags_NoPreserveWidths        = 1 << 2,   // Disable column width preservation when adjusting columns
+    ImGuiOldColumnFlags_NoPreserveWidths        = 1 << 2,   // Disable column m_windowWidth preservation when adjusting columns
     ImGuiOldColumnFlags_NoForceWithinWindow     = 1 << 3,   // Disable forcing columns to fit within window
-    ImGuiOldColumnFlags_GrowParentContentsSize  = 1 << 4,   // Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns width at all_. Will eventually remove.
+    ImGuiOldColumnFlags_GrowParentContentsSize  = 1 << 4,   // Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns m_windowWidth at all_. Will eventually remove.
 
     // Obsolete names (will be removed)
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
@@ -1929,8 +1929,8 @@ struct ImGuiContext
     ImGuiIO                 IO;
     ImGuiStyle              Style;
     ImFont*                 Font;                               // (Shortcut) == FontStack.empty() ? IO.Font : FontStack.back()
-    float                   FontSize;                           // (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize(). Text height for current window.
-    float                   FontBaseSize;                       // (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Base text height.
+    float                   FontSize;                           // (Shortcut) == FontBaseSize * g.CurrentWindow->FontWindowScale == window->FontSize(). Text m_windowHeight for current window.
+    float                   FontBaseSize;                       // (Shortcut) == IO.FontGlobalScale * Font->Scale * Font->FontSize. Base text m_windowHeight.
     float                   FontScale;                          // == FontSize / Font->FontSize
     float                   CurrentDpiScale;                    // Current window/viewport DpiScale
     ImDrawListSharedData    DrawListSharedData;
@@ -2516,7 +2516,7 @@ struct IMGUI_API ImGuiWindowTempData
 
     // Local parameters stacks
     // We store the current settings outside of the vectors to increase memory locality (reduce cache misses). The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not using those settings.
-    float                   ItemWidth;              // Current item width (>0.0: width in pixels, <0.0: align xx pixels to the right of window).
+    float                   ItemWidth;              // Current item m_windowWidth (>0.0: m_windowWidth in pixels, <0.0: align xx pixels to the right of window).
     float                   TextWrapPos;            // Current text wrap pos.
     ImVector<float>         ItemWidthStack;         // Store item widths to restore (attention: .back() is not == ItemWidth)
     ImVector<float>         TextWrapPosStack;       // Store text wrap pos to restore (attention: .back() is not == TextWrapPos)
@@ -2553,7 +2553,7 @@ struct IMGUI_API ImGuiWindow
     ImVec2                  ScrollTarget;                       // target scroll position. stored as cursor position with scrolling canceled out, so the highest point is always 0.0f. (FLT_MAX for no change)
     ImVec2                  ScrollTargetCenterRatio;            // 0.0f = scroll so that target position is at top, 0.5f = scroll so that target position is centered
     ImVec2                  ScrollTargetEdgeSnapDist;           // 0.0f = no snapping, >0.0f snapping threshold
-    ImVec2                  ScrollbarSizes;                     // Size taken by each scrollbars on their smaller axis. Pay attention! ScrollbarSizes.x == width of the vertical scrollbar, ScrollbarSizes.y = height of the horizontal scrollbar.
+    ImVec2                  ScrollbarSizes;                     // Size taken by each scrollbars on their smaller axis. Pay attention! ScrollbarSizes.x == m_windowWidth of the vertical scrollbar, ScrollbarSizes.y = m_windowHeight of the horizontal scrollbar.
     bool                    ScrollbarX, ScrollbarY;             // Are scrollbars visible?
     bool                    Active;                             // Set to true on Begin(), unless Collapsed
     bool                    WasActive;
@@ -2698,9 +2698,9 @@ struct IMGUI_API ImGuiTabBar
     int                 PrevFrameVisible;
     ImRect              BarRect;
     float               CurrTabsContentsHeight;
-    float               PrevTabsContentsHeight; // Record the height of contents submitted below the tab bar
-    float               WidthAllTabs;           // Actual width of all tabs (locked during layout)
-    float               WidthAllTabsIdeal;      // Ideal width if all tabs were visible and not clipped
+    float               PrevTabsContentsHeight; // Record the m_windowHeight of contents submitted below the tab bar
+    float               WidthAllTabs;           // Actual m_windowWidth of all tabs (locked during layout)
+    float               WidthAllTabsIdeal;      // Ideal m_windowWidth if all tabs were visible and not clipped
     float               ScrollingAnim;
     float               ScrollingTarget;
     float               ScrollingTargetDistToVisibility;
@@ -2743,19 +2743,19 @@ typedef ImU16 ImGuiTableDrawChannelIdx;
 struct ImGuiTableColumn
 {
     ImGuiTableColumnFlags   Flags;                          // Flags after some patching (not directly same as provided by user). See ImGuiTableColumnFlags_
-    float                   WidthGiven;                     // Final/actual width visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum width, may be < WidthRequest to honor shrinking columns down in tight space.
+    float                   WidthGiven;                     // Final/actual m_windowWidth visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum m_windowWidth, may be < WidthRequest to honor shrinking columns down in tight space.
     float                   MinX;                           // Absolute positions
     float                   MaxX;
-    float                   WidthRequest;                   // Master width absolute value when !(Flags & _WidthStretch). When Stretch this is derived every frame from StretchWeight in TableUpdateLayout()
-    float                   WidthAuto;                      // Automatic width
-    float                   StretchWeight;                  // Master width weight when (Flags & _WidthStretch). Often around ~1.0f initially.
-    float                   InitStretchWeightOrWidth;       // Value passed to TableSetupColumn(). For Width it is a content width (_without padding_).
+    float                   WidthRequest;                   // Master m_windowWidth absolute value when !(Flags & _WidthStretch). When Stretch this is derived every frame from StretchWeight in TableUpdateLayout()
+    float                   WidthAuto;                      // Automatic m_windowWidth
+    float                   StretchWeight;                  // Master m_windowWidth weight when (Flags & _WidthStretch). Often around ~1.0f initially.
+    float                   InitStretchWeightOrWidth;       // Value passed to TableSetupColumn(). For Width it is a content m_windowWidth (_without padding_).
     ImRect                  ClipRect;                       // Clipping rectangle for the column
     ImGuiID                 UserID;                         // Optional, value passed to TableSetupColumn()
     float                   WorkMinX;                       // Contents region min ~(MinX + CellPaddingX + CellSpacingX1) == cursor start position when entering column
     float                   WorkMaxX;                       // Contents region max ~(MaxX - CellPaddingX - CellSpacingX2)
-    float                   ItemWidth;                      // Current item width for the column, preserved across rows
-    float                   ContentMaxXFrozen;              // Contents maximum position for frozen rows (apart from headers), from which we can infer content width.
+    float                   ItemWidth;                      // Current item m_windowWidth for the column, preserved across rows
+    float                   ContentMaxXFrozen;              // Contents maximum position for frozen rows (apart from headers), from which we can infer content m_windowWidth.
     float                   ContentMaxXUnfrozen;
     float                   ContentMaxXHeadersUsed;         // Contents maximum position for headers rows (regardless of freezing). TableHeader() automatically softclip itself + report ideal desired size, to avoid creating extraneous draw calls
     float                   ContentMaxXHeadersIdeal;
@@ -2821,7 +2821,7 @@ struct ImGuiTableHeaderData
 struct ImGuiTableInstanceData
 {
     ImGuiID                     TableInstanceID;
-    float                       LastOuterHeight;            // Outer height from last frame
+    float                       LastOuterHeight;            // Outer m_windowHeight from last frame
     float                       LastTopHeadersRowHeight;    // Height of first consecutive header rows from last frame (FIXME: this is used assuming consecutive headers are in same frozen set)
     float                       LastFrozenHeight;           // Height of frozen section from last frame
     int                         HoveredRowLast;             // Index of row which was hovered last frame.
@@ -2872,15 +2872,15 @@ struct IMGUI_API ImGuiTable
     float                       CellSpacingX1;              // Spacing between non-bordered cells. Locked in BeginTable()/Layout.
     float                       CellSpacingX2;
     float                       InnerWidth;                 // User value passed to BeginTable(), see comments at the top of BeginTable() for details.
-    float                       ColumnsGivenWidth;          // Sum of current column width
-    float                       ColumnsAutoFitWidth;        // Sum of ideal column width in order nothing to be clipped, used for auto-fitting and content width submission in outer window
+    float                       ColumnsGivenWidth;          // Sum of current column m_windowWidth
+    float                       ColumnsAutoFitWidth;        // Sum of ideal column m_windowWidth in order nothing to be clipped, used for auto-fitting and content m_windowWidth submission in outer window
     float                       ColumnsStretchSumWeights;   // Sum of weight of all enabled stretching columns
     float                       ResizedColumnNextWidth;
-    float                       ResizeLockMinContentsX2;    // Lock minimum contents width while resizing down in order to not create feedback loops. But we allow growing the table.
+    float                       ResizeLockMinContentsX2;    // Lock minimum contents m_windowWidth while resizing down in order to not create feedback loops. But we allow growing the table.
     float                       RefScale;                   // Reference scale to be able to rescale columns on font/dpi changes.
     float                       AngledHeadersHeight;        // Set by TableAngledHeadersRow(), used in TableUpdateLayout()
     float                       AngledHeadersSlope;         // Set by TableAngledHeadersRow(), used in TableUpdateLayout()
-    ImRect                      OuterRect;                  // Note: for non-scrolling table, OuterRect.Max.y is often FLT_MAX until EndTable(), unless a height has been specified in BeginTable().
+    ImRect                      OuterRect;                  // Note: for non-scrolling table, OuterRect.Max.y is often FLT_MAX until EndTable(), unless a m_windowHeight has been specified in BeginTable().
     ImRect                      InnerRect;                  // InnerRect but without decoration. As with OuterRect, for non-scrolling tables, InnerRect.Max.y is
     ImRect                      WorkRect;
     ImRect                      InnerClipRect;
@@ -2900,7 +2900,7 @@ struct IMGUI_API ImGuiTable
     ImGuiTableSortSpecs         SortSpecs;                  // Public facing sorts specs, this is what we return in TableGetSortSpecs()
     ImGuiTableColumnIdx         SortSpecsCount;
     ImGuiTableColumnIdx         ColumnsEnabledCount;        // Number of enabled columns (<= ColumnsCount)
-    ImGuiTableColumnIdx         ColumnsEnabledFixedCount;   // Number of enabled columns using fixed width (<= ColumnsCount)
+    ImGuiTableColumnIdx         ColumnsEnabledFixedCount;   // Number of enabled columns using fixed m_windowWidth (<= ColumnsCount)
     ImGuiTableColumnIdx         DeclColumnsCount;           // Count calls to TableSetupColumn()
     ImGuiTableColumnIdx         AngledHeadersCount;         // Count columns with angled headers
     ImGuiTableColumnIdx         HoveredColumnBody;          // Index of column whose visible region is being hovered. Important: == ColumnsCount when hovering empty region after the right-most column!

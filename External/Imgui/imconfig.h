@@ -107,12 +107,12 @@
 //#define IMGUI_DEFINE_MATH_OPERATORS
 
 //---- Use 32-bit vertex indices (default is 16-bit) is one way to allow large meshes with more than 64K vertices.
-// Your renderer backend will need to support it (most example renderer backends support both 16/32-bit indices).
-// Another way to allow large meshes while keeping 16-bit indices is to handle ImDrawCmd::VtxOffset in your renderer.
+// Your m_renderer backend will need to support it (most example m_renderer backends support both 16/32-bit indices).
+// Another way to allow large meshes while keeping 16-bit indices is to handle ImDrawCmd::VtxOffset in your m_renderer.
 // Read about ImGuiBackendFlags_RendererHasVtxOffset for details.
 //#define ImDrawIdx unsigned int
 
-//---- Override ImDrawCallback signature (will need to modify renderer backends accordingly)
+//---- Override ImDrawCallback signature (will need to modify m_renderer backends accordingly)
 //struct ImDrawList;
 //struct ImDrawCmd;
 //typedef void (*MyImDrawCallback)(const ImDrawList* draw_list, const ImDrawCmd* cmd, void* my_renderer_user_data);

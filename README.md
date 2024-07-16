@@ -68,7 +68,7 @@
 
 6.2 Started rendering by very basic ray tracing.
 
-6.30 Added simplest lighting. Fixed the problem that vertex memory alignment does not match between host and device. 
+6.30 Added simplest lighting. Fixed the problem that vertex memory alignment does not match between host and m_device. 
 
 7.1 Added directional light shadow.
 
@@ -79,3 +79,5 @@
 7.10 Completed transparent object rendering. Completed semi-transparent object and shadow. Supported dynamic acceleration structure. 
 
 7.13 Added a basic GUI, using ImGUI framework.
+
+7.16 Adjusted resolution, making window resizing is compatible with rendered image.

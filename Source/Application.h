@@ -34,8 +34,6 @@
 namespace Kaamoo {
     class Application {
     public:
-        static constexpr int WIDTH = 800;
-        static constexpr int HEIGHT = 800;
 
 #ifdef RAY_TRACING
         inline const static std::string ConfigPath = "RayTracing/";
@@ -59,17 +57,11 @@ namespace Kaamoo {
 
         Application &operator=(const Application &) = delete;
 
-        static const Device &getDevice() { return device; }
-
-        static const Renderer &getRenderer() { return renderer; }
-
-        static const MyWindow &getWindow() { return myWindow; }
-
     private:
 
-        inline static MyWindow myWindow{WIDTH, HEIGHT, "VulkanTest"};
-        inline static Device device{myWindow};
-        inline static Renderer renderer{myWindow, device};
+        MyWindow m_window{SCENE_WIDTH + UI_LEFT_WIDTH, SCENE_HEIGHT, "VulkanTest"};
+        Device m_device{m_window};
+        Renderer m_renderer{m_window, m_device};
 
         std::shared_ptr<DescriptorPool> m_globalPool;
         GameObject::Map m_gameObjects;
@@ -77,10 +69,10 @@ namespace Kaamoo {
         Material::Map m_materials;
         std::shared_ptr<VkRenderPass> m_shadowPass;
         std::shared_ptr<VkFramebuffer> m_shadowFramebuffer;
-        
+
         std::vector<std::shared_ptr<RenderSystem>> m_renderSystems;
         std::shared_ptr<PostSystem> m_postSystem;
-        
+
 #ifdef RAY_TRACING
         std::shared_ptr<RayTracingSystem> m_rayTracingSystem;
         std::vector<GameObjectDesc> m_gameObjectDescs;
@@ -93,9 +85,9 @@ namespace Kaamoo {
         void loadMaterials();
 
         void createRenderSystems();
-        
+
         void UpdateComponents(FrameInfo &frameInfo);
-        
+
         void UpdateUbo(GlobalUbo &ubo, float totalTime) noexcept;
 
         void Awake();

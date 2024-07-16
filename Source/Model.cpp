@@ -73,7 +73,7 @@ namespace Kaamoo {
         );
 #else
         vertexBuffer=std::make_unique<Buffer>(
-                device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                m_device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
                 );
 #endif
@@ -100,7 +100,7 @@ namespace Kaamoo {
         );
 #else
         indexBuffer = std::make_unique<Buffer>(
-                device, indexSize, indexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                m_device, indexSize, indexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
 #endif

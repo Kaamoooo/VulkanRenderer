@@ -15,6 +15,9 @@ namespace Kaamoo {
         std::string Default="Default";
         std::string CubeMap="CubeMap";
     } ImageType;
+    
+    const int IMAGE_DEFAULT_EXTENT = 1024;
+    
     class Image {
     public:
         VkImage image;

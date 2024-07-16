@@ -36,7 +36,7 @@ namespace Kaamoo {
         void InitMap(){
             componentConstructorMap[ComponentName::MeshRendererComponent] = [](const rapidjson::Value& object)->Component*{return new MeshRendererComponent(object);};
             componentConstructorMap[ComponentName::LightComponent] = [](const rapidjson::Value& object)->Component*{return new LightComponent(object);};
-            componentConstructorMap[ComponentName::ObjectMovementComponent] = [](const rapidjson::Value& object)->Component*{return new ObjectMovementComponent(Application::getWindow().getGLFWwindow());};
+            componentConstructorMap[ComponentName::ObjectMovementComponent] = [](const rapidjson::Value& object)->Component*{return new ObjectMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraMovementComponent] = [](const rapidjson::Value& object)->Component*{return new CameraMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraComponent] = [](const rapidjson::Value& object)->Component*{return new CameraComponent();};
 #ifdef RAY_TRACING

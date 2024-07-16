@@ -143,7 +143,7 @@ namespace Kaamoo {
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-        std::cout << "Required device extensions: " << deviceExtensions.size() << std::endl;
+        std::cout << "Required m_device extensions: " << deviceExtensions.size() << std::endl;
         for (auto &extensionName: deviceExtensions) {
             std::cout << "  " << extensionName << std::endl;
         }
@@ -163,7 +163,7 @@ namespace Kaamoo {
         properties2.pNext = &rayTracingPipelineProperties;
         rayTracingPipelineProperties.pNext = &externalMemoryHostProperties;
         vkGetPhysicalDeviceProperties2(physicalDevice, &properties2);
-        std::cout << "physical device: " << properties.deviceName << std::endl;
+        std::cout << "physical m_device: " << properties.deviceName << std::endl;
     }
 
     void Device::createLogicalDevice() {
@@ -243,7 +243,7 @@ namespace Kaamoo {
         }
 
         if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device_) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create logical device!");
+            throw std::runtime_error("failed to create logical m_device!");
         }
 
         vkGetDeviceQueue(device_, indices.graphicsFamily, 0, &graphicsQueue_);

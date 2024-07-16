@@ -54,7 +54,7 @@ namespace Kaamoo {
         pipelineConfigureInfo.renderPass = renderPass;
         pipelineConfigureInfo.pipelineLayout = pipelineLayout;
 //        m_pipeline = std::make_unique<Pipeline>(
-//                device,
+//                m_device,
 //                m_material
 //        );
     }

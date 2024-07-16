@@ -86,7 +86,7 @@ namespace Kaamoo {
     }
 
 /**
- * Flush a memory range of the buffer to make it visible to the device
+ * Flush a memory range of the buffer to make it visible to the m_device
  *
  * @note Only required for non-coherent memory
  *
@@ -153,7 +153,7 @@ namespace Kaamoo {
     }
 
 /**
- *  Flush the memory range at index * alignmentSize of the buffer to make it visible to the device
+ *  Flush the memory range at index * alignmentSize of the buffer to make it visible to the m_device
  *
  * @param index Used in offset calculation
  *

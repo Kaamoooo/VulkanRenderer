@@ -54,8 +54,8 @@ namespace Kaamoo {
                                           &m_pipeline->getMissRegion(),
                                           &m_pipeline->getHitRegion(),
                                           &m_pipeline->getCallableRegion(),
-                                          frameInfo.extent.width,
-                                          frameInfo.extent.height,
+                                          SCENE_HEIGHT,
+                                          SCENE_WIDTH,
                                           1
             );
         }

@@ -2,16 +2,14 @@
 
 #include "Device.hpp"
 
-// vulkan headers
 #include <vulkan/vulkan.h>
 
-// std lib headers
 #include <string>
 #include <vector>
 #include <memory>
 
 namespace Kaamoo {
-
+    
     class SwapChain {
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
@@ -42,10 +40,6 @@ namespace Kaamoo {
         uint32_t width() { return swapChainExtent.width; }
 
         uint32_t height() { return swapChainExtent.height; }
-
-        float extentAspectRatio() {
-            return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height);
-        }
 
         VkFormat findDepthFormat();
 

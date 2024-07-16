@@ -11,8 +11,8 @@ namespace Kaamoo {
         m_materials.clear();
     }
 
-    Application::Application() : m_shaderBuilder(device) {
-        m_globalPool = DescriptorPool::Builder(device).
+    Application::Application() : m_shaderBuilder(m_device) {
+        m_globalPool = DescriptorPool::Builder(m_device).
                 setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
                 addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
                 addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
@@ -20,7 +20,7 @@ namespace Kaamoo {
         loadGameObjects();
         loadMaterials();
         createRenderSystems();
-        GUI::Init(renderer, myWindow);
+        GUI::Init(m_renderer, m_window);
     }
 
     void Application::run() {
@@ -28,16 +28,16 @@ namespace Kaamoo {
         float totalTime = 0;
         GlobalUbo ubo{};
         Awake();
-        while (!myWindow.shouldClose()) {
+        while (!m_window.shouldClose()) {
             glfwPollEvents();
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             totalTime += frameTime;
             currentTime = newTime;
 
-            if (auto commandBuffer = renderer.beginFrame()) {
-                int frameIndex = renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, myWindow.getExtent()};
+            if (auto commandBuffer = m_renderer.beginFrame()) {
+                int frameIndex = m_renderer.getFrameIndex();
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentSceneExtent()};
 
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
@@ -46,35 +46,38 @@ namespace Kaamoo {
                 m_rayTracingSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_rayTracingSystem->rayTrace(frameInfo);
 
-                renderer.beginSwapChainRenderPass(commandBuffer);
-                GUI::BeginFrame();
+                m_renderer.beginSwapChainRenderPass(commandBuffer);
+                
+                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
+                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
+                                &m_gameObjects);
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_postSystem->render(frameInfo);
                 GUI::EndFrame(commandBuffer);
-                renderer.endSwapChainRenderPass(commandBuffer);
+                
+                m_renderer.endSwapChainRenderPass(commandBuffer);
 #else
-                renderer.beginShadowRenderPass(commandBuffer);
+                m_renderer.beginShadowRenderPass(commandBuffer);
                 m_shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_shadowSystem->renderShadow(frameInfo);
-                renderer.endShadowRenderPass(commandBuffer);
+                m_renderer.endShadowRenderPass(commandBuffer);
                 
-                renderer.setShadowMapSynchronization(commandBuffer);
+                m_renderer.setShadowMapSynchronization(commandBuffer);
 
-                renderer.beginSwapChainRenderPass(commandBuffer);
+                m_renderer.beginSwapChainRenderPass(commandBuffer);
                 GUI::BeginFrame();
                 for (const auto &item: m_renderSystems) {
                     item->UpdateGlobalUboBuffer(ubo, frameIndex);
                     item->render(frameInfo);
                 }
                 GUI::EndFrame(commandBuffer);
-                renderer.endSwapChainRenderPass(commandBuffer);
+                m_renderer.endSwapChainRenderPass(commandBuffer);
 #endif
-
-                renderer.endFrame();
+                m_renderer.endFrame();
             }
 
         }
-        vkDeviceWaitIdle(device.device());
+        vkDeviceWaitIdle(m_device.device());
     }
 
     void Application::loadGameObjects() {
@@ -152,15 +155,15 @@ namespace Kaamoo {
 
     void Application::loadMaterials() {
 
-        uint32_t minUniformOffsetAlignment = std::lcm(device.properties.limits.minUniformBufferOffsetAlignment,
-                                                      device.properties.limits.nonCoherentAtomSize);
-        uint32_t minStorageBufferOffsetAlignment = device.properties2.properties.limits.minStorageBufferOffsetAlignment;
+        uint32_t minUniformOffsetAlignment = std::lcm(m_device.properties.limits.minUniformBufferOffsetAlignment,
+                                                      m_device.properties.limits.nonCoherentAtomSize);
+        uint32_t minStorageBufferOffsetAlignment = m_device.properties2.properties.limits.minStorageBufferOffsetAlignment;
         std::string materialsString = JsonUtils::ReadJsonFile(BasePath + "Materials.json");
         rapidjson::Document materialsDocument;
         materialsDocument.Parse(materialsString.c_str());
 
         auto globalUboBufferPtr = std::make_shared<Buffer>(
-                device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
+                m_device, sizeof(GlobalUbo), SwapChain::MAX_FRAMES_IN_FLIGHT,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, minUniformOffsetAlignment);
         globalUboBufferPtr->map();
@@ -168,7 +171,7 @@ namespace Kaamoo {
 #ifdef RAY_TRACING
         {
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{};
-            std::vector<std::shared_ptr<Image>> imagePointers{renderer.getOffscreenImageColor()};
+            std::vector<std::shared_ptr<Image>> imagePointers{m_renderer.getOffscreenImageColor()};
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
             std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{};
             std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{};
@@ -213,10 +216,10 @@ namespace Kaamoo {
                     textureEntry.x = imageInfos.size();
                     for (auto &textureNameGenericValue: textureNames) {
                         std::string textureName = textureNameGenericValue.GetString();
-                        auto image = std::make_shared<Image>(device, ImageType.Default);
+                        auto image = std::make_shared<Image>(m_device, ImageType.Default);
                         image->createTextureImage(BaseTexturePath + textureName);
                         image->createImageView();
-                        auto sampler = std::make_shared<Sampler>(device);
+                        auto sampler = std::make_shared<Sampler>(m_device);
                         sampler->createTextureSampler();
                         auto imageInfo = image->descriptorInfo(*sampler);
                         imagePointers.emplace_back(image);
@@ -239,13 +242,13 @@ namespace Kaamoo {
                 MeshRendererComponent *meshRendererComponent;
                 if (gameObject.TryGetComponent(meshRendererComponent)) {
                     auto model = meshRendererComponent->GetModelPtr();
-                    TLAS::createTLAS(*model, meshRendererComponent->GetTLASId(),idShaderOffsetMap[meshRendererComponent->GetMaterialID()],gameObject.transform->mat4());
+                    TLAS::createTLAS(*model, meshRendererComponent->GetTLASId(), idShaderOffsetMap[meshRendererComponent->GetMaterialID()], gameObject.transform->mat4());
                 }
             }
             TLAS::buildTLAS();
 
             //TLAS, offscreen
-            auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+            auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
                     build();
@@ -259,7 +262,7 @@ namespace Kaamoo {
             accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
             auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
             offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-            offScreenImageInfo->imageView = renderer.getOffscreenImageColor()->imageView;
+            offScreenImageInfo->imageView = m_renderer.getOffscreenImageColor()->imageView;
 
             DescriptorWriter(rayGenDescriptorSetLayoutPtr, *m_globalPool).
                     writeTLAS(0, accelerationStructureInfo).
@@ -295,14 +298,14 @@ namespace Kaamoo {
                 }
             }
 
-            auto objBufferPtr = std::make_shared<Buffer>(device, sizeof(GameObjectDesc), m_gameObjectDescs.size(),
+            auto objBufferPtr = std::make_shared<Buffer>(m_device, sizeof(GameObjectDesc), m_gameObjectDescs.size(),
                                                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minStorageBufferOffsetAlignment);
             objBufferPtr->map(objBufferPtr->getBufferSize());
             objBufferPtr->writeToBuffer(m_gameObjectDescs.data(), m_gameObjectDescs.size() * sizeof(GameObjectDesc));
             bufferPointers.push_back(objBufferPtr);
 
-            auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(device).
+            auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, imageInfos.size()).
@@ -325,13 +328,13 @@ namespace Kaamoo {
         //Post
         {
             auto postSystemDescriptorSetLayoutPtr =
-                    DescriptorSetLayout::Builder(device).
+                    DescriptorSetLayout::Builder(m_device).
                             addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT).
                             addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT).
                             build();
 
 
-            auto offScreenPostImageInfo = renderer.getOffscreenImageColor()->descriptorInfo();
+            auto offScreenPostImageInfo = m_renderer.getOffscreenImageColor()->descriptorInfo();
             offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
             auto postDescriptorSet = std::make_shared<VkDescriptorSet>();
@@ -346,7 +349,7 @@ namespace Kaamoo {
             };
             std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{postSystemDescriptorSetLayoutPtr};
             std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{postDescriptorSet};
-            std::vector<std::shared_ptr<Image>> imagePointers{renderer.getOffscreenImageColor()};
+            std::vector<std::shared_ptr<Image>> imagePointers{m_renderer.getOffscreenImageColor()};
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
             std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
 
@@ -357,7 +360,7 @@ namespace Kaamoo {
 #else
         auto bufferInfo = globalUboBufferPtr->descriptorInfo();
 
-        auto globalDescriptorSetLayoutPointer = DescriptorSetLayout::Builder(device).
+        auto globalDescriptorSetLayoutPointer = DescriptorSetLayout::Builder(m_device).
                 addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS).
                 addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL_GRAPHICS).
                 build();
@@ -365,7 +368,7 @@ namespace Kaamoo {
         std::shared_ptr<VkDescriptorSet> globalDescriptorSetPointer = std::make_shared<VkDescriptorSet>();
         DescriptorWriter(globalDescriptorSetLayoutPointer, *m_globalPool).
                 writeBuffer(0, bufferInfo).
-                writeImage(1, renderer.getShadowImageInfo()).
+                writeImage(1, m_renderer.getShadowImageInfo()).
                 build(globalDescriptorSetPointer);
 
         if (materialsDocument.IsArray()) {
@@ -415,7 +418,7 @@ namespace Kaamoo {
 
                 //Bind Descriptors
                 //binding points: textures, uniform buffers
-                DescriptorSetLayout::Builder descriptorSetLayoutBuilder(device);
+                DescriptorSetLayout::Builder descriptorSetLayoutBuilder(m_device);
                 int layoutBindingPoint = 0;
                 for (auto &textureNameGenericValue: textureNames) {
                     descriptorSetLayoutBuilder.addBinding(layoutBindingPoint++,
@@ -449,13 +452,13 @@ namespace Kaamoo {
                     std::string textureName = textureNameGenericValue.GetString();
 
                     if (pipelineCategoryString == PipelineCategory.SkyBox)
-                        image = std::make_shared<Image>(device, ImageType.CubeMap);
+                        image = std::make_shared<Image>(m_device, ImageType.CubeMap);
                     else
-                        image = std::make_shared<Image>(device, ImageType.Default);
+                        image = std::make_shared<Image>(m_device, ImageType.Default);
 
                     image->createTextureImage(BaseTexturePath + textureName);
                     image->createImageView();
-                    auto sampler = std::make_shared<Sampler>(device);
+                    auto sampler = std::make_shared<Sampler>(m_device);
                     sampler->createTextureSampler();
                     auto imageInfo = image->descriptorInfo(*sampler);
                     imageInfos.emplace_back(imageInfo);
@@ -466,7 +469,7 @@ namespace Kaamoo {
 
                 std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
                 if (pipelineCategoryString == "Shadow") {
-                    auto shadowUboBuffer = std::make_shared<Buffer>(device, sizeof(ShadowUbo),
+                    auto shadowUboBuffer = std::make_shared<Buffer>(m_device, sizeof(ShadowUbo),
                                                                     SwapChain::MAX_FRAMES_IN_FLIGHT,
                                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
@@ -478,9 +481,9 @@ namespace Kaamoo {
                            pipelineCategoryString == PipelineCategory.Opaque ||
                            pipelineCategoryString == PipelineCategory.TessellationGeometry ||
                            pipelineCategoryString == PipelineCategory.SkyBox) {
-                    imagePointers.push_back(renderer.getShadowImage());
-                    samplerPointers.push_back(renderer.getShadowSampler());
-                    auto imageInfo = renderer.getShadowImageInfo();
+                    imagePointers.push_back(m_renderer.getShadowImage());
+                    samplerPointers.push_back(m_renderer.getShadowSampler());
+                    auto imageInfo = m_renderer.getShadowImageInfo();
                     imageInfos.emplace_back(imageInfo);
                     descriptorWriter.writeImage(writerBindingPoint++, imageInfo);
                 }
@@ -511,7 +514,7 @@ namespace Kaamoo {
 
     void Application::UpdateComponents(FrameInfo &frameInfo) {
         ComponentUpdateInfo updateInfo{};
-        RendererInfo rendererInfo{renderer.getAspectRatio()};
+        RendererInfo rendererInfo{m_renderer.getAspectRatio()};
         updateInfo.frameInfo = &frameInfo;
         updateInfo.rendererInfo = &rendererInfo;
 
@@ -555,30 +558,30 @@ namespace Kaamoo {
             auto pipelineCategory = material.second->getPipelineCategory();
 #ifdef RAY_TRACING
             if (pipelineCategory == PipelineCategory.RayTracing) {
-                m_rayTracingSystem = std::make_shared<RayTracingSystem>(device, renderer.getOffscreenRenderPass(), material.second);
+                m_rayTracingSystem = std::make_shared<RayTracingSystem>(m_device, m_renderer.getOffscreenRenderPass(), material.second);
                 m_rayTracingSystem->Init();
             }
             if (pipelineCategory == PipelineCategory.Post) {
-                m_postSystem = std::make_shared<PostSystem>(device, renderer.getSwapChainRenderPass(), material.second);
+                m_postSystem = std::make_shared<PostSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
                 m_postSystem->Init();
             }
 #else
             if (pipelineCategory == PipelineCategory.Shadow) {
-                m_shadowSystem = std::make_shared<ShadowSystem>(device, renderer.getShadowRenderPass(), material.second);
+                m_shadowSystem = std::make_shared<ShadowSystem>(m_device, m_renderer.getShadowRenderPass(), material.second);
                 continue;
             } else
         if (pipelineCategory == PipelineCategory.TessellationGeometry) {
-            auto renderSystem = std::make_shared<GrassSystem>(device, renderer.getSwapChainRenderPass(), material.second);
+            auto renderSystem = std::make_shared<GrassSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
             renderSystem->Init();
             m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
             continue;
         } else if (pipelineCategory == PipelineCategory.SkyBox) {
-            auto renderSystem = std::make_shared<SkyBoxSystem>(device, renderer.getSwapChainRenderPass(), material.second);
+            auto renderSystem = std::make_shared<SkyBoxSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
             renderSystem->Init();
             m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
             continue;
         } else if (pipelineCategory == PipelineCategory.Opaque) {
-            auto renderSystem = std::make_shared<RenderSystem>(device, renderer.getSwapChainRenderPass(), material.second);
+            auto renderSystem = std::make_shared<RenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
             renderSystem->Init();
             m_renderSystems.push_back(renderSystem);
         }

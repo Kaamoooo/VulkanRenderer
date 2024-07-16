@@ -105,8 +105,8 @@ namespace Kaamoo {
         defaultCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         defaultCreateInfo.imageType = VK_IMAGE_TYPE_2D;
         VkExtent3D extent3D{};
-        extent3D.width = 1024;
-        extent3D.height = 1024;
+        extent3D.width = IMAGE_DEFAULT_EXTENT;
+        extent3D.height = IMAGE_DEFAULT_EXTENT;
         extent3D.depth = 1;
         defaultCreateInfo.extent = extent3D;
         defaultCreateInfo.mipLevels = 1;

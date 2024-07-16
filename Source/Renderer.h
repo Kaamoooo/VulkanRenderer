@@ -56,7 +56,7 @@ namespace Kaamoo {
         }
 
         float getAspectRatio() const {
-            return swapChain->extentAspectRatio();
+            return static_cast<float>(myWindow.getCurrentExtent().width - UI_LEFT_WIDTH) / static_cast<float> (myWindow.getCurrentExtent().height);
         }
 
         const std::shared_ptr<Image> &getShadowImage() const;
@@ -89,7 +89,7 @@ namespace Kaamoo {
 
         bool isCubeMap = true;
         const int ShadowMapResolution = 1024;
-        
+
         std::shared_ptr<Image> shadowImage;
         std::shared_ptr<Sampler> shadowSampler;
         VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;
@@ -100,7 +100,7 @@ namespace Kaamoo {
         std::shared_ptr<Image> offscreenImageDepth;
         VkFramebuffer offscreenFrameBuffer = VK_NULL_HANDLE;
         VkRenderPass offscreenRenderPass = VK_NULL_HANDLE;
-    
+
 
     private:
 
@@ -111,6 +111,7 @@ namespace Kaamoo {
     public:
 
         const std::shared_ptr<Image> &getOffscreenImageColor() const;
+
         const VkRenderPass getOffscreenRenderPass() const {
             return offscreenRenderPass;
         }

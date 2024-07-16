@@ -536,7 +536,7 @@ typedef struct
 } stbtt_bakedchar;
 
 STBTT_DEF int stbtt_BakeFontBitmap(const unsigned char *data, int offset,  // font location (use offset=0 for plain .ttf)
-                                float pixel_height,                     // height of font in pixels
+                                float pixel_height,                     // m_windowHeight of font in pixels
                                 unsigned char *pixels, int pw, int ph,  // bitmap to be filled in
                                 int first_char, int num_chars,          // characters to bake
                                 stbtt_bakedchar *chardata);             // you allocate this, it's num_chars long
@@ -593,7 +593,7 @@ typedef struct stbrp_rect stbrp_rect;
 STBTT_DEF int  stbtt_PackBegin(stbtt_pack_context *spc, unsigned char *pixels, int width, int height, int stride_in_bytes, int padding, void *alloc_context);
 // Initializes a packing context stored in the passed-in stbtt_pack_context.
 // Future calls using this context will pack characters into the bitmap passed
-// in here: a 1-channel bitmap that is width * height. stride_in_bytes is
+// in here: a 1-channel bitmap that is m_windowWidth * m_windowHeight. stride_in_bytes is
 // the distance from one row to the next (or 0 to mean they are packed tightly
 // together). "padding" is the amount of padding to leave between each
 // character (normally you want '1' for bitmaps you'll use as textures with
@@ -614,7 +614,7 @@ STBTT_DEF int  stbtt_PackFontRange(stbtt_pack_context *spc, const unsigned char 
 // and increasing. Data for how to render them is stored in chardata_for_range;
 // pass these to stbtt_GetPackedQuad to get back renderable quads.
 //
-// font_size is the full height of the character from ascender to descender,
+// font_size is the full m_windowHeight of the character from ascender to descender,
 // as computed by stbtt_ScaleForPixelHeight. To use a point size as computed
 // by stbtt_ScaleForMappingEmToPixels, wrap the point size in STBTT_POINT_SIZE()
 // and pass that result as 'font_size':
@@ -761,12 +761,12 @@ STBTT_DEF int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codep
 //
 
 STBTT_DEF float stbtt_ScaleForPixelHeight(const stbtt_fontinfo *info, float pixels);
-// computes a scale factor to produce a font whose "height" is 'pixels' tall.
+// computes a scale factor to produce a font whose "m_windowHeight" is 'pixels' tall.
 // Height is measured as the distance from the highest ascender to the lowest
 // descender; in other words, it's equivalent to calling stbtt_GetFontVMetrics
 // and computing:
 //       scale = pixels / (ascent - descent)
-// so if you prefer to measure height by the ascent only, use a similar calculation.
+// so if you prefer to measure m_windowHeight by the ascent only, use a similar calculation.
 
 STBTT_DEF float stbtt_ScaleForMappingEmToPixels(const stbtt_fontinfo *info, float pixels);
 // computes a scale factor to produce a font whose EM size is mapped to
@@ -880,7 +880,7 @@ STBTT_DEF unsigned char *stbtt_GetCodepointBitmap(const stbtt_fontinfo *info, fl
 // allocates a large-enough single-channel 8bpp bitmap and renders the
 // specified character/glyph at the specified scale into it, with
 // antialiasing. 0 is no coverage (transparent), 255 is fully covered (opaque).
-// *width & *height are filled out with the width & height of the bitmap,
+// *m_windowWidth & *m_windowHeight are filled out with the m_windowWidth & m_windowHeight of the bitmap,
 // which is stored left-to-right, top-to-bottom.
 //
 // xoff/yoff are the offset it pixel space from the glyph origin to the top-left of the bitmap
@@ -893,7 +893,7 @@ STBTT_DEF void stbtt_MakeCodepointBitmap(const stbtt_fontinfo *info, unsigned ch
 // the same as stbtt_GetCodepointBitmap, but you pass in storage for the bitmap
 // in the form of 'output', with row spacing of 'out_stride' bytes. the bitmap
 // is clipped to out_w/out_h bytes. Call stbtt_GetCodepointBitmapBox to get the
-// width and height and positioning info for it first.
+// m_windowWidth and m_windowHeight and positioning info for it first.
 
 STBTT_DEF void stbtt_MakeCodepointBitmapSubpixel(const stbtt_fontinfo *info, unsigned char *output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, float shift_x, float shift_y, int codepoint);
 // same as stbtt_MakeCodepointBitmap, but you can specify a subpixel
@@ -905,7 +905,7 @@ STBTT_DEF void stbtt_MakeCodepointBitmapSubpixelPrefilter(const stbtt_fontinfo *
 
 STBTT_DEF void stbtt_GetCodepointBitmapBox(const stbtt_fontinfo *font, int codepoint, float scale_x, float scale_y, int *ix0, int *iy0, int *ix1, int *iy1);
 // get the bbox of the bitmap centered around the glyph origin; so the
-// bitmap width is ix1-ix0, height is iy1-iy0, and location to place
+// bitmap m_windowWidth is ix1-ix0, m_windowHeight is iy1-iy0, and location to place
 // the bitmap top left is (leftSideBearing*scale,iy0).
 // (Note that the bitmap uses y-increases-down, but the shape uses
 // y-increases-up, so CodepointBitmapBox and CodepointBox are inverted.)
@@ -963,9 +963,9 @@ STBTT_DEF unsigned char * stbtt_GetCodepointSDF(const stbtt_fontinfo *info, floa
 //        onedge_value      --  value 0-255 to test the SDF against to reconstruct the character (i.e. the isocontour of the character)
 //        pixel_dist_scale  --  what value the SDF should increase by when moving one SDF "pixel" away from the edge (on the 0..255 scale)
 //                                 if positive, > onedge_value is inside; if negative, < onedge_value is inside
-//        width,height      --  output height & width of the SDF bitmap (including padding)
+//        m_windowWidth,m_windowHeight      --  output m_windowHeight & m_windowWidth of the SDF bitmap (including padding)
 //        xoff,yoff         --  output origin of the character
-//        return value      --  a 2D array of bytes 0..255, width*height in size
+//        return value      --  a 2D array of bytes 0..255, m_windowWidth*m_windowHeight in size
 //
 // pixel_dist_scale & onedge_value are a scale & bias that allows you to make
 // optimal use of the limited 0..255 for your application, trading off precision
@@ -2022,7 +2022,7 @@ static int stbtt__run_charstring(const stbtt_fontinfo *info, int glyph_index, st
 
 #define STBTT__CSERR(s) (0)
 
-   // this currently ignores the initial width value, which isn't needed if we have hmtx
+   // this currently ignores the initial m_windowWidth value, which isn't needed if we have hmtx
    b = stbtt__cff_index_get(info->charstrings, glyph_index);
    while (b.cursor < b.size) {
       i = 0;
@@ -3208,17 +3208,17 @@ static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, 
                }
 
                // in second pixel, area covered by line segment found in first pixel
-               // is always a rectangle 1 wide * the height of that line segment; this
+               // is always a rectangle 1 wide * the m_windowHeight of that line segment; this
                // is exactly what the variable 'area' stores. it also gets a contribution
                // from the line segment within it. the THIRD pixel will get the first
                // pixel's rectangle contribution, the second pixel's rectangle contribution,
                // and its own contribution. the 'own contribution' is the same in every pixel except
                // the leftmost and rightmost, a trapezoid that slides down in each pixel.
                // the second pixel's contribution to the third pixel will be the
-               // rectangle 1 wide times the height change in the second pixel, which is dy.
+               // rectangle 1 wide times the m_windowHeight change in the second pixel, which is dy.
 
                step = sign * dy * 1; // dy is dy/dx, change in y for every 1 change in x,
-               // which multiplied by 1-pixel-width is how much pixel area changes for each step in x
+               // which multiplied by 1-pixel-m_windowWidth is how much pixel area changes for each step in x
                // so the area advances by 'step' every time
 
                for (x = x1+1; x < x2; ++x) {
@@ -3232,7 +3232,7 @@ static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, 
                // plus the trapezoid filled by the line segment in this pixel all the way to the right edge
                scanline[x2] += area + sign * stbtt__position_trapezoid_area(sy1-y_final, (float) x2, x2+1.0f, x_bottom, x2+1.0f);
 
-               // the rest of the line is filled based on the total height of the line segment in this pixel
+               // the rest of the line is filled based on the total m_windowHeight of the line segment in this pixel
                scanline_fill[x2] += sign * (sy1-sy0);
             }
          } else {
@@ -3819,7 +3819,7 @@ STBTT_DEF void stbtt_MakeCodepointBitmap(const stbtt_fontinfo *info, unsigned ch
 // This is SUPER-CRAPPY packing to keep source code small
 
 static int stbtt_BakeFontBitmap_internal(unsigned char *data, int offset,  // font location (use offset=0 for plain .ttf)
-                                float pixel_height,                     // height of font in pixels
+                                float pixel_height,                     // m_windowHeight of font in pixels
                                 unsigned char *pixels, int pw, int ph,  // bitmap to be filled in
                                 int first_char, int num_chars,          // characters to bake
                                 stbtt_bakedchar *chardata)
@@ -3907,7 +3907,7 @@ typedef int stbrp_coord;
 
 typedef struct
 {
-   int width,height;
+   int m_windowWidth,m_windowHeight;
    int x,y,bottom_y;
 } stbrp_context;
 
@@ -3924,8 +3924,8 @@ struct stbrp_rect
 
 static void stbrp_init_target(stbrp_context *con, int pw, int ph, stbrp_node *nodes, int num_nodes)
 {
-   con->width  = pw;
-   con->height = ph;
+   con->m_windowWidth  = pw;
+   con->m_windowHeight = ph;
    con->x = 0;
    con->y = 0;
    con->bottom_y = 0;
@@ -3937,11 +3937,11 @@ static void stbrp_pack_rects(stbrp_context *con, stbrp_rect *rects, int num_rect
 {
    int i;
    for (i=0; i < num_rects; ++i) {
-      if (con->x + rects[i].w > con->width) {
+      if (con->x + rects[i].w > con->m_windowWidth) {
          con->x = 0;
          con->y = con->bottom_y;
       }
-      if (con->y + rects[i].h > con->height)
+      if (con->y + rects[i].h > con->m_windowHeight)
          break;
       rects[i].x = con->x;
       rects[i].y = con->y;
@@ -4146,7 +4146,7 @@ static float stbtt__oversample_shift(int oversample)
    if (!oversample)
       return 0.0f;
 
-   // The prefilter is a box filter of width "oversample",
+   // The prefilter is a box filter of m_windowWidth "oversample",
    // which shifts phase by (oversample - 1)/2 pixels in
    // oversampled space. We want to shift in the opposite
    // direction to counter this.
@@ -5026,7 +5026,7 @@ STBTT_DEF int stbtt_CompareUTF8toUTF16_bigendian(const char *s1, int len1, const
 //   0.6  (2012-07-17) fix warnings; added stbtt_ScaleForMappingEmToPixels,
 //                        stbtt_GetFontBoundingBox, stbtt_IsGlyphEmpty
 //   0.5  (2011-12-09) bugfixes:
-//                        subpixel glyph renderer computed wrong bounding box
+//                        subpixel glyph m_renderer computed wrong bounding box
 //                        first vertex of shape can be off-curve (FreeSans)
 //   0.4b (2011-12-03) fixed an error in the font baking example
 //   0.4  (2011-12-01) kerning, subpixel rendering (tor)

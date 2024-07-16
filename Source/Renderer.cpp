@@ -1,9 +1,7 @@
 ﻿#include <glm/fwd.hpp>
-#include <glm/detail/type_mat4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include "Renderer.h"
 #include "Image.h"
-#include "Application.h"
 
 
 namespace Kaamoo {
@@ -67,6 +65,7 @@ namespace Kaamoo {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || myWindow.isWindowResized()) {
             myWindow.resetWindowResizedFlag();
             recreateSwapChain();
+//            loadOffscreenResources();
 //            loadShadow();
         } else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image");
@@ -76,9 +75,9 @@ namespace Kaamoo {
     }
 
     void Renderer::recreateSwapChain() {
-        auto extent = myWindow.getExtent();
+        auto extent = myWindow.getCurrentExtent();
         while (extent.width == 0 || extent.height == 0) {
-            extent = myWindow.getExtent();
+            extent = myWindow.getCurrentExtent();
             glfwWaitEvents();
         }
         //等待逻辑设备中的所有命令队列执行完毕
@@ -89,7 +88,6 @@ namespace Kaamoo {
         } else {
             std::shared_ptr<SwapChain> oldSwapChain = std::move(swapChain);
 
-            //调用了std::move,将swapChain移动到另一个变量中，而移动之后原有的swapChain变为未定义
             swapChain = std::make_unique<SwapChain>(device, extent, oldSwapChain);
 
             if (!oldSwapChain->compareSwapFormats(*swapChain)) {
@@ -116,7 +114,6 @@ namespace Kaamoo {
         renderPassBeginInfo.renderPass = swapChain->getRenderPass();
         renderPassBeginInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
 
-        //Render Area即渲染的矩形区域
         renderPassBeginInfo.renderArea.offset = {0, 0};
         renderPassBeginInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
@@ -129,17 +126,17 @@ namespace Kaamoo {
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         VkViewport viewport{};
-        viewport.x = 0.0f;
+        viewport.x = UI_LEFT_WIDTH;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(myWindow.getExtent().width);
-        viewport.height = static_cast<float>(myWindow.getExtent().height);
+        viewport.width = static_cast<float>(myWindow.getCurrentSceneExtent().width);
+        viewport.height = static_cast<float>(myWindow.getCurrentSceneExtent().height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
         VkRect2D scissor{};
         scissor.offset = {0, 0};
         scissor.extent = swapChain->getSwapChainExtent();
-
+        
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     }
@@ -170,8 +167,8 @@ namespace Kaamoo {
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-//        viewport.width = static_cast<float>(myWindow.getExtent().width);
-//        viewport.height = static_cast<float>(myWindow.getExtent().height);
+//        viewport.m_windowWidth = static_cast<float>(m_window.getCurrentExtent().m_windowWidth);
+//        viewport.m_windowHeight = static_cast<float>(m_window.getCurrentExtent().m_windowHeight);
         viewport.width = static_cast<float>(ShadowMapResolution);
         viewport.height = static_cast<float>(ShadowMapResolution);
         viewport.minDepth = 0.0f;
@@ -232,8 +229,8 @@ namespace Kaamoo {
         VkImageCreateInfo imageCreateInfo{};
         Image::setDefaultImageCreateInfo(imageCreateInfo);
         VkExtent3D shadowMapExtent{};
-//        shadowMapExtent.height = swapChain->getSwapChainExtent().height;
-//        shadowMapExtent.width = swapChain->getSwapChainExtent().width;
+//        shadowMapExtent.m_windowHeight = swapChain->getSwapChainExtent().m_windowHeight;
+//        shadowMapExtent.m_windowWidth = swapChain->getSwapChainExtent().m_windowWidth;
         shadowMapExtent.height = ShadowMapResolution;
         shadowMapExtent.width = ShadowMapResolution;
 
@@ -326,8 +323,8 @@ namespace Kaamoo {
         framebufferCreateInfo.renderPass = shadowRenderPass;
         framebufferCreateInfo.attachmentCount = 1;
         framebufferCreateInfo.pAttachments = shadowImage->getImageView();
-//        framebufferCreateInfo.width = swapChain->getSwapChainExtent().width;
-//        framebufferCreateInfo.height = swapChain->getSwapChainExtent().height;
+//        framebufferCreateInfo.m_windowWidth = swapChain->getSwapChainExtent().m_windowWidth;
+//        framebufferCreateInfo.m_windowHeight = swapChain->getSwapChainExtent().m_windowHeight;
 
         framebufferCreateInfo.width = ShadowMapResolution;
         framebufferCreateInfo.height = ShadowMapResolution;
@@ -357,18 +354,19 @@ namespace Kaamoo {
             imageCreateInfo.format = offscreenColorFormat;
             imageCreateInfo.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
             VkExtent3D imageExtent{};
-            imageExtent.height = swapChain->getSwapChainExtent().height;
-            imageExtent.width = swapChain->getSwapChainExtent().width;
+//            imageExtent.height = swapChain->getSwapChainExtent().height;
+            imageExtent.height = SCENE_HEIGHT;
+            imageExtent.width = SCENE_WIDTH;
             imageExtent.depth = 1;
             imageCreateInfo.extent = imageExtent;
             offscreenImageColor->createImage(imageCreateInfo);
 
-            auto imageViewCreateInfo=std::make_shared<VkImageViewCreateInfo>();
+            auto imageViewCreateInfo = std::make_shared<VkImageViewCreateInfo>();
             offscreenImageColor->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
             imageViewCreateInfo->format = imageCreateInfo.format;
             offscreenImageColor->createImageView(*imageViewCreateInfo);
 
-            m_offscreenSampler=std::make_shared<Sampler>(device);
+            m_offscreenSampler = std::make_shared<Sampler>(device);
             m_offscreenSampler->createTextureSampler();
             offscreenImageColor->sampler = m_offscreenSampler->getSampler();
 
@@ -470,7 +468,8 @@ namespace Kaamoo {
                                                     *(offscreenImageDepth->getImageView())};
             framebufferCreateInfo.attachmentCount = attachments.size();
             framebufferCreateInfo.pAttachments = attachments.data();
-            framebufferCreateInfo.width = swapChain->getSwapChainExtent().width;
+//            framebufferCreateInfo.width = swapChain->getSwapChainExtent().width;
+            framebufferCreateInfo.width = myWindow.getCurrentSceneExtent().width;
             framebufferCreateInfo.height = swapChain->getSwapChainExtent().height;
             framebufferCreateInfo.layers = 1;
 

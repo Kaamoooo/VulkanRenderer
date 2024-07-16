@@ -191,8 +191,8 @@
 // bit so it only decodes WM_CHAR events.
 //
 // STB_TEXTEDIT_LAYOUTROW returns information about the shape of one displayed
-// row of characters assuming they start on the i'th character--the width and
-// the height and the number of characters consumed. This allows this library
+// row of characters assuming they start on the i'th character--the m_windowWidth and
+// the m_windowHeight and the number of characters consumed. This allows this library
 // to traverse the entire layout incrementally. You need to compute word-wrapping
 // here.
 //
@@ -369,7 +369,7 @@ typedef struct
 {
    float x0,x1;             // starting x location, end x location (allows for align=right, etc)
    float baseline_y_delta;  // position of baseline relative to previous row's baseline
-   float ymin,ymax;         // height of row above and below baseline
+   float ymin,ymax;         // m_windowHeight of row above and below baseline
    int num_chars;
 } StbTexteditRow;
 #endif //INCLUDE_IMSTB_TEXTEDIT_H
@@ -512,7 +512,7 @@ static void stb_text_makeundo_replace(IMSTB_TEXTEDIT_STRING *str, STB_TexteditSt
 typedef struct
 {
    float x,y;    // position of n'th character
-   float height; // height of line
+   float m_windowHeight; // m_windowHeight of line
    int first_char, length; // first char of row, and length
    int prev_first;  // first char of previous row
 } StbFindState;
@@ -532,7 +532,7 @@ static void stb_textedit_find_charpos(StbFindState *find, IMSTB_TEXTEDIT_STRING 
       find->y = 0;
       find->first_char = 0;
       find->length = z;
-      find->height = r.ymax - r.ymin;
+      find->m_windowHeight = r.ymax - r.ymin;
       find->x = r.x1;
       return;
    }
@@ -558,7 +558,7 @@ static void stb_textedit_find_charpos(StbFindState *find, IMSTB_TEXTEDIT_STRING 
 
    find->first_char = first = i;
    find->length = r.num_chars;
-   find->height = r.ymax - r.ymin;
+   find->m_windowHeight = r.ymax - r.ymin;
    find->prev_first = prev_start;
 
    // now scan to find xpos

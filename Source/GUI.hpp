@@ -38,7 +38,8 @@
 
             ImGui::StyleColorsDark();
             ImGuiIO &io = ImGui::GetIO();
-            io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+            io.Fonts->AddFontFromFileTTF(R"(C:\Windows\Fonts\arial.ttf)", 16.0f);
             ImGui_ImplVulkan_InitInfo init_info = {};
             init_info.Instance = device->getInstance();
             init_info.PhysicalDevice = device->getPhysicalDevice();
@@ -50,19 +51,51 @@
             init_info.ImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
             init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
             init_info.Allocator = nullptr;
-            init_info.RenderPass = renderer.getOffscreenRenderPass();
+            init_info.RenderPass = renderer.getSwapChainRenderPass();
             ImGui_ImplGlfw_InitForVulkan(myWindow.getGLFWwindow(), true);
             ImGui_ImplVulkan_Init(&init_info);
             ImGui_ImplVulkan_CreateFontsTexture();
+
+            ImGuiStyle& style = ImGui::GetStyle();
+            style.FramePadding = ImVec2(0, 0);
+            style.ItemSpacing = ImVec2(0, 6); 
+            style.WindowPadding = ImVec2(0, 0); 
+//            style.ItemInnerSpacing = ImVec2(0, 0);
         };
 
-        static void BeginFrame() {
+        static void BeginFrame(ImVec2 windowExtent) {
+            ImGui_ImplVulkan_SetMinImageCount(SwapChain::MAX_FRAMES_IN_FLIGHT);
             ImGuiIO &io = ImGui::GetIO();
-            io.DisplaySize = ImVec2(300, 500);
-            ImGui::NewFrame();
+            io.DisplaySize = ImVec2(UI_LEFT_WIDTH, windowExtent.y);
             ImGui_ImplVulkan_NewFrame();
             ImGui_ImplGlfw_NewFrame();
-            ImGui::ShowDemoWindow();
+            ImGui::NewFrame();
+        }
+
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap) {
+            ImGuiWindowFlags window_flags = 0;
+            window_flags |= ImGuiWindowFlags_MenuBar;
+            window_flags |= ImGuiWindowFlags_NoMove;
+            window_flags |= ImGuiWindowFlags_NoResize;
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH, windowExtent.y), ImGuiCond_Always);
+            
+            if (!ImGui::Begin("Scene", nullptr, window_flags)) {
+                ImGui::End();
+                return;
+            }
+            if (ImGui::TreeNode("Hierarchy")) {
+                if (ImGui::BeginListBox("##Hierarchy", ImVec2(-1, -1))) {
+                    for (auto &gameObjectPair: *pGameObjectsMap) {
+                        auto &gameObject = gameObjectPair.second;
+                        ImGui::Selectable(gameObject.getName().c_str(), false);
+                    }
+                    ImGui::EndListBox();
+                }
+                ImGui::TreePop();
+            }
+            ImGui::End();
+//            ImGui::PopStyleVar(2);
         }
 
         static void EndFrame(VkCommandBuffer &commandBuffer) {

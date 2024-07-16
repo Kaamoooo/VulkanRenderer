@@ -148,7 +148,7 @@ namespace Kaamoo {
 
     private:
         glm::mat4 projectionMatrix{1.f};
-        glm::mat4 inverseprojectionMatrix{1.f};
+        glm::mat4 inverseProjectionMatrix{1.f};
         glm::mat4 viewMatrix{1.f};
         glm::mat4 inverseViewMatrix{1.f};
     };
