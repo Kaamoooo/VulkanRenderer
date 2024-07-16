@@ -3218,7 +3218,7 @@ bool ImGui::SliderScalar(const char* label, ImGuiDataType data_type, void* p_dat
     return value_changed;
 }
 
-// Add multiple sliders on 1 line for compact edition of multiple components
+// Add multiple sliders on 1 line for compact edition of multiple m_components
 bool ImGui::SliderScalarN(const char* label, ImGuiDataType data_type, void* v, int components, const void* v_min, const void* v_max, const char* format, ImGuiSliderFlags flags)
 {
     ImGuiWindow* window = GetCurrentWindow();
@@ -5282,7 +5282,7 @@ static void ColorEditRestoreHS(const float* col, float* H, float* S, float* V)
         *S = g.ColorEditSavedSat;
 }
 
-// Edit colors components (each component in 0.0f..1.0f range).
+// Edit colors m_components (each component in 0.0f..1.0f range).
 // See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
 // With typical options: Left-click on color square to open color picker. Right-click to open option menu. CTRL-Click over input fields to edit them and TAB to go to next item.
 bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flags)

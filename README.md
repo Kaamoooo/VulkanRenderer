@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240710164854780](./README.assets/image-20240710164854780.png)
+![image-20240716155753891](./README.assets/image-20240716155753891.png)
 
 ## Progress
 
@@ -38,7 +38,7 @@
 
 1.1 Completed dynamic generated and interactive grass.
 
-3.24 Modified GameObject architecture, using components to replace hard-coded member variables.
+3.24 Modified GameObject architecture, using m_components to replace hard-coded member variables.
 
 3.25 Fixed the problem when exiting the programme memory is not correctly released.
 
@@ -50,7 +50,7 @@
 
 5.5 Optimized input system. Make it as a component.
 
-5.7 Reconstructed game object and component system. Make all objects and components load from the configuration file. Fixed the issue of resizing the window leading cube map recreation failed.	
+5.7 Reconstructed game object and component system. Make all objects and m_components load from the configuration file. Fixed the issue of resizing the window leading cube map recreation failed.	
 
 5.10 Built the framework of creating ray tracing BLAS.
 
@@ -80,4 +80,4 @@
 
 7.13 Added a basic GUI, using ImGUI framework.
 
-7.16 Adjusted resolution, making window resizing is compatible with rendered image.
+7.16 Adjusted resolution, making window resizing is compatible with rendered image. Completed simple GUI.

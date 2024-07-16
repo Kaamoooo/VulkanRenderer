@@ -138,34 +138,34 @@ RECENT REVISION HISTORY:
 //    int x,y,n;
 //    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
 //    // ... process data if not NULL ...
-//    // ... x = m_windowWidth, y = m_windowHeight, n = # 8-bit components per pixel ...
-//    // ... replace '0' with '1'..'4' to force that many components per pixel
+//    // ... x = m_windowWidth, y = m_windowHeight, n = # 8-bit m_components per pixel ...
+//    // ... replace '0' with '1'..'4' to force that many m_components per pixel
 //    // ... but 'n' will always be the number that it would have been if you said 0
 //    stbi_image_free(data);
 //
 // Standard parameters:
 //    int *x                 -- outputs image m_windowWidth in pixels
 //    int *y                 -- outputs image m_windowHeight in pixels
-//    int *channels_in_file  -- outputs # of image components in image file
-//    int desired_channels   -- if non-zero, # of image components requested in result
+//    int *channels_in_file  -- outputs # of image m_components in image file
+//    int desired_channels   -- if non-zero, # of image m_components requested in result
 //
 // The return value from an image loader is an 'unsigned char *' which points
 // to the pixel data, or NULL on an allocation failure or if the image is
 // corrupt or invalid. The pixel data consists of *y scanlines of *x pixels,
-// with each pixel consisting of N interleaved 8-bit components; the first
+// with each pixel consisting of N interleaved 8-bit m_components; the first
 // pixel pointed to is top-left-most in the image. There is no padding between
 // image scanlines or between pixels, regardless of format. The number of
-// components N is 'desired_channels' if desired_channels is non-zero, or
+// m_components N is 'desired_channels' if desired_channels is non-zero, or
 // *channels_in_file otherwise. If desired_channels is non-zero,
-// *channels_in_file has the number of components that _would_ have been
+// *channels_in_file has the number of m_components that _would_ have been
 // output otherwise. E.g. if you set desired_channels to 4, you will always
 // get RGBA output, but you can check *channels_in_file to see if it's trivially
 // opaque because e.g. there were only 3 channels in the source image.
 //
-// An output image with N components has the following components interleaved
+// An output image with N m_components has the following m_components interleaved
 // in this order in each pixel:
 //
-//     N=#comp     components
+//     N=#comp     m_components
 //       1           grey
 //       2           grey, alpha
 //       3           red, green, blue
@@ -488,7 +488,7 @@ STBIDEF const char *stbi_failure_reason  (void);
 // free the loaded image -- this is just free()
 STBIDEF void     stbi_image_free      (void *retval_from_stbi_load);
 
-// get image dimensions & components without fully decoding
+// get image dimensions & m_components without fully decoding
 STBIDEF int      stbi_info_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp);
 STBIDEF int      stbi_info_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp);
 STBIDEF int      stbi_is_16_bit_from_memory(stbi_uc const *buffer, int len);
@@ -1770,7 +1770,7 @@ static unsigned char *stbi__convert_format(unsigned char *data, int img_n, int r
 
       #define STBI__COMBO(a,b)  ((a)*8+(b))
       #define STBI__CASE(a,b)   case STBI__COMBO(a,b): for(i=x-1; i >= 0; --i, src += a, dest += b)
-      // convert source image with img_n components to one with req_comp components;
+      // convert source image with img_n m_components to one with req_comp m_components;
       // avoid switch per pixel, so use switch per scanline and massive macros
       switch (STBI__COMBO(img_n, req_comp)) {
          STBI__CASE(1,2) { dest[0]=src[0]; dest[1]=255;                                     } break;
@@ -1827,7 +1827,7 @@ static stbi__uint16 *stbi__convert_format16(stbi__uint16 *data, int img_n, int r
 
       #define STBI__COMBO(a,b)  ((a)*8+(b))
       #define STBI__CASE(a,b)   case STBI__COMBO(a,b): for(i=x-1; i >= 0; --i, src += a, dest += b)
-      // convert source image with img_n components to one with req_comp components;
+      // convert source image with img_n m_components to one with req_comp m_components;
       // avoid switch per pixel, so use switch per scanline and massive macros
       switch (STBI__COMBO(img_n, req_comp)) {
          STBI__CASE(1,2) { dest[0]=src[0]; dest[1]=0xffff;                                     } break;
@@ -1860,7 +1860,7 @@ static float   *stbi__ldr_to_hdr(stbi_uc *data, int x, int y, int comp)
    if (!data) return NULL;
    output = (float *) stbi__malloc_mad4(x, y, comp, sizeof(float), 0);
    if (output == NULL) { STBI_FREE(data); return stbi__errpf("outofmem", "Out of memory"); }
-   // compute number of non-alpha components
+   // compute number of non-alpha m_components
    if (comp & 1) n = comp; else n = comp-1;
    for (i=0; i < x*y; ++i) {
       for (k=0; k < n; ++k) {
@@ -1886,7 +1886,7 @@ static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp)
    if (!data) return NULL;
    output = (stbi_uc *) stbi__malloc_mad3(x, y, comp, 0);
    if (output == NULL) { STBI_FREE(data); return stbi__errpuc("outofmem", "Out of memory"); }
-   // compute number of non-alpha components
+   // compute number of non-alpha m_components
    if (comp & 1) n = comp; else n = comp-1;
    for (i=0; i < x*y; ++i) {
       for (k=0; k < n; ++k) {
@@ -1917,7 +1917,7 @@ static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp)
 //      - doesn't try to recover corrupt jpegs
 //      - doesn't allow partial loading, loading multiple at once
 //      - still fast on x86 (copying globals into locals doesn't help x86)
-//      - allocates lots of intermediate memory (full size of all components)
+//      - allocates lots of intermediate memory (full size of all m_components)
 //        - non-interleaved case requires this anyway
 //        - allows good upsampling (see next)
 //    high-quality
@@ -1952,7 +1952,7 @@ typedef struct
    stbi__uint16 dequant[4][64];
    stbi__int16 fast_ac[4][1 << FAST_BITS];
 
-// sizes for components, interleaved MCUs
+// sizes for m_components, interleaved MCUs
    int img_h_max, img_v_max;
    int img_mcu_x, img_mcu_y;
    int img_mcu_w, img_mcu_h;
@@ -2224,7 +2224,7 @@ static int stbi__jpeg_decode_block(stbi__jpeg *j, short data[64], stbi__huffman 
    if (!stbi__mul2shorts_valid(dc, dequant[0])) return stbi__err("can't merge dc and ac", "Corrupt JPEG");
    data[0] = (short) (dc * dequant[0]);
 
-   // decode AC components, see JPEG spec
+   // decode AC m_components, see JPEG spec
    k = 1;
    do {
       unsigned int zig;
@@ -2496,7 +2496,7 @@ static void stbi__idct_block(stbi_uc *out, int out_stride, short data[64])
    }
 
    for (i=0, v=val, o=out; i < 8; ++i,v+=8,o+=out_stride) {
-      // no fast case since the first 1D IDCT spread components out
+      // no fast case since the first 1D IDCT spread m_components out
       STBI__IDCT_1D(v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7])
       // constants scaled things up by 1<<12, plus we had 1<<2 from first
       // loop, plus horizontal and vertical each scale by sqrt(8) so together
@@ -2925,8 +2925,8 @@ static stbi_uc stbi__get_marker(stbi__jpeg *j)
    return x;
 }
 
-// in each scan, we'll have scan_n components, and the order
-// of the components is specified by order[]
+// in each scan, we'll have scan_n m_components, and the order
+// of the m_components is specified by order[]
 #define STBI__RESTART(x)     ((x) >= 0xd0 && (x) <= 0xd7)
 
 // after a restart interval, stbi__jpeg_reset the entropy decoder and
@@ -2979,7 +2979,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
          STBI_SIMD_ALIGN(short, data[64]);
          for (j=0; j < z->img_mcu_y; ++j) {
             for (i=0; i < z->img_mcu_x; ++i) {
-               // scan an interleaved mcu... process scan_n components in order
+               // scan an interleaved mcu... process scan_n m_components in order
                for (k=0; k < z->scan_n; ++k) {
                   int n = z->order[k];
                   // scan out an mcu's worth of this component; that's just determined
@@ -2994,7 +2994,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                      }
                   }
                }
-               // after all interleaved components, that's an interleaved MCU,
+               // after all interleaved m_components, that's an interleaved MCU,
                // so now count down the restart interval
                if (--z->todo <= 0) {
                   if (z->code_bits < 24) stbi__grow_buffer_unsafe(z);
@@ -3039,7 +3039,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
          int i,j,k,x,y;
          for (j=0; j < z->img_mcu_y; ++j) {
             for (i=0; i < z->img_mcu_x; ++i) {
-               // scan an interleaved mcu... process scan_n components in order
+               // scan an interleaved mcu... process scan_n m_components in order
                for (k=0; k < z->scan_n; ++k) {
                   int n = z->order[k];
                   // scan out an mcu's worth of this component; that's just determined
@@ -3054,7 +3054,7 @@ static int stbi__parse_entropy_coded_data(stbi__jpeg *z)
                      }
                   }
                }
-               // after all interleaved components, that's an interleaved MCU,
+               // after all interleaved m_components, that's an interleaved MCU,
                // so now count down the restart interval
                if (--z->todo <= 0) {
                   if (z->code_bits < 24) stbi__grow_buffer_unsafe(z);
@@ -3871,7 +3871,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
    // load a jpeg image from whichever source, but leave in YCbCr format
    if (!stbi__decode_jpeg_image(z)) { stbi__cleanup_jpeg(z); return NULL; }
 
-   // determine actual number of components to generate
+   // determine actual number of m_components to generate
    n = req_comp ? req_comp : z->s->img_n >= 3 ? 3 : 1;
 
    is_rgb = z->s->img_n == 3 && (z->rgb == 3 || (z->app14_color_transform == 0 && !z->jfif));
@@ -3881,7 +3881,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
    else
       decode_n = z->s->img_n;
 
-   // nothing to do if no components requested; check this now to avoid
+   // nothing to do if no m_components requested; check this now to avoid
    // accessing uninitialized coutput[0] later
    if (decode_n <= 0) { stbi__cleanup_jpeg(z); return NULL; }
 
@@ -4018,7 +4018,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
       stbi__cleanup_jpeg(z);
       *out_x = z->s->img_x;
       *out_y = z->s->img_y;
-      if (comp) *comp = z->s->img_n >= 3 ? 3 : 1; // report original components, not output
+      if (comp) *comp = z->s->img_n >= 3 ? 3 : 1; // report original m_components, not output
       return output;
    }
 }
@@ -5121,8 +5121,8 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
                s->img_n = (color & 2 ? 3 : 1) + (color & 4 ? 1 : 0);
                if ((1 << 30) / s->img_x / s->img_n < s->img_y) return stbi__err("too large", "Image too large to decode");
             } else {
-               // if paletted, then pal_n is our final components, and
-               // img_n is # components to decompress/filter.
+               // if paletted, then pal_n is our final m_components, and
+               // img_n is # m_components to decompress/filter.
                s->img_n = 1;
                if ((1 << 30) / s->img_x / 4 < s->img_y) return stbi__err("too large","Corrupt PNG");
             }
@@ -6559,7 +6559,7 @@ typedef struct
 typedef struct
 {
    int w,h;
-   stbi_uc *out;                 // output buffer (always 4 components)
+   stbi_uc *out;                 // output buffer (always 4 m_components)
    stbi_uc *background;          // The current "background" as far as a gif is concerned
    stbi_uc *history;
    int flags, bgindex, ratio, transparent, eflags;
@@ -7838,7 +7838,7 @@ STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user
       1.40  (2014-06-22)
               fix gcc struct-initialization warning
       1.39  (2014-06-15)
-              fix to TGA optimization when req_comp != number of components in TGA;
+              fix to TGA optimization when req_comp != number of m_components in TGA;
               fix to GIF loading because BMP wasn't rewinding (whoops, no GIFs in my test suite)
               add support for BMP version 5 (more ignored fields)
       1.38  (2014-06-06)

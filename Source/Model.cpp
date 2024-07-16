@@ -96,7 +96,7 @@ namespace Kaamoo {
         indexBuffer = std::make_unique<Buffer>(
                 device, indexSize, indexCount,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | rayTracingFlags,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
 #else
         indexBuffer = std::make_unique<Buffer>(
@@ -111,7 +111,6 @@ namespace Kaamoo {
     std::unique_ptr<Model> Model::createModelFromFile(Device &device, const std::string &filePath) {
         Builder builder{};
         builder.loadModel(filePath);
-//        std::cout << "Model vertices:" << builder.vertices.size() << std::endl;
         return std::make_unique<Model>(device, builder);
     }
 
@@ -124,12 +123,10 @@ namespace Kaamoo {
         return bindingDescriptions;
     }
 
-//绑定Attribute,例如我们为顶点制定了position和color,这里的Descriptions数量就应该为2
     std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescriptions() {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
-//location表示在shader当中的位置，binding表示绑定的缓冲区索引
-//position,color,normal,uv
+        //position,color,normal,uv
         attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0});
         attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)});
         attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});

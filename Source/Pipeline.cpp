@@ -88,14 +88,14 @@ namespace Kaamoo {
         uint32_t hitCount = m_rayTracingGroups.size() - GenShaderCount - MissShaderCount;
         uint32_t handleCount = GenShaderCount + MissShaderCount + hitCount;
         uint32_t handleSize = device.rayTracingPipelineProperties.shaderGroupHandleSize;
-        uint32_t handleSizeAligned = Utils::alighUp(handleSize, device.rayTracingPipelineProperties.shaderGroupHandleAlignment);
+        uint32_t handleSizeAligned = Utils::alignUp(handleSize, device.rayTracingPipelineProperties.shaderGroupHandleAlignment);
 
-        m_genRegion.stride = Utils::alighUp(handleSizeAligned, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+        m_genRegion.stride = Utils::alignUp(handleSizeAligned, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
         m_genRegion.size = m_genRegion.stride;
         m_missRegion.stride = handleSizeAligned;
-        m_missRegion.size = Utils::alighUp(handleSizeAligned * MissShaderCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+        m_missRegion.size = Utils::alignUp(handleSizeAligned * MissShaderCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
         m_hitRegion.stride = handleSizeAligned;
-        m_hitRegion.size = Utils::alighUp(handleSizeAligned * hitCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+        m_hitRegion.size = Utils::alignUp(handleSizeAligned * hitCount, device.rayTracingPipelineProperties.shaderGroupBaseAlignment);
 
         uint32_t dataSize = handleCount * handleSize;
         std::vector<uint8_t> shaderHandles(dataSize);
