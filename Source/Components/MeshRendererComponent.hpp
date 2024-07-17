@@ -63,15 +63,61 @@ namespace Kaamoo {
             }
         };
 
-        std::unordered_map<std::string, std::string> GetFieldValueMap() override {
-            std::unordered_map<std::string, std::string> map{};
-            map["Model"] = model->GetName();
-            map["MaterialId"] = std::to_string(materialId);
-            return map;
-        }
-
         id_t GetTLASId() const {
             return tlasId;
+        }
+
+        void SetUI(std::vector<GameObjectDesc> *gameObjectDesc) override {
+            if (model == nullptr) {
+                return;
+            }
+            ImGui::Text("Model:       %s", model->GetName().c_str());
+            if (ImGui::TreeNode("PBR")) {
+                GameObjectDesc &desc = gameObjectDesc->at(tlasId);
+                auto validProperty = PBRLoader::GetValidProperty(desc.pbr);
+                for (const auto &item: validProperty) {
+                    switch (item) {
+                        case 0:
+                            ImGui::Text("Albedo:");
+                            ImGui::SameLine(120);
+                            ImGui::SetNextItemWidth(140);
+                            ImGui::InputFloat3("##Albedo", &desc.pbr.albedo.x);
+                            Utils::ClampVec3(desc.pbr.albedo, 0, 1);
+                            break;
+                        case 2:
+                            ImGui::Text("Metallic:");
+                            ImGui::SameLine(120);
+                            ImGui::SetNextItemWidth(140);
+                            ImGui::InputFloat("##Metallic", &desc.pbr.metallic);
+                            Utils::ClampFloat(desc.pbr.metallic, 0, 1);
+                            break;
+                        case 3:
+                            ImGui::Text("Roughness:");
+                            ImGui::SameLine(120);
+                            ImGui::SetNextItemWidth(140);
+                            ImGui::InputFloat("##Roughness", &desc.pbr.roughness);
+                            Utils::ClampFloat(desc.pbr.roughness, 0, 1);
+                            break;
+                        case 4:
+                            ImGui::Text("Opacity:");
+                            ImGui::SameLine(120);
+                            ImGui::SetNextItemWidth(140);
+                            ImGui::InputFloat("##Opacity", &desc.pbr.opacity);
+                            Utils::ClampFloat(desc.pbr.opacity, 0, 1);
+                            break;
+                        case 6:
+                            ImGui::Text("Emissive:");
+                            ImGui::SameLine(120);
+                            ImGui::SetNextItemWidth(140);
+                            ImGui::InputFloat3("##Emissive", &desc.pbr.emissive.x);
+                            Utils::ClampVec3(desc.pbr.emissive, 0, 1);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                ImGui::TreePop();
+            }
         }
 
     private:

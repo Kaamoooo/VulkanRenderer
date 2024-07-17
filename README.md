@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240716155753891](./README.assets/image-20240716155753891.png)
+![image-20240717114846659](./README.assets/image-20240717114846659.png)
 
 ## Progress
 
@@ -81,3 +81,5 @@
 7.13 Added a basic GUI, using ImGUI framework.
 
 7.16 Adjusted resolution, making window resizing is compatible with rendered image. Completed simple GUI.
+
+7.17 Completed basic UI system.

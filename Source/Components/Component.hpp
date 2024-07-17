@@ -10,6 +10,9 @@
 #include <iostream>
 #include "../StructureInfos.h"
 
+#include "Imgui/imgui.h"
+#include "../Utils/Utils.hpp"
+
 namespace Kaamoo {
     class GameObject;
 
@@ -41,9 +44,7 @@ namespace Kaamoo {
 
         virtual void LateUpdate(const ComponentUpdateInfo &updateInfo) {};
 
-        virtual std::unordered_map<std::string, std::string> GetFieldValueMap() {
-            return std::unordered_map<std::string, std::string>(0);
-        }
+        virtual void SetUI(std::vector<GameObjectDesc>*){};
 
     protected:
         std::string name = "Component";

@@ -28,10 +28,10 @@ namespace Kaamoo {
         rayAnyHit,
     };
 
-    struct alignas(16) PBR{
+    struct alignas(16) PBR {
         glm::vec3 albedo;//0~12
         alignas(16) glm::vec3 normal;//16~28
-        alignas(4)  float metallic; //28~32
+        alignas(4) float metallic; //28~32
         float roughness; //32~36
         float opacity;  //36~40
         float AO;   //40~44
@@ -90,7 +90,7 @@ namespace Kaamoo {
             } else {
                 pbr.AO = -1;
             }
-            
+
             if (value.HasMember("emissive")) {
                 auto &emissive = value["emissive"];
                 pbr.emissive = glm::vec3(emissive[0].GetFloat(), emissive[1].GetFloat(), emissive[2].GetFloat());
@@ -101,29 +101,34 @@ namespace Kaamoo {
         }
 
         static int getValidPropertyCount(const PBR &pbr) {
-            int count = 0;
+            int count = GetValidProperty(pbr).size();
+            return count;
+        }
+
+        static std::vector<int> GetValidProperty(const PBR &pbr) {
+            std::vector<int> validProperty{};
             if (pbr.albedo != glm::vec3(-1.f)) {
-                count++;
+                validProperty.push_back(0);
             }
             if (pbr.normal != glm::vec3(-1.f)) {
-                count++;
+                validProperty.push_back(1);
             }
             if (pbr.metallic != -1.f) {
-                count++;
+                validProperty.push_back(2);
             }
             if (pbr.roughness != -1.f) {
-                count++;
+                validProperty.push_back(3);
             }
             if (pbr.opacity != -1.f) {
-                count++;
+                validProperty.push_back(4);
             }
-            if (pbr.AO!= -1.f) {
-                count++;
+            if (pbr.AO != -1.f) {
+                validProperty.push_back(5);
             }
             if (pbr.emissive != glm::vec3(-1, -1, -1)) {
-                count++;
+                validProperty.push_back(6);
             }
-            return count;
+            return validProperty;
         }
     };
 

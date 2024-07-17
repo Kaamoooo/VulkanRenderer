@@ -14,7 +14,7 @@ namespace Kaamoo {
         TransformComponent() {
             name = "TransformComponent";
         }
-        
+
         glm::vec3 getForwardDir() const {
             float yaw = rotation.y;
             return glm::vec3{glm::sin(yaw), 0, glm::cos(yaw)};
@@ -23,7 +23,7 @@ namespace Kaamoo {
         void Translate(glm::vec3 t) {
             translation += t;
         }
-        
+
         glm::mat3 normalMatrix() {
             glm::mat3 invScaleMatrix = glm::mat4{1.f};
             const glm::vec3 invScale = 1.0f / scale;

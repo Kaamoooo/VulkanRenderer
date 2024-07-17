@@ -35,6 +35,14 @@ namespace Kaamoo {
         int lightNum;
         alignas(16)Light lights[MAX_LIGHT_NUM];
     };
+
+    struct GameObjectDesc {
+        uint64_t vertexBufferAddress;//0~8
+        uint64_t indexBufferAddress; //8~16
+        PBR pbr; //16~64
+        glm::i32vec2 textureEntry; //64~72
+    };
+
 #else
     struct GlobalUbo {
         glm::mat4 viewMatrix{1.f};

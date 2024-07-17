@@ -1,4 +1,7 @@
 ﻿#include <iomanip>
+#include "Imgui/imgui.h"
+#include "Imgui/imgui_impl_glfw.h"
+#include "Imgui/imgui_impl_vulkan.h"
 
 namespace Kaamoo {
     class GUI {
@@ -80,7 +83,7 @@ namespace Kaamoo {
  *       Inspector        Hierarchy       Scene
  * */
 
-        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap) {
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,std::vector<GameObjectDesc>* pGameObjectDescs) {
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags_NoMove;
             window_flags |= ImGuiWindowFlags_NoResize;
@@ -115,18 +118,21 @@ namespace Kaamoo {
 
                 //Todo: Set transform by UI and write back to JSON
                 //Todo: Ray tracing sky box
+                //Transform is a special component of game object, so I handle it separately.
                 if (ImGui::TreeNode("Transform")) {
                     ImGui::Text("Position:");
                     ImGui::SameLine(90);
-                    ImGui::Text(Utils::Vec3ToString(gameObject.transform->translation).c_str());
+                    ImGui::InputFloat3("##Position", &gameObject.transform->translation.x);
 
                     ImGui::Text("Rotation:");
                     ImGui::SameLine(90);
-                    ImGui::Text(Utils::Vec3ToString(gameObject.transform->rotation).c_str());
+                    glm::vec3 rotationByDegrees = glm::degrees(gameObject.transform->rotation);
+                    ImGui::InputFloat3("##Rotation", &rotationByDegrees.x);
+                    gameObject.transform->rotation = glm::radians(rotationByDegrees);
 
                     ImGui::Text("Scale:");
                     ImGui::SameLine(90);
-                    ImGui::Text(Utils::Vec3ToString(gameObject.transform->scale).c_str());
+                    ImGui::InputFloat3("##Scale", &gameObject.transform->scale.x);
 
                     ImGui::TreePop();
                 }
@@ -135,12 +141,7 @@ namespace Kaamoo {
                     for (auto &component: gameObject.getComponents()) {
                         if (component->GetName() == ComponentName::TransformComponent)continue;
                         if (ImGui::TreeNode(component->GetName().c_str())) {
-                            auto fieldValueMap = component->GetFieldValueMap();
-                            for (auto &fieldValuePair: fieldValueMap) {
-                                ImGui::Text((fieldValuePair.first + ":").c_str());
-                                ImGui::SameLine(120);
-                                ImGui::Text(fieldValuePair.second.c_str());
-                            }
+                            component->SetUI(pGameObjectDescs);
                             ImGui::TreePop();
                         }
                     }

@@ -56,12 +56,18 @@ namespace Kaamoo {
             updateInfo.frameInfo->globalUbo.lights[lightIndex] = light;
         }
 
-        std::unordered_map<std::string, std::string> GetFieldValueMap() override {
-            std::unordered_map<std::string, std::string> map{};
-            map.emplace("Color",Utils::Vec3ToString(color));
-            map.emplace("Intensity", Utils::FloatToString(lightIntensity));
-            map.emplace("Type", lightTypeStr);
-            return map;
+        void SetUI(std::vector<GameObjectDesc>*) override {
+            ImGui::Text("Color:");
+            ImGui::SameLine(90);
+            ImGui::InputFloat3("##Color", &color.x);
+
+            ImGui::Text("Intensity:");
+            ImGui::SameLine(90);
+            ImGui::InputFloat("##Intensity", &lightIntensity);
+
+            ImGui::Text("Type:");
+            ImGui::SameLine(90);
+            ImGui::Text(lightTypeStr.c_str());
         }
 
         static int GetLightNum() {

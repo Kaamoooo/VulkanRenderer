@@ -9,26 +9,22 @@
 #include "Renderer.h"
 #include "Model.hpp"
 #include "GameObject.hpp"
-#include "RenderSystems/RenderSystem.h"
-#include "RenderSystems/PointLightSystem.h"
 #include "Descriptor.h"
 #include "Image.h"
 #include "Material.hpp"
 #include "ShaderBuilder.h"
 #include "Utils/JsonUtils.hpp"
 
-#include <Imgui/imgui.h>
-#include <Imgui/imgui_impl_vulkan.h>
-#include <Imgui/imgui_impl_glfw.h>
-#include "ComponentFactory.hpp"
-
 #include "Sampler.h"
+#include "RenderSystems/RenderSystem.h"
+#include "RenderSystems/PointLightSystem.h"
 #include "RenderSystems/ShadowSystem.h"
 #include "RenderSystems/GrassSystem.h"
 #include "RenderSystems/SkyBoxSystem.hpp"
 #include "RenderSystems/RayTracingSystem.hpp"
 #include "RenderSystems/PostSystem.hpp"
 
+#include "ComponentFactory.hpp"
 #include "GUI.hpp"
 
 namespace Kaamoo {
@@ -72,10 +68,11 @@ namespace Kaamoo {
 
         std::vector<std::shared_ptr<RenderSystem>> m_renderSystems;
         std::shared_ptr<PostSystem> m_postSystem;
+        std::shared_ptr<Buffer> m_pGameObjectDescBuffer; 
 
 #ifdef RAY_TRACING
         std::shared_ptr<RayTracingSystem> m_rayTracingSystem;
-        std::vector<GameObjectDesc> m_gameObjectDescs;
+        std::vector<GameObjectDesc> m_pGameObjectDescs;
 #else
         std::shared_ptr<ShadowSystem> m_shadowSystem;
 #endif

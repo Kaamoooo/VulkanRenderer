@@ -494,7 +494,7 @@ namespace Kaamoo {
     void Device::createBuffer(
             VkDeviceSize size,
             VkBufferUsageFlags usage,
-            VkMemoryPropertyFlags properties,
+            VkMemoryPropertyFlags propertyFlags,
             VkBuffer &buffer,
             VkDeviceMemory &bufferMemory) {
         VkBufferCreateInfo bufferInfo{};
@@ -518,7 +518,7 @@ namespace Kaamoo {
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         
         allocInfo.allocationSize = getAlignment(memRequirements.size,externalMemoryHostProperties.minImportedHostPointerAlignment) ;
-        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, propertyFlags);
         allocInfo.pNext = &memoryAllocateFlagsInfo;
 
         if (vkAllocateMemory(device_, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {

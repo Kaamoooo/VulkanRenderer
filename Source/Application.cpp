@@ -42,6 +42,8 @@ namespace Kaamoo {
                 UpdateUbo(ubo, totalTime);
 
 #ifdef RAY_TRACING
+                m_pGameObjectDescBuffer->writeToBuffer(m_pGameObjectDescs.data(), m_pGameObjectDescs.size() * sizeof(GameObjectDesc));
+
                 m_rayTracingSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_rayTracingSystem->rayTrace(frameInfo);
 
@@ -49,7 +51,7 @@ namespace Kaamoo {
                 
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects);
+                                &m_gameObjects,&m_pGameObjectDescs);
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_postSystem->render(frameInfo);
                 GUI::EndFrame(commandBuffer);
@@ -277,7 +279,7 @@ namespace Kaamoo {
                     meshRendererCount++;
                 }
             }
-            m_gameObjectDescs.resize(meshRendererCount);
+            m_pGameObjectDescs.resize(meshRendererCount);
             for (auto &modelPair: m_gameObjects) {
                 GameObjectDesc modelDesc{};
                 auto &gameObject = modelPair.second;
@@ -293,16 +295,16 @@ namespace Kaamoo {
                     if (pbrEntry != pbrMaterials.end()) {
                         modelDesc.pbr = pbrEntry->second;
                     }
-                    m_gameObjectDescs[meshRendererComponent->GetTLASId()] = modelDesc;
+                    m_pGameObjectDescs[meshRendererComponent->GetTLASId()] = modelDesc;
                 }
             }
 
-            auto objBufferPtr = std::make_shared<Buffer>(m_device, sizeof(GameObjectDesc), m_gameObjectDescs.size(),
-                                                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+            m_pGameObjectDescBuffer = std::make_shared<Buffer>(m_device, sizeof(GameObjectDesc), m_pGameObjectDescs.size(),
+                                                               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minStorageBufferOffsetAlignment);
-            objBufferPtr->map(objBufferPtr->getBufferSize());
-            objBufferPtr->writeToBuffer(m_gameObjectDescs.data(), m_gameObjectDescs.size() * sizeof(GameObjectDesc));
-            bufferPointers.push_back(objBufferPtr);
+            m_pGameObjectDescBuffer->map(m_pGameObjectDescBuffer->getBufferSize());
+            m_pGameObjectDescBuffer->writeToBuffer(m_pGameObjectDescs.data(), m_pGameObjectDescs.size() * sizeof(GameObjectDesc));
+            bufferPointers.push_back(m_pGameObjectDescBuffer);
 
             auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
@@ -314,7 +316,7 @@ namespace Kaamoo {
             auto sceneDescriptorSet = std::make_shared<VkDescriptorSet>();
             DescriptorWriter(sceneDescriptorSetLayoutPtr, *m_globalPool).
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo(globalUboBufferPtr->getBufferSize())).
-                    writeBuffer(1, objBufferPtr->descriptorInfo(objBufferPtr->getBufferSize())).
+                    writeBuffer(1, m_pGameObjectDescBuffer->descriptorInfo(m_pGameObjectDescBuffer->getBufferSize())).
                     writeImages(2, imageInfos).
                     build(sceneDescriptorSet);
             descriptorSetPointers.push_back(sceneDescriptorSet);
