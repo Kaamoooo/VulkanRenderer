@@ -41,6 +41,7 @@ namespace Kaamoo {
         inline const static std::string GameObjectsFileName = "GameObjects.json";
         inline const static std::string MaterialsFileName = "Materials.json";
         inline const static std::string ComponentsFileName = "Components.json";
+        inline const static std::string SkyboxCubeMapName = "Cubemap/SwedishRoyalCastle";
         const int MATERIAL_NUMBER = 16;
 
         void run();

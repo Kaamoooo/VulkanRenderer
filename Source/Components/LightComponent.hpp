@@ -38,7 +38,6 @@ namespace Kaamoo {
             auto &transform = updateInfo.gameObject->transform;
             if (lightCategory == LightCategory::POINT_LIGHT) {
                 auto rotateLight = glm::rotate(glm::mat4{1.f}, updateInfo.frameInfo->frameTime, glm::vec3(0, 1.f, 0));
-                //Todo: Dynamic acceleration structure
 //                transform->translation = glm::vec3(rotateLight * glm::vec4(transform->translation, 1));
                 transform->translation = glm::vec3(glm::vec4(transform->translation, 1));
                 light.lightCategory = LightCategory::POINT_LIGHT;

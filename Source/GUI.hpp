@@ -62,7 +62,7 @@ namespace Kaamoo {
             ImGui_ImplVulkan_CreateFontsTexture();
 
             ImGuiStyle &style = ImGui::GetStyle();
-            style.FramePadding = ImVec2(0, 0);
+            style.FramePadding = ImVec2(3, 3);
             style.ItemSpacing = ImVec2(0, 6);
             style.WindowPadding = ImVec2(10, 0);
             style.IndentSpacing = 8;
@@ -116,8 +116,6 @@ namespace Kaamoo {
                 ImGui::SameLine(70);
                 ImGui::Text(gameObject.getName().c_str());
 
-                //Todo: Set transform by UI and write back to JSON
-                //Todo: Ray tracing sky box
                 //Transform is a special component of game object, so I handle it separately.
                 if (ImGui::TreeNode("Transform")) {
                     ImGui::Text("Position:");

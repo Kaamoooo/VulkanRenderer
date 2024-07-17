@@ -48,14 +48,14 @@ namespace Kaamoo {
                 m_rayTracingSystem->rayTrace(frameInfo);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                
+
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects,&m_pGameObjectDescs);
+                                &m_gameObjects, &m_pGameObjectDescs);
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_postSystem->render(frameInfo);
                 GUI::EndFrame(commandBuffer);
-                
+
                 m_renderer.endSwapChainRenderPass(commandBuffer);
 #else
                 m_renderer.beginShadowRenderPass(commandBuffer);
@@ -209,7 +209,6 @@ namespace Kaamoo {
                     idShaderOffsetMap.emplace(id, shaderGroupOffset);
                     shaderGroupOffset++;
 
-                    //Todo:What if there is only material but no game object using it?   
                     //Todo: Support non-PBR material
 
                     auto textureNames = object["texture"].GetArray();
@@ -301,15 +300,25 @@ namespace Kaamoo {
 
             m_pGameObjectDescBuffer = std::make_shared<Buffer>(m_device, sizeof(GameObjectDesc), m_pGameObjectDescs.size(),
                                                                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minStorageBufferOffsetAlignment);
+                                                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, minStorageBufferOffsetAlignment);
             m_pGameObjectDescBuffer->map(m_pGameObjectDescBuffer->getBufferSize());
             m_pGameObjectDescBuffer->writeToBuffer(m_pGameObjectDescs.data(), m_pGameObjectDescs.size() * sizeof(GameObjectDesc));
             bufferPointers.push_back(m_pGameObjectDescBuffer);
+
+            //Skybox cube map
+            auto skyBoxImage = std::make_shared<Image>(m_device, ImageType.CubeMap);
+            skyBoxImage->createTextureImage(BaseTexturePath + SkyboxCubeMapName, true);
+            skyBoxImage->createImageView();
+            auto skyBoxSampler = std::make_shared<Sampler>(m_device);
+            skyBoxSampler->createTextureSampler();
+            imagePointers.emplace_back(skyBoxImage);
+            samplerPointers.emplace_back(skyBoxSampler);
 
             auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, imageInfos.size()).
+                    addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_MISS_BIT_KHR).
                     build();
             descriptorSetLayoutPointers.push_back(sceneDescriptorSetLayoutPtr);
 
@@ -318,6 +327,7 @@ namespace Kaamoo {
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo(globalUboBufferPtr->getBufferSize())).
                     writeBuffer(1, m_pGameObjectDescBuffer->descriptorInfo(m_pGameObjectDescBuffer->getBufferSize())).
                     writeImages(2, imageInfos).
+                    writeImage(3, skyBoxImage->descriptorInfo(*skyBoxSampler)).
                     build(sceneDescriptorSet);
             descriptorSetPointers.push_back(sceneDescriptorSet);
             auto material = std::make_shared<Material>(-2, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,

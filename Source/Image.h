@@ -28,7 +28,7 @@ namespace Kaamoo {
 
         ~Image();
 
-        void createTextureImage(const std::string& path);
+        void createTextureImage(const std::string& path,bool SRGB = false);
 
 
         void createImageView();

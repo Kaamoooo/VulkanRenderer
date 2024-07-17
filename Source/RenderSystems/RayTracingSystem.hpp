@@ -20,8 +20,6 @@ namespace Kaamoo {
         void rayTrace(FrameInfo &frameInfo) {
             m_pipeline->bind(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR);
 
-            //Todo: Temporarily hard code the push constant
-            m_pushConstantRay.clearColor = {0.0f, 0.1f, 0.1f, 1.0f};
 
             std::vector<VkDescriptorSet> descriptorSets;
             for (auto &descriptorSetPointer: m_material->getDescriptorSetPointers()) {
@@ -30,6 +28,7 @@ namespace Kaamoo {
                 }
             }
 
+//            m_pushConstantRay.clearColor = {0.0f, 0.1f, 0.1f, 1.0f};
 //                vkCmdPushConstants(
 //                        frameInfo.commandBuffer,
 //                        m_pipelineLayout,
