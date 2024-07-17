@@ -46,14 +46,14 @@
     "type": "LightComponent",
     "category": "Directional",
     "color": [1, 1, 1],
-    "intensity": 0.1
+    "intensity": 3
   },
   {
     "id": 51,
     "type": "LightComponent",
     "category": "Point",
     "color": [1, 1, 1],
-    "intensity": 1
+    "intensity": 3
   },
   {
     "id": 11,

@@ -139,9 +139,12 @@ namespace Kaamoo {
 
     }
 
-    void Image::createTextureImage(const std::string &path) {
+    void Image::createTextureImage(const std::string &path,bool SRGB) {
         VkImageCreateInfo createInfo{};
         setDefaultImageCreateInfo(createInfo);
+        if (SRGB){
+            createInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+        }
         if (imageType == ImageType.CubeMap) {
             createInfo.arrayLayers = 6;
             createInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
@@ -157,6 +160,7 @@ namespace Kaamoo {
         if (imageType == ImageType.CubeMap) {
             createInfo.subresourceRange.layerCount = 6;
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+            createInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
         }
         createImageView(createInfo);
     }

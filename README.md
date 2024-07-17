@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240717114846659](./README.assets/image-20240717114846659.png)
+![image-20240717141451254](./README.assets/image-20240717141451254.png)
 
 ## Progress
 
@@ -82,4 +82,4 @@
 
 7.16 Adjusted resolution, making window resizing is compatible with rendered image. Completed simple GUI.
 
-7.17 Completed basic UI system.
+7.17 Completed basic UI system. Added skybox. Adjusted color space.

@@ -4,7 +4,7 @@
     "pipelineCategory": "RayTracing",
     "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
     "PBR": {
-      "albedo": [1.0, 0.0, 0.0],
+      "albedo": [0.6, 0.0, 0.0],
       "normal": [],
       "metallic": 0.5,
       "roughness": 1.0,
@@ -36,7 +36,7 @@
     "pipelineCategory": "RayTracing",
     "rayClosestHitShader": "RayTracing/raytrace.rchit.spv",
     "PBR": {
-      "albedo": [0.0, 1.0, 0.0],
+      "albedo": [0.0, 0.6, 0.0],
       "normal": [],
       "metallic": 0,
       "roughness": 1.0,
