@@ -73,5 +73,4 @@ void main(){
     float shadowMask =clamp(0, 1, (fragDepth-depth)*10);
     vec4 lightingResult=vec4(fragColor*texColor*(totalDiffuse+ambientLightColor+totalSpecular), 1);
     outColor = lightingResult*(1-shadowMask);
-    
 }

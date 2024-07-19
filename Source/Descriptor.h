@@ -115,6 +115,7 @@ namespace Kaamoo {
 
     private:
         std::shared_ptr<DescriptorSetLayout> setLayout;
+        std::shared_ptr<VkDescriptorBufferInfo> m_bufferInfo;
         DescriptorPool &pool;
         std::vector<std::shared_ptr<VkWriteDescriptorSet>> writes;
     };

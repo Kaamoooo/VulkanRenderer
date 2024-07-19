@@ -83,3 +83,5 @@
 7.16 Adjusted resolution, making window resizing is compatible with rendered image. Completed simple GUI.
 
 7.17 Completed basic UI system. Added skybox. Adjusted color space.
+
+7.19 Fixed rasterization rendering.

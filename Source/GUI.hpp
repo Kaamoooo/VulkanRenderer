@@ -82,7 +82,7 @@ namespace Kaamoo {
  *  | UI_LEFT_WIDTH_2 | UI_LEFT_WIDTH | SCENE_WIDTH     
  *       Inspector        Hierarchy       Scene
  * */
-
+#ifdef RAY_TRACING
         static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,std::vector<GameObjectDesc>* pGameObjectDescs) {
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags_NoMove;
@@ -148,6 +148,73 @@ namespace Kaamoo {
             }
             ImGui::End();
         }
+#else
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,Material::Map* pMaterialsMap) {
+            ImGuiWindowFlags window_flags = 0;
+            window_flags |= ImGuiWindowFlags_NoMove;
+            window_flags |= ImGuiWindowFlags_NoResize;
+
+            ImGui::SetNextWindowPos(ImVec2(UI_LEFT_WIDTH_2, 0), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH, windowExtent.y), ImGuiCond_Always);
+
+            ImGui::Begin("Scene", nullptr, window_flags);
+            if (ImGui::TreeNode("Hierarchy")) {
+                if (ImGui::BeginListBox("##Hierarchy", ImVec2(-1, -1))) {
+                    for (auto &gameObjectPair: *pGameObjectsMap) {
+                        auto &gameObject = gameObjectPair.second;
+                        if (ImGui::Selectable(gameObject.getName().c_str())) {
+                            selectedId = gameObjectPair.first;
+                            bSelected = true;
+                        }
+                    }
+                    ImGui::EndListBox();
+                }
+                ImGui::TreePop();
+            }
+            ImGui::End();
+
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH_2, windowExtent.y), ImGuiCond_Always);
+            ImGui::Begin("Inspector", nullptr, window_flags);
+            if (bSelected) {
+                auto &gameObject = pGameObjectsMap->at(selectedId);
+                ImGui::Text("Name:");
+                ImGui::SameLine(70);
+                ImGui::Text(gameObject.getName().c_str());
+
+                //Transform is a special component of game object, so I handle it separately.
+                if (ImGui::TreeNode("Transform")) {
+                    ImGui::Text("Position:");
+                    ImGui::SameLine(90);
+                    ImGui::InputFloat3("##Position", &gameObject.transform->translation.x);
+
+                    ImGui::Text("Rotation:");
+                    ImGui::SameLine(90);
+                    glm::vec3 rotationByDegrees = glm::degrees(gameObject.transform->rotation);
+                    ImGui::InputFloat3("##Rotation", &rotationByDegrees.x);
+                    gameObject.transform->rotation = glm::radians(rotationByDegrees);
+
+                    ImGui::Text("Scale:");
+                    ImGui::SameLine(90);
+                    ImGui::InputFloat3("##Scale", &gameObject.transform->scale.x);
+
+                    ImGui::TreePop();
+                }
+
+                if (ImGui::TreeNode("Components")) {
+                    for (auto &component: gameObject.getComponents()) {
+                        if (component->GetName() == ComponentName::TransformComponent)continue;
+                        if (ImGui::TreeNode(component->GetName().c_str())) {
+                            component->SetUI(pMaterialsMap);
+                            ImGui::TreePop();
+                        }
+                    }
+                    ImGui::TreePop();
+                }
+            }
+            ImGui::End();
+        }
+#endif
 
         static void EndFrame(VkCommandBuffer &commandBuffer) {
             ImGui::Render();

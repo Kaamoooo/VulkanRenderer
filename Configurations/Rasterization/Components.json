@@ -49,8 +49,8 @@
     "id": 8,
     "type": "LightComponent",
     "category": "Directional",
-    "color": [0.2, 0.2, 0.2],
-    "intensity": 1
+    "color": [1, 1, 1],
+    "intensity": 0.5
   },
   {
     "id": 9,

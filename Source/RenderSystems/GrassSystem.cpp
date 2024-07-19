@@ -93,7 +93,7 @@ namespace Kaamoo {
         for (auto &pair: frameInfo.gameObjects) {
             auto &obj = pair.second;
             SimplePushConstantData push{};
-            if (moveObject == nullptr && obj.getName() == "smooth_vase.obj") {
+            if (moveObject == nullptr && obj.getName() == "Vase") {
                 moveObject = &obj;
             }
             MeshRendererComponent *meshRendererComponent;

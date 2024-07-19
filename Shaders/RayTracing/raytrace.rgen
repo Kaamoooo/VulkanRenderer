@@ -42,7 +42,7 @@ void main()
                 tMax, // ray max range
                 0               // payload (location = 0)
     );
-    vec3 linearColor = pow(payload.hitValue, vec3(1.0f/2.2));
-    imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(linearColor, 1.0));
+    vec3 gammaColor = pow(payload.hitValue, vec3(1.0f/2.2));
+    imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(gammaColor, 1.0));
 
 }

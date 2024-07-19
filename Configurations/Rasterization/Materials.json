@@ -50,7 +50,7 @@
     "fragmentShader": "Grass/Ground.frag.spv",
     "texture": [
       "Ground.jpg",
-      "Ground068_1K-JPG_NormalGL.jpg"
+      "Ground068_1K-JPG_NormalDX.jpg"
     ]
   },
   {

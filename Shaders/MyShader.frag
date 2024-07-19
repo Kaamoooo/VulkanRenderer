@@ -70,6 +70,6 @@ void main() {
     float shadowMask = clamp(0, 1, (fragDepth - depth) * 10);
     vec4 lightingResult = vec4(fragColor * texColor * (totalDiffuse + ambientLightColor + totalSpecular), 1);
     outColor = lightingResult * (1 - shadowMask);
-    outColor = vec4(ubo.curTime, 0, 0, 1);
-    //    outColor = vec4(worldPos.xyz, 1);
+//    outColor = vec4(ubo.curTime, 0, 0, 1);
+//        outColor = vec4(worldPos.xyz, 1);
 }

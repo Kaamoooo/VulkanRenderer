@@ -22,7 +22,7 @@
     "transform": {
       "translation": [1,0,0],
       "scale": [2,2,2],
-      "rotation": [0,45,0]
+      "rotation": [180,45,0]
     },
     "componentIds":[3]
   },

@@ -143,7 +143,7 @@ namespace Kaamoo {
         write->dstBinding = binding;
         write->pBufferInfo = bufferInfo.get();
         write->descriptorCount = 1;
-
+        m_bufferInfo = bufferInfo;
         writes.push_back(write);
         return *this;
     }

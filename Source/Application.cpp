@@ -2,6 +2,7 @@
 #include <numeric>
 #include <rapidjson/document.h>
 #include <algorithm>
+#include <glm/ext/matrix_clip_space.hpp>
 
 namespace Kaamoo {
     Application::~Application() {
@@ -66,7 +67,9 @@ namespace Kaamoo {
                 m_renderer.setShadowMapSynchronization(commandBuffer);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                GUI::BeginFrame();
+                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
+                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
+                                &m_gameObjects,&m_materials);
                 for (const auto &item: m_renderSystems) {
                     item->UpdateGlobalUboBuffer(ubo, frameIndex);
                     item->render(frameInfo);
@@ -158,7 +161,6 @@ namespace Kaamoo {
 
         uint32_t minUniformOffsetAlignment = std::lcm(m_device.properties.limits.minUniformBufferOffsetAlignment,
                                                       m_device.properties.limits.nonCoherentAtomSize);
-        uint32_t minStorageBufferOffsetAlignment = m_device.properties2.properties.limits.minStorageBufferOffsetAlignment;
         std::string materialsString = JsonUtils::ReadJsonFile(BasePath + "Materials.json");
         rapidjson::Document materialsDocument;
         materialsDocument.Parse(materialsString.c_str());
@@ -170,6 +172,7 @@ namespace Kaamoo {
         globalUboBufferPtr->map();
 
 #ifdef RAY_TRACING
+        uint32_t minStorageBufferOffsetAlignment = m_device.properties2.properties.limits.minStorageBufferOffsetAlignment;
         {
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{};
             std::vector<std::shared_ptr<Image>> imagePointers{m_renderer.getOffscreenImageColor()};
@@ -486,7 +489,7 @@ namespace Kaamoo {
                                                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                                                                     minUniformOffsetAlignment);
                     bufferPointers.push_back(shadowUboBuffer);
-                    auto shadowUboBufferInfo = shadowUboBuffer->descriptorInfo();
+                    auto shadowUboBufferInfo = shadowUboBuffer->descriptorInfo(sizeof(ShadowUbo)*SwapChain::MAX_FRAMES_IN_FLIGHT);
                     descriptorWriter.writeBuffer(writerBindingPoint++, shadowUboBufferInfo);
                 } else if (pipelineCategoryString == PipelineCategory.Overlay ||
                            pipelineCategoryString == PipelineCategory.Opaque ||

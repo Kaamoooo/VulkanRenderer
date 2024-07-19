@@ -55,6 +55,7 @@ namespace Kaamoo {
             updateInfo.frameInfo->globalUbo.lights[lightIndex] = light;
         }
 
+#ifdef RAY_TRACING
         void SetUI(std::vector<GameObjectDesc>*) override {
             ImGui::Text("Color:");
             ImGui::SameLine(90);
@@ -68,6 +69,23 @@ namespace Kaamoo {
             ImGui::SameLine(90);
             ImGui::Text(lightTypeStr.c_str());
         }
+#else
+
+        void SetUI(Material::Map *) override {
+            ImGui::Text("Color:");
+            ImGui::SameLine(90);
+            ImGui::InputFloat3("##Color", &color.x);
+
+            ImGui::Text("Intensity:");
+            ImGui::SameLine(90);
+            ImGui::InputFloat("##Intensity", &lightIntensity);
+
+            ImGui::Text("Type:");
+            ImGui::SameLine(90);
+            ImGui::Text(lightTypeStr.c_str());
+        }
+
+#endif
 
         static int GetLightNum() {
             return lightNum;

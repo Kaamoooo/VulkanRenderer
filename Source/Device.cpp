@@ -160,9 +160,11 @@ namespace Kaamoo {
         }
 
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+#ifdef RAY_TRACING
         properties2.pNext = &rayTracingPipelineProperties;
         rayTracingPipelineProperties.pNext = &externalMemoryHostProperties;
         vkGetPhysicalDeviceProperties2(physicalDevice, &properties2);
+#endif
         std::cout << "physical m_device: " << properties.deviceName << std::endl;
     }
 

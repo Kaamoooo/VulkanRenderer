@@ -37,6 +37,7 @@ namespace Kaamoo {
                     this->model = modelFromFile;
                     Model::models.emplace(modelName, modelFromFile);
                 }
+                this->model->SetName(modelName);
 #endif
             }
             this->materialId = object["materialId"].GetInt();
@@ -57,12 +58,15 @@ namespace Kaamoo {
             if (model == nullptr) {
                 return;
             }
+#ifdef RAY_TRACING
             if (lastTransform != updateInfo.gameObject->transform->mat4()) {
                 lastTransform = updateInfo.gameObject->transform->mat4();
                 TLAS::updateTLAS(tlasId, lastTransform);
             }
+#endif
         };
 
+#ifdef RAY_TRACING
         id_t GetTLASId() const {
             return tlasId;
         }
@@ -119,6 +123,18 @@ namespace Kaamoo {
                 ImGui::TreePop();
             }
         }
+#else
+
+        void SetUI(Material::Map *materialMap) override {
+            if (model == nullptr) {
+                return;
+            }
+            ImGui::Text("Model:       %s", model->GetName().c_str());
+            auto material = materialMap->at(materialId);
+            ImGui::Text("Category:    %s", material->getPipelineCategory().c_str());
+        }
+
+#endif
 
     private:
         id_t tlasId;

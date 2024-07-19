@@ -1,6 +1,6 @@
 #pragma once
 
-#define RAY_TRACING
+//#define RAY_TRACING
 
 #include "MyWindow.hpp"
 #include <string>
@@ -28,7 +28,6 @@ namespace Kaamoo {
     public:
         const bool enableValidationLayers = true;
         VkPhysicalDeviceProperties properties{};
-        VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
 
         Device(MyWindow &window);
 
@@ -91,8 +90,9 @@ namespace Kaamoo {
         VkAccessFlags accessFlagsForImageLayout(VkImageLayout layout);
 
 
-#ifdef RAY_TRACING
         VkPhysicalDeviceExternalMemoryHostPropertiesEXT externalMemoryHostProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT};
+#ifdef RAY_TRACING
+        VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
         VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
 
         VkDeviceAddress getAccelerationStructureAddressKHR(VkAccelerationStructureKHR &accelerationStructure) {
