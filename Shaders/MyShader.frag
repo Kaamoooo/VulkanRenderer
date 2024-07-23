@@ -17,7 +17,6 @@ layout (push_constant) uniform PushConstantData {
 
 layout (set = 1, binding = 0) uniform sampler2D texSampler;
 
-//layout(set=1, binding=1) uniform sampler2D shadowSampler;
 layout (set = 1, binding = 1) uniform samplerCube shadowSampler;
 
 void main() {
@@ -34,11 +33,11 @@ void main() {
         Light light = ubo.lights[i];
 
         float lightDistance = distance(worldPos.xyz, light.position.xyz);
-        float c0 = 1, c1 = 0.2, c2 = 0.002;
+        float c0 = 1, c1 = 0.002;
         float d = lightDistance;
 
         //point light
-        float attenuation = min(1, 1 / (c0 + c1 * d + c2 * d * d));
+        float attenuation = min(1, 1 / (c0 + c1 * d));
         vec3 directionToLight = normalize(light.position - worldPos).xyz;
 
         //directrional light
@@ -60,16 +59,19 @@ void main() {
         totalDiffuse += diffuse;
     }
 
-    vec3 cubeMapDirection = worldPos.xyz - ubo.lights[0].position.xyz;
+    vec3 cubeMapDirection = normalize(worldPos.xyz - ubo.lights[0].position.xyz);
     cubeMapDirection.y = -cubeMapDirection.y;
+    //    cubeMapDirection.z = -cubeMapDirection.z;
     int cubeMapIndex = getCubeMapIndex(cubeMapDirection);
-
-    vec4 lightFragPos = ubo.shadowProjMatrix * ubo.shadowViewMatrix[3] * worldPos;
+    vec4 lightFragPos = ubo.shadowProjMatrix * ubo.shadowViewMatrix[cubeMapIndex] * worldPos;
     float depth = texture(shadowSampler, cubeMapDirection).x;
     float fragDepth = lightFragPos.z / lightFragPos.w;
-    float shadowMask = clamp(0, 1, (fragDepth - depth) * 10);
+    float shadowMask = clamp(0, 1, (fragDepth - depth));
     vec4 lightingResult = vec4(fragColor * texColor * (totalDiffuse + ambientLightColor + totalSpecular), 1);
     outColor = lightingResult * (1 - shadowMask);
-//    outColor = vec4(ubo.curTime, 0, 0, 1);
-//        outColor = vec4(worldPos.xyz, 1);
+//    outColor = worldNormal
+    //    outColor = vec4(cubeMapIndex * 1.0 / 6.0);
+//        outColor = lightingResult;
+    //    outColor = vec4(ubo.curTime, 0, 0, 1);
+    //        outColor = vec4(worldPos.xyz, 1);
 }

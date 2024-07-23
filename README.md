@@ -85,3 +85,5 @@
 7.17 Completed basic UI system. Added skybox. Adjusted color space.
 
 7.19 Fixed rasterization rendering.
+
+7.23 Optimized rasterzation pipeline shadow map.

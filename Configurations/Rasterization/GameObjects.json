@@ -27,7 +27,7 @@
     "componentIds":[3]
   },
   {
-    "name": "Cube",
+    "name": "SkyBox",
     "transform": {
       "translation": [0,0,0],
       "scale": [2,2,2],
