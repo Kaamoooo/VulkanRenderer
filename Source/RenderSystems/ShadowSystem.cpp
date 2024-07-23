@@ -112,6 +112,8 @@ namespace Kaamoo {
             MeshRendererComponent *meshRendererComponent;
             if (!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
 
+            auto material = frameInfo.materials.at(meshRendererComponent->GetMaterialID());
+            if (material->getPipelineCategory() == PipelineCategory.SkyBox)continue;
             ShadowPushConstant push{};
             push.modelMatrix = obj.transform->mat4();
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,

@@ -14,8 +14,8 @@
 #include "Material.hpp"
 #include "ShaderBuilder.h"
 #include "Utils/JsonUtils.hpp"
-
 #include "Sampler.h"
+
 #include "RenderSystems/RenderSystem.h"
 #include "RenderSystems/PointLightSystem.h"
 #include "RenderSystems/ShadowSystem.h"
@@ -56,7 +56,7 @@ namespace Kaamoo {
 
     private:
 
-        MyWindow m_window{SCENE_WIDTH + UI_LEFT_WIDTH + UI_LEFT_WIDTH_2, SCENE_HEIGHT, "VulkanTest"};
+        MyWindow m_window{SCENE_WIDTH + UI_LEFT_WIDTH + UI_LEFT_WIDTH_2, SCENE_HEIGHT, "Tiny Vulkan Renderer"};
         Device m_device{m_window};
         Renderer m_renderer{m_window, m_device};
 

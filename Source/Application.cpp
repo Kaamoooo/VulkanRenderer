@@ -212,8 +212,6 @@ namespace Kaamoo {
                     idShaderOffsetMap.emplace(id, shaderGroupOffset);
                     shaderGroupOffset++;
 
-                    //Todo: Support non-PBR material
-
                     auto textureNames = object["texture"].GetArray();
                     glm::i32vec2 textureEntry{};
                     textureEntry.x = imageInfos.size();
