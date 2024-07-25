@@ -35,7 +35,7 @@ namespace Kaamoo {
             oss << std::setprecision(2) << value;
             return oss.str();
         }
-        
+
         static float StringToFloat(const std::string &value) {
             return std::stof(value);
         }
@@ -67,15 +67,38 @@ namespace Kaamoo {
             return path;
         }
 
-        static void ClampFloat(float& value, float min, float max) {
+        static void ClampFloat(float &value, float min, float max) {
             if (value < min) value = min;
             else if (value > max) value = max;
         }
-        
-        static void ClampVec3(glm::vec3& value, float min, float max) {
+
+        static void ClampVec3(glm::vec3 &value, float min, float max) {
             ClampFloat(value.x, min, max);
             ClampFloat(value.y, min, max);
             ClampFloat(value.z, min, max);
+        }
+
+        static glm::mat4 GetRotateDirectionMatrix(glm::vec3 rotation) {
+            const float c3 = glm::cos(rotation.z);
+            const float s3 = glm::sin(rotation.z);
+            const float c2 = glm::cos(rotation.x);
+            const float s2 = glm::sin(rotation.x);
+            const float c1 = glm::cos(rotation.y);
+            const float s1 = glm::sin(rotation.y);
+            const glm::vec3 u{(c1 * c3 + s1 * s2 * s3), (c2 * s3), (c1 * s2 * s3 - c3 * s1)};
+            const glm::vec3 v{(c3 * s1 * s2 - c1 * s3), (c2 * c3), (c1 * c3 * s2 + s1 * s3)};
+            const glm::vec3 w{(c2 * s1), (-s2), (c1 * c2)};
+            auto rotateMatrix = glm::mat4{1.f};
+            rotateMatrix[0][0] = u.x;
+            rotateMatrix[0][1] = u.y;
+            rotateMatrix[0][2] = u.z;
+            rotateMatrix[1][0] = v.x;
+            rotateMatrix[1][1] = v.y;
+            rotateMatrix[1][2] = v.z;
+            rotateMatrix[2][0] = w.x;
+            rotateMatrix[2][1] = w.y;
+            rotateMatrix[2][2] = w.z;
+            return rotateMatrix;
         }
     };
 }

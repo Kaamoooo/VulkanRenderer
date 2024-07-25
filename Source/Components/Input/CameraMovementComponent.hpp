@@ -1,5 +1,4 @@
-﻿#ifndef CAMERA_MOVEMENT_COMPONENT_INCLUDED
-#define CAMERA_MOVEMENT_COMPONENT_INCLUDED
+﻿#pragma once
 
 #include "InputControllerComponent.hpp"
 
@@ -25,10 +24,14 @@ namespace Kaamoo {
                         glm::normalize(rotation) * lookSpeed * updateInfo.frameInfo->frameTime;
 
 
-            float yaw = updateInfo.gameObject->transform->rotation.y;
-            const glm::vec3 forwardDir{glm::sin(yaw), 0, glm::cos(yaw)};
-            const glm::vec3 rightDir{forwardDir.z, 0, -forwardDir.x};
-            const glm::vec3 upDir{0, -1, 0};
+            auto transformRotation = updateInfo.gameObject->transform->rotation;
+            auto forwardDirMatrix = Utils::GetRotateDirectionMatrix(transformRotation);
+            const glm::vec3 forwardDir = forwardDirMatrix * glm::vec4{0, 0, 1, 1};
+            forwardDirMatrix = Utils::GetRotateDirectionMatrix({transformRotation.x + 1, transformRotation.y, transformRotation.z});
+            const glm::vec3 forwardDirWithOffset = forwardDirMatrix * glm::vec4{0, 0, 1, 1};
+            const glm::vec3 rightDir = glm::normalize(glm::cross(forwardDir, forwardDirWithOffset));
+            glm::mat4 rotationMatrix = glm::rotate(glm::mat4{1.f}, glm::radians(90.f), rightDir);
+            const glm::vec3 upDir = rotationMatrix * glm::vec4{forwardDir, 1};
 
             glm::vec3 moveDir{0};
             if (glfwGetKey(window, keys.moveUp) == GLFW_PRESS) moveDir += upDir;
@@ -39,12 +42,9 @@ namespace Kaamoo {
             if (glfwGetKey(window, keys.moveBack) == GLFW_PRESS) moveDir -= forwardDir;
 
             if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
-                updateInfo.gameObject->transform->translation +=
-                        glm::normalize(moveDir) * moveSpeed * updateInfo.frameInfo->frameTime;
+                updateInfo.gameObject->transform->translation += glm::normalize(moveDir) * moveSpeed * updateInfo.frameInfo->frameTime;
             }
         }
 
     };
 }
-
-#endif

@@ -87,3 +87,5 @@
 7.19 Fixed rasterization rendering.
 
 7.23 Optimized rasterzation pipeline shadow map.
+
+7.25 Optimized camera movement.

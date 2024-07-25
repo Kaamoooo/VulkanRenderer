@@ -1,6 +1,6 @@
 #pragma once
 
-//#define RAY_TRACING
+#define RAY_TRACING
 
 #include "MyWindow.hpp"
 #include <string>
