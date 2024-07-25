@@ -1,6 +1,7 @@
 #pragma once
 
 #define RAY_TRACING
+//#define VALIDATION_ENABLED
 
 #include "MyWindow.hpp"
 #include <string>
@@ -26,7 +27,11 @@ namespace Kaamoo {
 
     class Device {
     public:
+#ifdef VALIDATION_ENABLED
         const bool enableValidationLayers = true;
+#else
+        const bool enableValidationLayers = false;
+#endif
         VkPhysicalDeviceProperties properties{};
 
         Device(MyWindow &window);
@@ -120,17 +125,23 @@ namespace Kaamoo {
 
 
         const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+#ifdef RAY_TRACING
         const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-                                                            VK_KHR_MULTIVIEW_EXTENSION_NAME,
                                                             VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
                                                             VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
                                                             VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-//                                                            VK_NV_RAY_TRACING_VALIDATION_EXTENSION_NAME,
-//                                                            VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
                                                             VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,
                                                             VK_EXT_PIPELINE_CREATION_FEEDBACK_EXTENSION_NAME,
                                                             VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME
         };
+#else
+        const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                                                            VK_KHR_MULTIVIEW_EXTENSION_NAME,
+                                                            VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,
+                                                            VK_EXT_PIPELINE_CREATION_FEEDBACK_EXTENSION_NAME,
+                                                            VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME
+        };
+#endif
 
 
         void createInstance();

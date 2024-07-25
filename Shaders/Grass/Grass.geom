@@ -23,7 +23,7 @@ float rand(vec2 co) {
     return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-float _Width = 0.014, _Height = 0.3, _BendDegree = 4, _BendSpeed = 2;
+float _Width = 0.014, _Height = 0.3, _BendDegree = 12, _BendSpeed = 3;
 const float PI = 3.1415926535;
 float _CollisionRadius = 0.45;
 
@@ -82,39 +82,45 @@ void main() {
         }
         int level = i / 2;
         float widthWeight = 0.8 - 0.03 * level * level;
+        vec3 axis;
+        vec3 up;
+        float randomX = rand(rootWorldPos.xx);
+        float randomZ = rand(rootWorldPos.zz);
         if (i % 2 == 0) {
-            outWorldPos = vec4(rootWorldPos.x - _Width * widthWeight, rootWorldPos.y - curHeight, rootWorldPos.z, 1);
+            outWorldPos = vec4(rootWorldPos.x - _Width * widthWeight * randomX, rootWorldPos.y - curHeight, rootWorldPos.z - _Width * widthWeight * randomZ, 1);
             outUv = vec2(0, curHeight / _Height);
+            axis = vec3(rootWorldPos.x - outWorldPos.x, 0, rootWorldPos.z - outWorldPos.z);
         } else {
-            outWorldPos = vec4(rootWorldPos.x + _Width * widthWeight, rootWorldPos.y - curHeight, rootWorldPos.z, 1);
+            outWorldPos = vec4(rootWorldPos.x + _Width * widthWeight * randomX, rootWorldPos.y - curHeight, rootWorldPos.z + _Width * widthWeight * randomZ, 1);
             outUv = vec2(1, curHeight / _Height);
             curHeight += layerHeight;
+            axis = vec3(outWorldPos.x - rootWorldPos.x, 0, outWorldPos.z - rootWorldPos.z);
         }
+        up = normalize(cross(axis, vec3(0, 1, 0)));
         if (level == 2)
         {
-            outWorldPos.z += layerHeight * sin(bendRadian);
+            outWorldPos.x += layerHeight * sin(bendRadian) * dot(up, vec3(1, 0, 0));
+            outWorldPos.z += layerHeight * sin(bendRadian) * dot(up, vec3(0, 0, 1));
             outWorldPos.y = rootWorldPos.y - layerHeight - layerHeight * cos(bendRadian);
         } else if (level == 3)
         {
-            outWorldPos.z += layerHeight * (sin(bendRadian) + sin(2 * bendRadian));
+            outWorldPos.x += layerHeight * (sin(bendRadian) + sin(2 * bendRadian)) * dot(up, vec3(1, 0, 0));
+            outWorldPos.z += layerHeight * (sin(bendRadian) + sin(2 * bendRadian)) * dot(up, vec3(0, 0, 1));
             outWorldPos.y = rootWorldPos.y - layerHeight - layerHeight * (cos(bendRadian) + cos(2 * bendRadian));
         } else if (level == 4)
         {
-            outWorldPos.z += layerHeight * (sin(bendRadian) + sin(2 * bendRadian) + sin(3 * bendRadian));
+            outWorldPos.x += layerHeight * (sin(bendRadian) + sin(2 * bendRadian) + sin(3 * bendRadian)) * dot(up, vec3(1, 0, 0));
+            outWorldPos.z += layerHeight * (sin(bendRadian) + sin(2 * bendRadian) + sin(3 * bendRadian)) * dot(up, vec3(0, 0, 1));
             outWorldPos.y = rootWorldPos.y - layerHeight - layerHeight * (cos(bendRadian) + cos(2 * bendRadian) + cos(3 * bendRadian));
         } else if (level == 5)
         {
-            outWorldPos.z += layerHeight * (sin(bendRadian) + sin(2 * bendRadian) + sin(3 * bendRadian) + sin(4 * bendRadian));
+            outWorldPos.x += layerHeight * (sin(bendRadian) + sin(2 * bendRadian) + sin(3 * bendRadian) + sin(4 * bendRadian)) * dot(up, vec3(1, 0, 0));
+            outWorldPos.z += layerHeight * (sin(bendRadian) + sin(2 * bendRadian) + sin(3 * bendRadian) + sin(4 * bendRadian)) * dot(up, vec3(0, 0, 1));
             outWorldPos.y = rootWorldPos.y - layerHeight - layerHeight * (cos(bendRadian) + cos(2 * bendRadian) + cos(3 * bendRadian) + cos(4 * bendRadian));
         }
 
-
-        outFragColor = vec3(0, 0.2 + level * 0.06 + 0.1 * random, 0);
-        vec3 up = vec3(0, -1, 0.0);
-        float angle = PI / 2 - bendRadian;// 旋转角度（弧度）
-        //The normal of each single straw is hard coded here, it should be calculated based on the vertex position
-        vec3 axis = normalize(vec3(1, 0, 1));// 旋转轴（单位向量）
-        mat3 rotationMatrix = rotateMatrix(axis, angle);
+        outFragColor = vec3(0, 0.5 + level * 0.04 + 0.1 * random, 0);
+        mat3 rotationMatrix = rotateMatrix(axis, bendRadian);
         outWorldNormal = push.modelMatrix * vec4(rotationMatrix * up, 0);
         outWorldPos = push.modelMatrix * outWorldPos;
         gl_Position = ubo.projectionMatrix * ubo.viewMatrix * outWorldPos;

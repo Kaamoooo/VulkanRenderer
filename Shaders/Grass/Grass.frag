@@ -20,7 +20,7 @@ layout (set = 1, binding = 1) uniform samplerCube shadowSampler;
 void main() {
     vec3 texColor = fragColor;
 
-    vec3 ambientLightColor = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
+    vec3 ambientLightColor = vec3(0.1, 0.1, 0.1);
     vec3 totalDiffuse = vec3(0, 0, 0);
     vec3 totalSpecular = vec3(0, 0, 0);
 
@@ -42,7 +42,7 @@ void main() {
         if (light.lightCategory == 1) {
             attenuation = 1;
             directionToLight = normalize(-light.direction.xyz);
-            continue;
+//            continue;
         }
 
         vec3 lightColorWithAttenuation = light.color.xyz * light.color.w * attenuation;

@@ -59,13 +59,8 @@ namespace Kaamoo {
         }
     }
 
-    void DestroyDebugUtilsMessengerEXT(
-            VkInstance instance,
-            VkDebugUtilsMessengerEXT debugMessenger,
-            const VkAllocationCallbacks *pAllocator) {
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
-                instance,
-                "vkDestroyDebugUtilsMessengerEXT");
+    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator) {
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
         if (func != nullptr) {
             func(instance, debugMessenger, pAllocator);
         }
@@ -100,7 +95,7 @@ namespace Kaamoo {
 
         VkApplicationInfo appInfo = {};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "LittleVulkanEngine App";
+        appInfo.pApplicationName = "Tiny Vulkan Renderer";
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -515,11 +510,11 @@ namespace Kaamoo {
         VkMemoryAllocateFlagsInfo memoryAllocateFlagsInfo = {};
         memoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
         memoryAllocateFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
-        
+
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        
-        allocInfo.allocationSize = getAlignment(memRequirements.size,externalMemoryHostProperties.minImportedHostPointerAlignment) ;
+
+        allocInfo.allocationSize = getAlignment(memRequirements.size, externalMemoryHostProperties.minImportedHostPointerAlignment);
         allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, propertyFlags);
         allocInfo.pNext = &memoryAllocateFlagsInfo;
 
