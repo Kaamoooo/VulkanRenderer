@@ -22,10 +22,14 @@ namespace Kaamoo {
         void endFrame();
 
         void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
+        
+        void beginGizmosRenderPass(VkCommandBuffer commandBuffer);
 
         void beginShadowRenderPass(VkCommandBuffer commandBuffer);
 
         void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+        
+        void endGizmosRenderPass(VkCommandBuffer commandBuffer);
 
         void endShadowRenderPass(VkCommandBuffer commandBuffer);
 
@@ -63,6 +67,12 @@ namespace Kaamoo {
 
         const std::shared_ptr<Sampler> &getShadowSampler() const;
 
+        const std::shared_ptr<Image> &getOffscreenImageColor() const;
+
+        const VkRenderPass getOffscreenRenderPass() const {
+            return offscreenRenderPass;
+        }
+
     private:
         void createCommandBuffers();
 
@@ -77,6 +87,8 @@ namespace Kaamoo {
         void freeOffscreenResources();
 
         void loadOffscreenResources();
+        
+        void loadGizmos();
 
         MyWindow &myWindow;
         Device &device;
@@ -100,21 +112,11 @@ namespace Kaamoo {
         std::shared_ptr<Image> offscreenImageDepth;
         VkFramebuffer offscreenFrameBuffer = VK_NULL_HANDLE;
         VkRenderPass offscreenRenderPass = VK_NULL_HANDLE;
-
-
-    private:
+        
 
         VkFormat offscreenColorFormat{VK_FORMAT_R8G8B8A8_UNORM};
         VkFormat offscreenDepthFormat{VK_FORMAT_D32_SFLOAT};
 
-
-    public:
-
-        const std::shared_ptr<Image> &getOffscreenImageColor() const;
-
-        const VkRenderPass getOffscreenRenderPass() const {
-            return offscreenRenderPass;
-        }
     };
 
 }

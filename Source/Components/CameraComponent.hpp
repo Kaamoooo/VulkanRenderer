@@ -14,7 +14,6 @@ namespace Kaamoo {
             projectionMatrix[0][0] = 2.f / (right - left);
             projectionMatrix[1][1] = 2.f / (bottom - top);
             projectionMatrix[2][2] = 1.f / (far - near);
-
             projectionMatrix[3][0] = -(right + left) / (right - left);
             projectionMatrix[3][1] = -(bottom + top) / (bottom - top);
             projectionMatrix[3][2] = -near / (far - near);
@@ -28,7 +27,6 @@ namespace Kaamoo {
             projectionMatrix[2][2] = far / (far - near);
             projectionMatrix[2][3] = 1.f;
             projectionMatrix[3][2] = -(far * near) / (far - near);
-//            projectionMatrix = CorrectionMatrix * glm::perspective(fovY, aspect, near, far);
         }
 
         glm::mat4 getProjectionMatrix() const {

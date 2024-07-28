@@ -9,7 +9,7 @@
 #include <memory>
 
 namespace Kaamoo {
-    
+
     class SwapChain {
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
@@ -28,6 +28,8 @@ namespace Kaamoo {
         VkFramebuffer getFrameBuffer(int index) { return swapChainFrameBuffers[index]; }
 
         VkRenderPass getRenderPass() { return renderPass; }
+
+        VkRenderPass getGizmosRenderPass() { return m_gizmosRenderPass; }
 
         VkImageView getImageView(int index) { return swapChainImageViews[index]; }
 
@@ -63,6 +65,8 @@ namespace Kaamoo {
 
         void createRenderPass();
 
+        void createGizmosRenderPass();
+
         void createFramebuffers();
 
         void createSyncObjects();
@@ -82,6 +86,7 @@ namespace Kaamoo {
 
         std::vector<VkFramebuffer> swapChainFrameBuffers;
         VkRenderPass renderPass;
+        VkRenderPass m_gizmosRenderPass;
 
         std::vector<VkImage> depthImages;
         std::vector<VkDeviceMemory> depthImageMemories;

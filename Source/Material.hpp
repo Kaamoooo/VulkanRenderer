@@ -166,10 +166,10 @@ namespace Kaamoo {
             return imagePointers;
         }
 
-        [[nodiscard]] std::vector<std::shared_ptr<ShaderModule>> getShaderModulePointers() const {
+        [[nodiscard]] std::vector<std::shared_ptr<ShaderModule>>& getShaderModulePointers() {
             return shaderModules;
         }
-
+        
         [[nodiscard]] std::vector<std::shared_ptr<DescriptorSetLayout>> getDescriptorSetLayoutPointers() const {
             return descriptorSetLayoutPointers;
         }
@@ -201,4 +201,4 @@ namespace Kaamoo {
         std::string pipelineCategory;
     };
 
-} // Kaamoo
+}

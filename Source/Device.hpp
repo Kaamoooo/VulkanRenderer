@@ -1,7 +1,7 @@
 #pragma once
 
 #define RAY_TRACING
-//#define VALIDATION_ENABLED
+#define VALIDATION_ENABLED
 
 #include "MyWindow.hpp"
 #include <string>

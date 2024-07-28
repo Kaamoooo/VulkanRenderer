@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240717141451254](./README.assets/image-20240717141451254.png)
+![image-20240728124034931](./README.assets/image-20240728124034931.png)
 
 ## Progress
 
@@ -89,3 +89,5 @@
 7.23 Optimized rasterzation pipeline shadow map.
 
 7.25 Optimized camera movement.
+
+7.28 Added gizmos render pass. Added a fixed axis to indicate directions.

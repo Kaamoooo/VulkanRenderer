@@ -215,16 +215,7 @@ namespace Kaamoo {
         configureInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configureInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         configureInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-
-//        configureInfo.viewport.x = 0.0f;
-//        configureInfo.viewport.y = 0.0f;
-//        configureInfo.viewport.m_windowWidth = static_cast<float>(m_windowWidth);
-//        configureInfo.viewport.m_windowHeight = static_cast<float>(m_windowHeight);
-//        configureInfo.viewport.minDepth = 0.0f;
-//        configureInfo.viewport.maxDepth = 1.0f;
-//
-//        configureInfo.scissor.offset = {0, 0};
-//        configureInfo.scissor.extent = {m_windowWidth, m_windowHeight};
+        
         configureInfo.viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         configureInfo.viewportStateCreateInfo.viewportCount = 1;
         configureInfo.viewportStateCreateInfo.pViewports = nullptr;

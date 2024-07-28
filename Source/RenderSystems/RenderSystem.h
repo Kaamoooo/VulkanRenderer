@@ -10,10 +10,23 @@
 #include "../Components/MeshRendererComponent.hpp"
 
 namespace Kaamoo {
+    struct SimplePushConstantData {
+        //按对角线初始化
+        glm::mat4 modelMatrix{1.f};
+        glm::mat4 normalMatrix{1.f};
+    };
+
+    struct PointLightPushConstant {
+        glm::vec4 position{};
+        glm::vec4 color{};
+        float radius;
+    };
+    
     class RenderSystem {
+        
     public:
         RenderSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material);
-        
+
         void Init();
 
         ~RenderSystem();

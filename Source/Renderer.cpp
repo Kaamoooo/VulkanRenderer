@@ -136,7 +136,43 @@ namespace Kaamoo {
         VkRect2D scissor{};
         scissor.offset = {0, 0};
         scissor.extent = swapChain->getSwapChainExtent();
-        
+
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    }
+
+    void Renderer::beginGizmosRenderPass(VkCommandBuffer commandBuffer) {
+        assert(isFrameStarted && "Cannot call beginGizmosRenderPass while frame is not in progress");
+        assert(commandBuffer == getCurrentCommandBuffer() && "Cannot begin render gizmos pass on command buffer from a different frame");
+
+        VkRenderPassBeginInfo renderPassBeginInfo{};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass = swapChain->getGizmosRenderPass();
+        renderPassBeginInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
+
+        renderPassBeginInfo.renderArea.offset = {0, 0};
+        renderPassBeginInfo.renderArea.extent = swapChain->getSwapChainExtent();
+
+        VkClearValue clearValues[2];
+        clearValues[0].color = {0.01f, 0.01f, 0.01f, 1.0f};
+        clearValues[1].depthStencil = {1.0f, 0};
+        renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(2);
+        renderPassBeginInfo.pClearValues = clearValues;
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        VkViewport viewport{};
+        viewport.x = UI_LEFT_WIDTH + UI_LEFT_WIDTH_2;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(myWindow.getCurrentSceneExtent().width);
+        viewport.height = static_cast<float>(myWindow.getCurrentSceneExtent().height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        VkRect2D scissor{};
+        scissor.offset = {0, 0};
+        scissor.extent = swapChain->getSwapChainExtent();
+
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     }
@@ -192,9 +228,16 @@ namespace Kaamoo {
     }
 
     void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) {
-        assert(isFrameStarted && "Cannot call endShadowRenderPass while frame is not in progress");
+        assert(isFrameStarted && "Cannot call endSwapChainRenderPass while frame is not in progress");
+        assert(commandBuffer == getCurrentCommandBuffer() && "Cannot endSwapChainRenderPass on command buffer from a different frame");
+
+        vkCmdEndRenderPass(commandBuffer);
+    }    
+    
+    void Renderer::endGizmosRenderPass(VkCommandBuffer commandBuffer) {
+        assert(isFrameStarted && "Cannot call endGizmosRenderPass while frame is not in progress");
         assert(commandBuffer == getCurrentCommandBuffer() &&
-               "Cannot end renderShadow pass on command buffer from a different frame");
+               "Cannot endGizmosRenderPass on command buffer from a different frame");
 
         vkCmdEndRenderPass(commandBuffer);
     }
@@ -527,4 +570,5 @@ namespace Kaamoo {
     const std::shared_ptr<Image> &Renderer::getOffscreenImageColor() const {
         return offscreenImageColor;
     }
+
 }

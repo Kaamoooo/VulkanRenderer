@@ -37,7 +37,7 @@ namespace Kaamoo {
 
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentSceneExtent()};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent()};
 
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
@@ -49,15 +49,15 @@ namespace Kaamoo {
                 m_rayTracingSystem->rayTrace(frameInfo);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-
+                
+                m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
+                m_postSystem->render(frameInfo);
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
                                 &m_gameObjects, &m_pGameObjectDescs);
-                m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
-                m_postSystem->render(frameInfo);
+
                 GUI::EndFrame(commandBuffer);
 
-                m_renderer.endSwapChainRenderPass(commandBuffer);
 #else
                 m_renderer.beginShadowRenderPass(commandBuffer);
                 m_shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -67,6 +67,8 @@ namespace Kaamoo {
                 m_renderer.setShadowMapSynchronization(commandBuffer);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
+                
+                
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
                                 &m_gameObjects,&m_materials);
@@ -75,8 +77,14 @@ namespace Kaamoo {
                     item->render(frameInfo);
                 }
                 GUI::EndFrame(commandBuffer);
-                m_renderer.endSwapChainRenderPass(commandBuffer);
 #endif
+                m_renderer.endSwapChainRenderPass(commandBuffer);
+                
+                m_renderer.beginGizmosRenderPass(commandBuffer);
+                m_gizmosRenderSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
+                m_gizmosRenderSystem->render(frameInfo);
+                m_renderer.endGizmosRenderPass(commandBuffer);
+                
                 m_renderer.endFrame();
             }
 
@@ -514,6 +522,28 @@ namespace Kaamoo {
             }
         }
 #endif
+        //Gizmos
+        {
+            auto uiDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT).
+                    build();
+
+            auto uiDescriptorSet = std::make_shared<VkDescriptorSet>();
+            DescriptorWriter(uiDescriptorSetLayoutPtr, *m_globalPool).
+                    writeBuffer(0, globalUboBufferPtr->descriptorInfo(globalUboBufferPtr->getBufferSize())).
+                    build(uiDescriptorSet);
+
+            std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{};
+            std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{uiDescriptorSetLayoutPtr};
+            std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{uiDescriptorSet};
+            std::vector<std::shared_ptr<Image>> imagePointers{};
+            std::vector<std::shared_ptr<Sampler>> samplerPointers{};
+            std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
+
+            auto uiMaterial = std::make_shared<Material>(-3, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers, bufferPointers,
+                                                         PipelineCategory.Gizmos);
+            m_materials.emplace(-3, std::move(uiMaterial));
+        }
     }
 
     void Application::Awake() {
@@ -598,7 +628,11 @@ namespace Kaamoo {
             m_renderSystems.push_back(renderSystem);
         }
 #endif
-
+            if (pipelineCategory == PipelineCategory.Gizmos) {
+                m_gizmosRenderSystem = std::make_shared<GizmosRenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
+//          This render system contains multiple pipelines, so I initialize it in the constructor.
+//          m_gizmosRenderSystem->Init();   
+            }
         }
     }
 

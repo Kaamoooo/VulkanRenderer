@@ -21,6 +21,7 @@ namespace Kaamoo {
         std::string Overlay = "Overlay";
         std::string Post = "Post";
         std::string RayTracing = "RayTracing";
+        std::string Gizmos = "Gizmos";
     } PipelineCategory;
 
     struct PipelineConfigureInfo {

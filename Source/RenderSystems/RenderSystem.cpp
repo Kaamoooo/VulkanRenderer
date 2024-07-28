@@ -7,20 +7,6 @@
 
 namespace Kaamoo {
 
-    //定义constant data,是暂存的且会被销毁
-    //constant data对于频繁改变的数据性能较高，然而尺寸有限，同时对于模型合批处理起来比较困难
-    //由于Shader中的constant data变量是按16bytes来分别存储的，即不满16字节的变量也要存储16字节，对于大型结构或数组，必须添加alignas(16)来与Shader匹配，表示内存地址是16的倍数
-    struct SimplePushConstantData {
-        //按对角线初始化
-        glm::mat4 modelMatrix{1.f};
-        glm::mat4 normalMatrix{1.f};
-    };
-    struct PointLightPushConstant {
-        glm::vec4 position{};
-        glm::vec4 color{};
-        float radius;
-    };
-
     RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material)
             : device{device}, m_material{material}, m_renderPass{renderPass} {
 
