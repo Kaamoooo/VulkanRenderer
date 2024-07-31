@@ -15,7 +15,7 @@ namespace Kaamoo {
 
 
     Pipeline::~Pipeline() {
-        
+
         vkDestroyPipeline(device.device(), m_pipeline, nullptr);
     }
 
@@ -25,7 +25,7 @@ namespace Kaamoo {
         //Shader
         uint32_t shaderStageCount = m_material->getShaderModulePointers().size();
         VkPipelineShaderStageCreateInfo shaderStageCreateInfo[shaderStageCount];
-        
+
         for (int i = 0; i < m_material->getShaderModulePointers().size(); i++) {
             VkRayTracingShaderGroupCreateInfoKHR group{VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR};
             group.anyHitShader = VK_SHADER_UNUSED_KHR;
@@ -83,7 +83,7 @@ namespace Kaamoo {
 
         createShaderBindingTable();
     }
-    
+
     void Pipeline::createShaderBindingTable() {
         uint32_t hitCount = m_rayTracingGroups.size() - GenShaderCount - MissShaderCount;
         uint32_t handleCount = GenShaderCount + MissShaderCount + hitCount;
@@ -102,9 +102,9 @@ namespace Kaamoo {
         Device::pfn_vkGetRayTracingShaderGroupHandlesKHR(device.device(), m_pipeline, 0, handleCount, dataSize, shaderHandles.data());
 
         VkDeviceSize sbtSize = m_genRegion.size + m_missRegion.size + m_hitRegion.size + m_callableRegion.size;
-        m_shaderBindingTableBuffer =std::make_shared<Buffer>(device, sbtSize, 1,
-                                                             VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_shaderBindingTableBuffer = std::make_shared<Buffer>(device, sbtSize, 1,
+                                                              VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         m_shaderBindingTableBuffer->map();
 
         VkDeviceAddress sbtAddress = m_shaderBindingTableBuffer->getDeviceAddress();
@@ -138,6 +138,7 @@ namespace Kaamoo {
             }
         }
     }
+
 #endif
 
     void Pipeline::createGraphicsPipeline(const PipelineConfigureInfo &pipelineConfigureInfo) {
@@ -215,7 +216,7 @@ namespace Kaamoo {
         configureInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configureInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         configureInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-        
+
         configureInfo.viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         configureInfo.viewportStateCreateInfo.viewportCount = 1;
         configureInfo.viewportStateCreateInfo.pViewports = nullptr;
@@ -273,6 +274,7 @@ namespace Kaamoo {
         configureInfo.depthStencilInfo.minDepthBounds = 0.0f;  // Optional
         configureInfo.depthStencilInfo.maxDepthBounds = 1.0f;  // Optional
         configureInfo.depthStencilInfo.stencilTestEnable = VK_FALSE;
+
         configureInfo.depthStencilInfo.front = {};  // Optional
         configureInfo.depthStencilInfo.back = {};   // Optional
 

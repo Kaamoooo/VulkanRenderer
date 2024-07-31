@@ -66,6 +66,7 @@ namespace Kaamoo {
         Material::Map &materials;
         GlobalUbo& globalUbo;
         VkExtent2D extent;
+        id_t selectedGameObjectId;
     };
     
     struct RendererInfo{

@@ -11,16 +11,16 @@ layout (location = 1) out vec4 worldPos;
 layout (location = 2) out vec4 worldNormal;
 layout (location = 3) out vec2 outUV;
 
-
 layout (push_constant) uniform PushConstantData {
     mat4 modelMatrix;
     mat4 normalMatrix;
+    vec3 scaleOrigin;
 } push;
 
 void main() {
-    worldPos = push.modelMatrix * vec4(position, 1);
-    gl_Position = ubo.projectionMatrix * ubo.viewMatrix * worldPos;
+    worldPos = push.modelMatrix * vec4(position + normal * 0.01f, 1);
     worldNormal = normalize(push.normalMatrix * vec4(normal, 0));
+    gl_Position = ubo.projectionMatrix * ubo.viewMatrix * worldPos;
 
     fragColor = color;
     outUV = uv;

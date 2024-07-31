@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240728124034931](./README.assets/image-20240728124034931.png)
+![image-20240731140933028](./README.assets/image-20240731140933028.png)
 
 ## Progress
 
@@ -91,3 +91,5 @@
 7.25 Optimized camera movement.
 
 7.28 Added gizmos render pass. Added a fixed axis to indicate directions.
+
+7.31 Added selected model outline.

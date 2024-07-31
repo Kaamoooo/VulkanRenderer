@@ -38,7 +38,7 @@ namespace Kaamoo {
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent()};
-
+                frameInfo.selectedGameObjectId = GUI::GetSelectedId();
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
 
@@ -49,15 +49,13 @@ namespace Kaamoo {
                 m_rayTracingSystem->rayTrace(frameInfo);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                
+
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_postSystem->render(frameInfo);
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
                                 &m_gameObjects, &m_pGameObjectDescs);
-
-                GUI::EndFrame(commandBuffer);
-
+                
 #else
                 m_renderer.beginShadowRenderPass(commandBuffer);
                 m_shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -68,23 +66,26 @@ namespace Kaamoo {
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
                 
-                
-                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
-                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects,&m_materials);
                 for (const auto &item: m_renderSystems) {
                     item->UpdateGlobalUboBuffer(ubo, frameIndex);
                     item->render(frameInfo);
                 }
-                GUI::EndFrame(commandBuffer);
-#endif
-                m_renderer.endSwapChainRenderPass(commandBuffer);
                 
+                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
+                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
+                                &m_gameObjects,&m_materials);
+#endif
+                GUI::EndFrame(commandBuffer);
+                m_renderer.endSwapChainRenderPass(commandBuffer);
+
                 m_renderer.beginGizmosRenderPass(commandBuffer);
                 m_gizmosRenderSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
-                m_gizmosRenderSystem->render(frameInfo);
+                m_gizmosRenderSystem->render(frameInfo, GizmosType::EdgeDetectionStencil);
+                m_gizmosRenderSystem->render(frameInfo, GizmosType::EdgeDetection);
+
+                m_gizmosRenderSystem->render(frameInfo, GizmosType::Axis);
                 m_renderer.endGizmosRenderPass(commandBuffer);
-                
+
                 m_renderer.endFrame();
             }
 
@@ -324,7 +325,8 @@ namespace Kaamoo {
             samplerPointers.emplace_back(skyBoxSampler);
 
             auto sceneDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                               VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR, imageInfos.size()).
                     addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_MISS_BIT_KHR).
@@ -525,7 +527,7 @@ namespace Kaamoo {
         //Gizmos
         {
             auto uiDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
-                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT).
+                    addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS | VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT).
                     build();
 
             auto uiDescriptorSet = std::make_shared<VkDescriptorSet>();

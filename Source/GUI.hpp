@@ -8,6 +8,8 @@ namespace Kaamoo {
     public:
         GUI() = delete;
 
+        static id_t GetSelectedId() { return selectedId; }
+
         static void Destroy() {
             ImGui_ImplVulkan_Shutdown();
             ImGui_ImplGlfw_Shutdown();
@@ -83,7 +85,8 @@ namespace Kaamoo {
  *       Inspector        Hierarchy       Scene
  * */
 #ifdef RAY_TRACING
-        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,std::vector<GameObjectDesc>* pGameObjectDescs) {
+
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap, std::vector<GameObjectDesc> *pGameObjectDescs) {
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags_NoMove;
             window_flags |= ImGuiWindowFlags_NoResize;
@@ -96,7 +99,7 @@ namespace Kaamoo {
                 if (ImGui::BeginListBox("##Hierarchy", ImVec2(-1, -1))) {
                     for (auto &gameObjectPair: *pGameObjectsMap) {
                         auto &gameObject = gameObjectPair.second;
-                        if (ImGui::Selectable(gameObject.getName().c_str())) {
+                        if (ImGui::Selectable(gameObject.getName().c_str(),selectedId == gameObjectPair.first)) {
                             selectedId = gameObjectPair.first;
                             bSelected = true;
                         }
@@ -148,6 +151,7 @@ namespace Kaamoo {
             }
             ImGui::End();
         }
+
 #else
         static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,Material::Map* pMaterialsMap) {
             ImGuiWindowFlags window_flags = 0;
@@ -225,6 +229,6 @@ namespace Kaamoo {
     private:
         inline static VkDescriptorPool imguiDescPool{};
         inline static bool bSelected;
-        inline static id_t selectedId;
+        inline static id_t selectedId = -1;
     };
 }

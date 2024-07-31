@@ -61,6 +61,7 @@ struct Vertex {
     vec3 position;
     vec3 color;
     vec3 normal;
+    vec3 smoothedNormal;
     vec2 uv;
 };
 

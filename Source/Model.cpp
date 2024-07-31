@@ -19,7 +19,14 @@ namespace std {
         //重载哈希函数对象的调用运算符
         size_t operator()(Kaamoo::Model::Vertex const &vertex) const {
             size_t seed = 0;
-            Kaamoo::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+//            Kaamoo::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+//            Kaamoo::hashCombine(seed, vertex.position);
+//            return seed;
+//            return ((hash<glm::vec3>()(vertex.position) ^
+//                     (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+//                   (hash<glm::vec3>()(vertex.normal) << 1) ^
+//                   (hash<glm::vec2>()(vertex.uv) << 1); 
+            seed = hash<glm::vec3>()(vertex.position);
             return seed;
         }
     };
@@ -72,10 +79,10 @@ namespace Kaamoo {
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
 #else
-        vertexBuffer=std::make_unique<Buffer>(
-                device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        vertexBuffer = std::make_unique<Buffer>(
+                device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-                );
+        );
 #endif
         device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
     }
@@ -130,7 +137,8 @@ namespace Kaamoo {
         attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0});
         attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)});
         attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
-        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
+        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, smoothedNormal)});
+        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
 
         return attributeDescriptions;
     }
@@ -149,7 +157,9 @@ namespace Kaamoo {
         std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
         for (const auto &shape: shapes) {
-            for (const auto &index: shape.mesh.indices) {
+            for (int i = 0; i < shape.mesh.indices.size(); i++) {
+                const auto &index = shape.mesh.indices[i];
+
                 Vertex vertex{};
 
                 if (index.vertex_index >= 0) {
@@ -174,6 +184,35 @@ namespace Kaamoo {
                     };
                 }
 
+                if (i % 3 == 2) {
+                    auto idx0 = shape.mesh.indices[i - 2];
+                    auto idx1 = shape.mesh.indices[i - 1];
+                    auto idx2 = shape.mesh.indices[i];
+
+                    glm::vec3 v0 = glm::vec3(
+                            attrib.vertices[3 * idx0.vertex_index + 0],
+                            attrib.vertices[3 * idx0.vertex_index + 1],
+                            attrib.vertices[3 * idx0.vertex_index + 2]
+                    );
+                    glm::vec3 v1 = glm::vec3(
+                            attrib.vertices[3 * idx1.vertex_index + 0],
+                            attrib.vertices[3 * idx1.vertex_index + 1],
+                            attrib.vertices[3 * idx1.vertex_index + 2]
+                    );
+                    glm::vec3 v2 = glm::vec3(
+                            attrib.vertices[3 * idx2.vertex_index + 0],
+                            attrib.vertices[3 * idx2.vertex_index + 1],
+                            attrib.vertices[3 * idx2.vertex_index + 2]
+                    );
+
+                    glm::vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+
+                    auto back = indices.size() - 1;
+                    vertices[indices[back - 1]].smoothedNormal += faceNormal;
+                    vertices[indices[back]].smoothedNormal += faceNormal;
+                    vertex.smoothedNormal += faceNormal;
+                }
+
                 if (index.texcoord_index >= 0) {
                     vertex.uv = {
                             attrib.texcoords[2 * index.texcoord_index + 0],
@@ -186,10 +225,8 @@ namespace Kaamoo {
                     vertices.push_back(vertex);
                 }
                 indices.push_back(uniqueVertices[vertex]);
-
             }
         }
-
 
     }
 }

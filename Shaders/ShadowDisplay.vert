@@ -2,7 +2,6 @@
 #include "UBO.glsl"
 
 layout(location = 0) out vec2 outUv;
- 
 
 const vec2 OFFSETS[6] = vec2[](
 vec2(-1, -1),
