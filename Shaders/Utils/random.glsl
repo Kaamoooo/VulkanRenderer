@@ -51,3 +51,20 @@ float rnd(inout uint prev)
 {
     return (float(lcg(prev)) / float(0x01000000));
 }
+
+float rnd(float seed)
+{
+    return fract(sin(seed) * 43758.5453);
+}
+
+vec3 randomHemisphereVector(vec3 normal,float seed) {
+    float u = rnd(seed);
+    float v = rnd(seed);
+    float theta = 2.0 * 3.1415926 * u;
+    float phi = acos(2.0 * v - 1.0);
+    vec3 randomVector = vec3(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
+    if (dot(randomVector, normal) < 0.0) {
+        randomVector = -randomVector;
+    }
+    return randomVector;
+}

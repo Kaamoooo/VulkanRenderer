@@ -15,7 +15,6 @@ layout (set = 0, binding = 0) uniform GlobalUbo {
     mat4 projectionMatrix;
     mat4 inverseProjectionMatrix;
     float curTime;
-    int frameIndex;
     int lightNum;
     //constant light count for now
     Light lights[10];

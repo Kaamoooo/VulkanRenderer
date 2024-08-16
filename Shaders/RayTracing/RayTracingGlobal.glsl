@@ -4,10 +4,16 @@
 #extension GL_EXT_ray_tracing: require
 #extension GL_EXT_nonuniform_qualifier: enable
 
+int MAX_BOUNCE_COUNT = 5;
 
 struct hitPayLoad {
     vec3 hitValue;
     float opacity;
+    float accumulatedDistance;
+    int bounceCount;
+    bool isBouncing;
+    vec3 closestHitWorldPos;
+    int recursionDepth;
 };
 
 struct ShadowPayload{
@@ -51,7 +57,6 @@ layout (set = 1, binding = 0) uniform GlobalUbo {
     mat4 projectionMatrix;
     mat4 inverseProjectionMatrix;
     float curTime;
-    int frameIndex;
     int lightNum;
     //constant light count for now
     Light lights[10];

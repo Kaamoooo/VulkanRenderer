@@ -67,11 +67,11 @@ namespace Kaamoo {
 
         const std::shared_ptr<Sampler> &getShadowSampler() const;
 
-        const std::shared_ptr<Image> &getOffscreenImageColor() const;
-
-        const VkRenderPass getOffscreenRenderPass() const {
-            return offscreenRenderPass;
-        }
+        const std::shared_ptr<Image> &getOffscreenImageColor(int index) const;
+        
+        const std::shared_ptr<Image> &getWorldPosImageColor() const{
+            return m_worldPosImage;
+        };
 
     private:
         void createCommandBuffers();
@@ -107,14 +107,13 @@ namespace Kaamoo {
         VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;
         VkRenderPass shadowRenderPass = VK_NULL_HANDLE;
 
-        std::shared_ptr<Image> offscreenImageColor;
+        std::vector<std::shared_ptr<Image>> offscreenImageColors;
+        std::shared_ptr<Image> m_worldPosImage;
         std::shared_ptr<Sampler> m_offscreenSampler;
         std::shared_ptr<Image> offscreenImageDepth;
-        VkFramebuffer offscreenFrameBuffer = VK_NULL_HANDLE;
-        VkRenderPass offscreenRenderPass = VK_NULL_HANDLE;
-        
 
         VkFormat offscreenColorFormat{VK_FORMAT_R8G8B8A8_UNORM};
+        VkFormat worldPosColorFormat{VK_FORMAT_R32G32B32A32_SFLOAT};
         VkFormat offscreenDepthFormat{VK_FORMAT_D32_SFLOAT};
 
     };

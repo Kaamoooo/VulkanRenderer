@@ -27,7 +27,7 @@ namespace Kaamoo {
     public:
         RenderSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material);
 
-        void Init();
+        virtual void Init();
 
         ~RenderSystem();
 

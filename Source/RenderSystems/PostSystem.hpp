@@ -8,7 +8,11 @@ namespace Kaamoo {
 
     class PostSystem : public RenderSystem {
     public:
-        
+        struct PushConstant {
+            int rayTracingImageIndex;
+            bool firstFrame = true;
+            alignas(16)glm::mat4 viewMatrix[2];
+        };
 
         PostSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) :
                 RenderSystem(device, renderPass, material) {};
@@ -25,6 +29,11 @@ namespace Kaamoo {
                     descriptorSets.push_back(*descriptorSetPointer);
                 }
             }
+            
+            m_pushConstant.rayTracingImageIndex = frameInfo.frameIndex % 2;
+            m_pushConstant.viewMatrix[m_pushConstant.rayTracingImageIndex] = frameInfo.globalUbo.viewMatrix;
+            vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &m_pushConstant);
+            
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
                     VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -36,10 +45,13 @@ namespace Kaamoo {
                     nullptr
             );
             vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+            
+            m_pushConstant.firstFrame = false;
         }
 
     private:
-
+        PushConstant m_pushConstant{};
+        
         void createPipelineLayout() override {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -51,7 +63,12 @@ namespace Kaamoo {
             }
             pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
 
-            pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+            VkPushConstantRange pushConstantRange = {};
+            pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            pushConstantRange.offset = 0;
+            pushConstantRange.size = sizeof(PushConstant);
+            pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+            pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
             if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) !=
                 VK_SUCCESS) {
                 throw std::runtime_error("failed to create m_pipeline layout");

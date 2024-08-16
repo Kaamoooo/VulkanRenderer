@@ -93,9 +93,9 @@ namespace Kaamoo {
         VkPipelineStageFlagBits pipelineStageForLayout(VkImageLayout layout);
 
         VkAccessFlags accessFlagsForImageLayout(VkImageLayout layout);
-
-
+        
         VkPhysicalDeviceExternalMemoryHostPropertiesEXT externalMemoryHostProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT};
+        
 #ifdef RAY_TRACING
         VkPhysicalDeviceProperties2 properties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
         VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
@@ -106,8 +106,8 @@ namespace Kaamoo {
             addressInfo.accelerationStructure = accelerationStructure;
             return pfn_vkGetAccelerationStructureDeviceAddressKHR(device_, &addressInfo);
         }
-
 #endif
+
     private:
         inline static Device *deviceSingleton;
         VkInstance instance;
@@ -122,9 +122,9 @@ namespace Kaamoo {
         VkSurfaceKHR surface_;
         VkQueue graphicsQueue_;
         VkQueue presentQueue_;
-
-
+        
         const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+        
 #ifdef RAY_TRACING
         const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
                                                             VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,

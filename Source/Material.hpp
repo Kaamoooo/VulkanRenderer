@@ -21,6 +21,7 @@ namespace Kaamoo {
         tessellationControl,
         tessellationEvaluation,
         geometry,
+        compute,
         rayGen,
         rayClosestHit,
         rayMiss,
@@ -134,6 +135,12 @@ namespace Kaamoo {
 
     class Material {
     public:
+        enum MaterialId {
+            post = -1,
+            rayTracing = -2,
+            compute = -3,
+            gizmos = -4,
+        };
         using id_t = signed int;
         using Map = std::unordered_map<id_t, std::shared_ptr<Material>>;
 
@@ -166,10 +173,10 @@ namespace Kaamoo {
             return imagePointers;
         }
 
-        [[nodiscard]] std::vector<std::shared_ptr<ShaderModule>>& getShaderModulePointers() {
+        [[nodiscard]] std::vector<std::shared_ptr<ShaderModule>> &getShaderModulePointers() {
             return shaderModules;
         }
-        
+
         [[nodiscard]] std::vector<std::shared_ptr<DescriptorSetLayout>> getDescriptorSetLayoutPointers() const {
             return descriptorSetLayoutPointers;
         }

@@ -5,18 +5,17 @@
 #include "../Utils/random.glsl"
 
 layout (set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
-layout (set = 0, binding = 1, rgba8) uniform image2D image;
+layout (set = 0, binding = 1, rgba8) uniform image2D image[2];
+layout (set = 0, binding = 2, rgba32f) uniform image2D worldPosImage;
 
 layout (location = 0) rayPayloadEXT hitPayLoad payload;
 
+layout (push_constant) uniform PushConstant {
+    int rayTracingImageIndex;
+} pushConstant;
+
 void main()
 {
-    //payload.seed = tea(gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x, ubo.frameIndex);
-    ////  float r1 = rnd(payload.seed);
-    // float r2 = rnd(payload.seed);
-    // vec2 subpixelJitter = ubo.frameIndex == 0 ? vec2(0.5, 0.5) : vec2(r1, r2);
-    // const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + subpixelJitter;
-
     const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5f, 0.5f);
     const vec2 inUV = pixelCenter / vec2(gl_LaunchSizeEXT.xy);
     vec2 d = inUV * 2.0 - 1.0;
@@ -29,7 +28,12 @@ void main()
 
     payload.opacity = 0;
     payload.hitValue = vec3(0.0, 0.0, 0.0);
-    
+    payload.accumulatedDistance = 0;
+    payload.bounceCount = 0;
+    payload.isBouncing = false;
+    payload.closestHitWorldPos = vec3(0.0, 0.0, 0.0);
+    payload.recursionDepth = 0;
+
     traceRayEXT(topLevelAS, // acceleration structure
                 rayFlags, // rayFlags
                 0xFF, // cullMask
@@ -42,7 +46,7 @@ void main()
                 tMax, // ray max range
                 0               // payload (location = 0)
     );
-    vec3 gammaColor = pow(payload.hitValue, vec3(1.0f/2.2));
-    imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(gammaColor, 1.0));
-
+    vec3 gammaColor = pow(payload.hitValue, vec3(1.0f / 2.2));
+    imageStore(image[pushConstant.rayTracingImageIndex], ivec2(gl_LaunchIDEXT.xy), vec4(gammaColor, 1.0));
+    imageStore(worldPosImage, ivec2(gl_LaunchIDEXT.xy), vec4(payload.closestHitWorldPos, 1.0));
 }

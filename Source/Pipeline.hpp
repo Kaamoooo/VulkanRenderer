@@ -22,6 +22,7 @@ namespace Kaamoo {
         std::string Post = "Post";
         std::string RayTracing = "RayTracing";
         std::string Gizmos = "Gizmos";
+        std::string Compute = "Compute";
     } PipelineCategory;
 
     struct PipelineConfigureInfo {
@@ -41,14 +42,10 @@ namespace Kaamoo {
         VkPipelineColorBlendStateCreateInfo colorBlendInfo;
         VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
         VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo;
-
-        //由于修改窗口的时候需要改变管线相关的数据，每次修改都创建一个新的管线太浪费，因此我们使用动态的viewport和scissor
+        
         std::vector<VkDynamicState> dynamicStateEnables;
         VkPipelineViewportStateCreateInfo viewportStateCreateInfo;
         VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo;
-//        VkViewport viewport;
-//        VkRect2D scissor;
-
 
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;
@@ -97,6 +94,8 @@ namespace Kaamoo {
         void createShaderBindingTable();
 
         void createRayTracingPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
+        
+        void createComputePipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
 
 #endif
 

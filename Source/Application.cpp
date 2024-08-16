@@ -55,7 +55,7 @@ namespace Kaamoo {
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
                                 &m_gameObjects, &m_pGameObjectDescs);
-                
+
 #else
                 m_renderer.beginShadowRenderPass(commandBuffer);
                 m_shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -184,7 +184,7 @@ namespace Kaamoo {
         uint32_t minStorageBufferOffsetAlignment = m_device.properties2.properties.limits.minStorageBufferOffsetAlignment;
         {
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{};
-            std::vector<std::shared_ptr<Image>> imagePointers{m_renderer.getOffscreenImageColor()};
+            std::vector<std::shared_ptr<Image>> imagePointers{m_renderer.getOffscreenImageColor(0), m_renderer.getOffscreenImageColor(1)};
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
             std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{};
             std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{};
@@ -257,10 +257,11 @@ namespace Kaamoo {
             }
             TLAS::buildTLAS();
 
-            //TLAS, offscreen
+            //TLAS, offscreen, GBuffer
             auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
-                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                    addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 2).
+                    addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
                     build();
             auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
             descriptorSetLayoutPointers.push_back(rayGenDescriptorSetLayoutPtr);
@@ -270,13 +271,22 @@ namespace Kaamoo {
             accelerationStructureInfo->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
             accelerationStructureInfo->accelerationStructureCount = 1;
             accelerationStructureInfo->pAccelerationStructures = &TLAS::tlas;
+
+            std::vector<VkDescriptorImageInfo> offscreenImageInfos;
             auto offScreenImageInfo = std::make_shared<VkDescriptorImageInfo>();
             offScreenImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-            offScreenImageInfo->imageView = m_renderer.getOffscreenImageColor()->imageView;
+            offScreenImageInfo->imageView = m_renderer.getOffscreenImageColor(0)->imageView;
+            offscreenImageInfos.emplace_back(*offScreenImageInfo);
+            offScreenImageInfo->imageView = m_renderer.getOffscreenImageColor(1)->imageView;
+            offscreenImageInfos.emplace_back(*offScreenImageInfo);
 
+            auto worldPosImageInfo = std::make_shared<VkDescriptorImageInfo>();
+            worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            worldPosImageInfo->imageView = m_renderer.getWorldPosImageColor()->imageView;
             DescriptorWriter(rayGenDescriptorSetLayoutPtr, *m_globalPool).
                     writeTLAS(0, accelerationStructureInfo).
-                    writeImage(1, offScreenImageInfo).
+                    writeImages(1, offscreenImageInfos).
+                    writeImage(2, worldPosImageInfo).
                     build(rayGenDescriptorSet);
 
             //ObjectDesc
@@ -341,9 +351,9 @@ namespace Kaamoo {
                     writeImage(3, skyBoxImage->descriptorInfo(*skyBoxSampler)).
                     build(sceneDescriptorSet);
             descriptorSetPointers.push_back(sceneDescriptorSet);
-            auto material = std::make_shared<Material>(-2, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
+            auto material = std::make_shared<Material>(Material::MaterialId::rayTracing, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
                                                        imagePointers, samplerPointers, bufferPointers, "RayTracing");
-            m_materials.emplace(-2, std::move(material));
+            m_materials.emplace(Material::MaterialId::rayTracing, std::move(material));
 
         }
 
@@ -351,18 +361,30 @@ namespace Kaamoo {
         {
             auto postSystemDescriptorSetLayoutPtr =
                     DescriptorSetLayout::Builder(m_device).
-                            addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT).
-                            addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT).
+                            addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2).
+                            addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 2).
+                            addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT).
+                            addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT).
                             build();
 
 
-            auto offScreenPostImageInfo = m_renderer.getOffscreenImageColor()->descriptorInfo();
+            std::vector<VkDescriptorImageInfo> offscreenImageInfos{};
+            auto offScreenPostImageInfo = m_renderer.getOffscreenImageColor(0)->descriptorInfo();
             offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            offscreenImageInfos.emplace_back(*offScreenPostImageInfo);
+            offScreenPostImageInfo = m_renderer.getOffscreenImageColor(1)->descriptorInfo();
+            offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            offscreenImageInfos.emplace_back(*offScreenPostImageInfo);
 
+            auto worldPosImageInfo = m_renderer.getWorldPosImageColor()->descriptorInfo();
+            worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            auto postSystemDescriptorSet = std::make_shared<VkDescriptorSet>();
             auto postDescriptorSet = std::make_shared<VkDescriptorSet>();
             DescriptorWriter(postSystemDescriptorSetLayoutPtr, *m_globalPool).
-                    writeImage(0, offScreenPostImageInfo).
-                    writeBuffer(1, globalUboBufferPtr->descriptorInfo()).
+                    writeImages(0, offscreenImageInfos).
+                    writeImages(1, offscreenImageInfos).
+                    writeBuffer(2, globalUboBufferPtr->descriptorInfo()).
+                    writeImage(3, worldPosImageInfo).
                     build(postDescriptorSet);
 
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
@@ -371,13 +393,56 @@ namespace Kaamoo {
             };
             std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{postSystemDescriptorSetLayoutPtr};
             std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{postDescriptorSet};
-            std::vector<std::shared_ptr<Image>> imagePointers{m_renderer.getOffscreenImageColor()};
+            std::vector<std::shared_ptr<Image>> imagePointers{};
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
             std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
 
-            auto postMaterial = std::make_shared<Material>(-1, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers, bufferPointers,
+            auto postMaterial = std::make_shared<Material>(Material::MaterialId::post, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers,
+                                                           bufferPointers,
                                                            PipelineCategory.Post);
-            m_materials.emplace(-1, std::move(postMaterial));
+            m_materials.emplace(Material::MaterialId::post, std::move(postMaterial));
+        }
+
+        //Compute
+        {
+            auto computeSystemDescriptorSetLayoutPtr =
+                    DescriptorSetLayout::Builder(m_device).
+                            addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT).
+                            addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2).
+                            addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT).
+                            build();
+
+            std::vector<VkDescriptorImageInfo> offscreenImageInfos{};
+            auto offScreenPostImageInfo = m_renderer.getOffscreenImageColor(0)->descriptorInfo();
+            offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            offscreenImageInfos.emplace_back(*offScreenPostImageInfo);
+            offScreenPostImageInfo = m_renderer.getOffscreenImageColor(1)->descriptorInfo();
+            offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            offscreenImageInfos.emplace_back(*offScreenPostImageInfo);
+
+            auto worldPosImageInfo = m_renderer.getWorldPosImageColor()->descriptorInfo();
+            worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+            auto postDescriptorSet = std::make_shared<VkDescriptorSet>();
+            DescriptorWriter(computeSystemDescriptorSetLayoutPtr, *m_globalPool).
+                    writeBuffer(0, globalUboBufferPtr->descriptorInfo()).
+                    writeImages(1, offscreenImageInfos).
+                    writeImage(2, worldPosImageInfo).
+                    build(postDescriptorSet);
+
+            std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
+                    std::make_shared<ShaderModule>(m_shaderBuilder.createShaderModule(RayTracingDenoiseComputeShaderName), ShaderCategory::compute),
+            };
+            std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayoutPointers{computeSystemDescriptorSetLayoutPtr};
+            std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSetPointers{postDescriptorSet};
+            std::vector<std::shared_ptr<Image>> imagePointers{};
+            std::vector<std::shared_ptr<Sampler>> samplerPointers{};
+            std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
+
+            auto computeMaterial = std::make_shared<Material>(Material::MaterialId::compute, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers,
+                                                              bufferPointers,
+                                                              PipelineCategory.Post);
+            m_materials.emplace(Material::MaterialId::compute, std::move(computeMaterial));
         }
 #else
         auto bufferInfo = globalUboBufferPtr->descriptorInfo();
@@ -542,9 +607,9 @@ namespace Kaamoo {
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
             std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
 
-            auto uiMaterial = std::make_shared<Material>(-3, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers, bufferPointers,
+            auto uiMaterial = std::make_shared<Material>(Material::MaterialId::gizmos, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers, bufferPointers,
                                                          PipelineCategory.Gizmos);
-            m_materials.emplace(-3, std::move(uiMaterial));
+            m_materials.emplace(Material::MaterialId::gizmos, std::move(uiMaterial));
         }
     }
 
@@ -602,12 +667,16 @@ namespace Kaamoo {
             auto pipelineCategory = material.second->getPipelineCategory();
 #ifdef RAY_TRACING
             if (pipelineCategory == PipelineCategory.RayTracing) {
-                m_rayTracingSystem = std::make_shared<RayTracingSystem>(m_device, m_renderer.getOffscreenRenderPass(), material.second);
+                m_rayTracingSystem = std::make_shared<RayTracingSystem>(m_device, nullptr, material.second);
                 m_rayTracingSystem->Init();
             }
             if (pipelineCategory == PipelineCategory.Post) {
                 m_postSystem = std::make_shared<PostSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
                 m_postSystem->Init();
+            }
+            if (pipelineCategory == PipelineCategory.Compute) {
+                m_computeSystem = std::make_shared<ComputeSystem>(m_device, nullptr, material.second);
+                m_computeSystem->Init();
             }
 #else
             if (pipelineCategory == PipelineCategory.Shadow) {

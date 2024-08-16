@@ -185,6 +185,7 @@ namespace Kaamoo {
         deviceFeatures.geometryShader = VK_TRUE;
         deviceFeatures.tessellationShader = VK_TRUE;
         deviceFeatures.shaderInt64 = VK_TRUE;
+        deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
 
         VkDeviceCreateInfo createInfo = {};
 

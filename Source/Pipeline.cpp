@@ -4,11 +4,14 @@
 namespace Kaamoo {
     Pipeline::Pipeline(Device &device, const PipelineConfigureInfo &pipelineConfigureInfo, std::shared_ptr<Material> material)
             : device(device), m_material(material) {
-        if (material->getPipelineCategory() == PipelineCategory.RayTracing) {
 #ifdef RAY_TRACING
+        if (material->getPipelineCategory() == PipelineCategory.RayTracing) {
             createRayTracingPipeline(pipelineConfigureInfo);
+        } else if (material->getPipelineCategory() == PipelineCategory.Compute) {
+            createComputePipeline(pipelineConfigureInfo);
+        } else
 #endif
-        } else {
+        {
             createGraphicsPipeline(pipelineConfigureInfo);
         }
     }
@@ -20,6 +23,12 @@ namespace Kaamoo {
     }
 
 #ifdef RAY_TRACING
+
+    void Pipeline::createComputePipeline(const Kaamoo::PipelineConfigureInfo &pipelineConfigureInfo) {
+        VkComputePipelineCreateInfo computePipelineCreateInfo{};
+        computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        computePipelineCreateInfo.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    }
 
     void Pipeline::createRayTracingPipeline(const PipelineConfigureInfo &pipelineConfigureInfo) {
         //Shader

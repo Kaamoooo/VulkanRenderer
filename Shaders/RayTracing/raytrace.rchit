@@ -2,6 +2,7 @@
 
 #include "RayTracingGlobal.glsl"
 #include "../PBR.glsl"
+#include "../Utils/random.glsl"
 
 layout (location = 0) rayPayloadInEXT hitPayLoad payLoad;
 layout (location = 1) rayPayloadEXT ShadowPayload shadowPayload;
@@ -72,6 +73,7 @@ PBR reloadPBR(PBR rawPBR, ivec2 textureEntry, vec2 uv, vec3 normal, mat3 TBN) {
 
 void main()
 {
+    payLoad.recursionDepth++;
     GameObjectDesc gameObjectDesc = gameObjectDescBuffer.gameObjectDescs[gl_InstanceCustomIndexEXT];
     VerticesBuffer verticesBuffer = VerticesBuffer(gameObjectDesc.verticesAddress);
     IndicesBuffer indicesBuffer = IndicesBuffer(gameObjectDesc.indicesAddress);
@@ -101,6 +103,10 @@ void main()
 
     PBR pbr = reloadPBR(gameObjectDesc.pbr, gameObjectDesc.textureEntry, uv, normal, TBN);
     vec3 worldNormal = normalize(vec3(pbr.normal * gl_WorldToObjectEXT));
+
+    if (payLoad.recursionDepth == 1) {
+        payLoad.closestHitWorldPos = worldPos;
+    }
 
     vec3 lo = vec3(0, 0, 0);
     for (int i = 0; i < ubo.lightNum; i++) {
@@ -148,16 +154,40 @@ void main()
         lo += radiance * brdf * geometry * shadowMask * attenuation;
     }
 
-    lo = (1 - payLoad.opacity) * (lo + pbr.emissive) * pbr.opacity;
-    payLoad.opacity += (1 - payLoad.opacity) * pbr.opacity;
-    payLoad.hitValue += lo;
+    if (payLoad.isBouncing) {
+        lo = (lo + pbr.emissive) * pbr.opacity;
+    } else {
+        lo = (1 - payLoad.opacity) * (lo + pbr.emissive) * pbr.opacity;
+        payLoad.opacity += (1 - payLoad.opacity) * pbr.opacity;
+    }
 
+    if (payLoad.bounceCount == 0) {
+        payLoad.hitValue += lo;
+    } else {
+        payLoad.accumulatedDistance += distance(gl_WorldRayOriginEXT, worldPos);
+        payLoad.hitValue += lo * (1.0 / pow(payLoad.accumulatedDistance, 1));
+    }
+
+    //Global illumination
+    if (payLoad.bounceCount < MAX_BOUNCE_COUNT)
+    {
+        float tMin = 0.001;
+        float tMax = 1000;
+        vec3 randomVector = randomHemisphereVector(worldNormal, ubo.curTime + worldPos.x + worldPos.y + worldPos.z + gl_WorldRayDirectionEXT.x + gl_WorldRayDirectionEXT.y + gl_WorldRayDirectionEXT.z);
+        uint flags = gl_RayFlagsNoneEXT;
+        payLoad.bounceCount++;
+        payLoad.isBouncing = true;
+        traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 0, worldPos, tMin, randomVector, tMax, 0);
+    }
+
+    //Transparent
     if (pbr.opacity < 0.99 && payLoad.opacity < 0.99) {
         float tMin = 0.001;
         float tMax = 1000;
         vec3 origin = worldPos;
         vec3 direction = gl_WorldRayDirectionEXT;
         uint flags = gl_RayFlagsNoneEXT;
+        payLoad.isBouncing = false;
         traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 0, origin, tMin, direction, tMax, 0);
     }
 

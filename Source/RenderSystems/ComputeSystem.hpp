@@ -3,22 +3,24 @@
 #include "RenderSystem.h"
 
 namespace Kaamoo {
+    const std::string RayTracingDenoiseComputeShaderName = "Compute/RayTracingDenoise.comp.spv";
 
-    const std::string RayGenShaderName = "rayGenShader";
-    const std::string RayClosestHitShaderName = "rayClosestHitShader";
-    const std::string RayMissShaderName = "rayMissShader";
-
-    class RayTracingSystem : public RenderSystem {
-#ifdef RAY_TRACING
+    class ComputeSystem : public RenderSystem {
     public:
         struct PushConstant {
             int rayTracingImageIndex;
+            bool firstFrame = true;
+            alignas(16)glm::mat4 viewMatrix[2];
         };
 
-        RayTracingSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) : RenderSystem(device, nullptr, material) {};
+        ComputeSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) :
+                RenderSystem(device, renderPass, material) {};
 
-        void rayTrace(FrameInfo &frameInfo) {
-            m_pipeline->bind(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR);
+        ComputeSystem(const RenderSystem &) = delete;
+
+
+        void render(FrameInfo &frameInfo) override {
+            m_pipeline->bind(frameInfo.commandBuffer);
 
             std::vector<VkDescriptorSet> descriptorSets;
             for (auto &descriptorSetPointer: m_material->getDescriptorSetPointers()) {
@@ -28,37 +30,22 @@ namespace Kaamoo {
             }
 
             m_pushConstant.rayTracingImageIndex = frameInfo.frameIndex % 2;
-            vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 0, sizeof(PushConstant), &m_pushConstant);
+            m_pushConstant.viewMatrix[m_pushConstant.rayTracingImageIndex] = frameInfo.globalUbo.viewMatrix;
+            vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &m_pushConstant);
 
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
-                    VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
                     m_pipelineLayout,
                     0,
-                    descriptorSets.size(),
+                    m_material->getDescriptorSetLayoutPointers().size(),
                     descriptorSets.data(),
                     0,
                     nullptr
             );
+            vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
 
-            Device::pfn_vkCmdTraceRaysKHR(frameInfo.commandBuffer,
-                                          &m_pipeline->getGenRegion(),
-                                          &m_pipeline->getMissRegion(),
-                                          &m_pipeline->getHitRegion(),
-                                          &m_pipeline->getCallableRegion(),
-                                          SCENE_HEIGHT,
-                                          SCENE_WIDTH,
-                                          1
-            );
-        }
-
-        void render(FrameInfo &frameInfo) override {
-            rayTrace(frameInfo);
-        }
-
-        void Init() override {
-            createPipelineLayout();
-            createPipeline(m_renderPass);
+            m_pushConstant.firstFrame = false;
         }
 
     private:
@@ -67,7 +54,7 @@ namespace Kaamoo {
         void createPipelineLayout() override {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(m_material->getDescriptorSetLayoutPointers().size());
+            pipelineLayoutCreateInfo.setLayoutCount = 1;
 
             std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
             for (auto &descriptorSetLayoutPointer: m_material->getDescriptorSetLayoutPointers()) {
@@ -75,10 +62,12 @@ namespace Kaamoo {
             }
             pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
 
-            VkPushConstantRange pushConstantRange{VK_SHADER_STAGE_RAYGEN_BIT_KHR, 0, sizeof(PushConstant)};
+            VkPushConstantRange pushConstantRange = {};
+            pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            pushConstantRange.offset = 0;
+            pushConstantRange.size = sizeof(PushConstant);
             pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
             pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
-
             if (vkCreatePipelineLayout(device.device(), &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) !=
                 VK_SUCCESS) {
                 throw std::runtime_error("failed to create m_pipeline layout");
@@ -90,10 +79,9 @@ namespace Kaamoo {
             Pipeline::setDefaultPipelineConfigureInfo(pipelineConfigureInfo);
             pipelineConfigureInfo.pipelineLayout = m_pipelineLayout;
             m_pipeline = std::make_unique<Pipeline>(device, pipelineConfigureInfo, m_material);
-        };
+        };;
 
-
-#endif
     };
 }
+
 

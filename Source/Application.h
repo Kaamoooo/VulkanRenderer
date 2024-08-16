@@ -24,6 +24,7 @@
 #include "RenderSystems/RayTracingSystem.hpp"
 #include "RenderSystems/PostSystem.hpp"
 #include "RenderSystems/GizmosRenderSystem.hpp"
+#include "RenderSystems/ComputeSystem.hpp"
 
 #include "ComponentFactory.hpp"
 #include "GUI.hpp"
@@ -71,6 +72,7 @@ namespace Kaamoo {
         std::vector<std::shared_ptr<RenderSystem>> m_renderSystems;
         std::shared_ptr<PostSystem> m_postSystem;
         std::shared_ptr<GizmosRenderSystem> m_gizmosRenderSystem;
+        std::shared_ptr<ComputeSystem> m_computeSystem;
         std::shared_ptr<Buffer> m_pGameObjectDescBuffer; 
 
 #ifdef RAY_TRACING
