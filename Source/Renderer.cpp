@@ -386,9 +386,9 @@ namespace Kaamoo {
     void Renderer::loadOffscreenResources() {
         freeOffscreenResources();
         {
+            m_offscreenSampler = std::make_shared<Sampler>(device);
+            m_offscreenSampler->createTextureSampler();
             //Color
-            offscreenImageColors.push_back(std::make_shared<Image>(device));
-            offscreenImageColors.push_back(std::make_shared<Image>(device));
 
             VkImageCreateInfo imageCreateInfo{};
             Image::setDefaultImageCreateInfo(imageCreateInfo);
@@ -400,30 +400,50 @@ namespace Kaamoo {
             imageExtent.depth = 1;
             imageCreateInfo.extent = imageExtent;
 
-            offscreenImageColors[0]->createImage(imageCreateInfo);
-            offscreenImageColors[1]->createImage(imageCreateInfo);
-
+            m_offscreenImageColors.push_back(std::make_shared<Image>(device));
+            m_offscreenImageColors.push_back(std::make_shared<Image>(device));
+            m_offscreenImageColors[0]->createImage(imageCreateInfo);
+            m_offscreenImageColors[1]->createImage(imageCreateInfo);
             auto imageViewCreateInfo = std::make_shared<VkImageViewCreateInfo>();
-            offscreenImageColors[0]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            m_offscreenImageColors[0]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
             imageViewCreateInfo->format = imageCreateInfo.format;
-            offscreenImageColors[0]->createImageView(*imageViewCreateInfo);
-            
-            offscreenImageColors[1]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            m_offscreenImageColors[0]->createImageView(*imageViewCreateInfo);
+            m_offscreenImageColors[1]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
             imageViewCreateInfo->format = imageCreateInfo.format;
-            offscreenImageColors[1]->createImageView(*imageViewCreateInfo);
+            m_offscreenImageColors[1]->createImageView(*imageViewCreateInfo);
+            m_offscreenImageColors[0]->sampler = m_offscreenSampler->getSampler();
+            m_offscreenImageColors[1]->sampler = m_offscreenSampler->getSampler();
             
+            m_viewPosImageColors.push_back(std::make_shared<Image>(device));
+            m_viewPosImageColors.push_back(std::make_shared<Image>(device));
+            m_viewPosImageColors[0]->createImage(imageCreateInfo);
+            m_viewPosImageColors[1]->createImage(imageCreateInfo);
+            imageViewCreateInfo = std::make_shared<VkImageViewCreateInfo>();
+            m_viewPosImageColors[0]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            imageViewCreateInfo->format = imageCreateInfo.format;
+            m_viewPosImageColors[0]->createImageView(*imageViewCreateInfo);
+            m_viewPosImageColors[1]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            imageViewCreateInfo->format = imageCreateInfo.format;
+            m_viewPosImageColors[1]->createImageView(*imageViewCreateInfo);
+            m_viewPosImageColors[0]->sampler = m_offscreenSampler->getSampler();
+            m_viewPosImageColors[1]->sampler = m_offscreenSampler->getSampler();
+
             m_worldPosImage = std::make_shared<Image>(device);
             imageCreateInfo.format = worldPosColorFormat;
             m_worldPosImage->createImage(imageCreateInfo);
             m_worldPosImage->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
             imageViewCreateInfo->format = worldPosColorFormat;
             m_worldPosImage->createImageView(*imageViewCreateInfo);
-
-            m_offscreenSampler = std::make_shared<Sampler>(device);
-            m_offscreenSampler->createTextureSampler();
-            offscreenImageColors[0]->sampler = m_offscreenSampler->getSampler();
-            offscreenImageColors[1]->sampler = m_offscreenSampler->getSampler();
             m_worldPosImage->sampler = m_offscreenSampler->getSampler();
+
+            m_denoisingAccumulationImage = std::make_shared<Image>(device);
+            imageCreateInfo.format = offscreenColorFormat;
+            m_denoisingAccumulationImage->createImage(imageCreateInfo);
+            m_denoisingAccumulationImage->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            imageViewCreateInfo->format = offscreenColorFormat;
+            m_denoisingAccumulationImage->createImageView(*imageViewCreateInfo);
+            m_denoisingAccumulationImage->sampler = m_offscreenSampler->getSampler();
+
 
             //depth
             offscreenImageDepth = std::make_shared<Image>(device);
@@ -440,13 +460,22 @@ namespace Kaamoo {
         }
 
         {
-            device.transitionImageLayout(offscreenImageColors[0]->getImage(),
+            device.transitionImageLayout(m_offscreenImageColors[0]->getImage(),
                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-            device.transitionImageLayout(offscreenImageColors[1]->getImage(),
+            device.transitionImageLayout(m_offscreenImageColors[1]->getImage(),
+                                         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+                                         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            device.transitionImageLayout(m_viewPosImageColors[0]->getImage(),
+                                         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+                                         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            device.transitionImageLayout(m_viewPosImageColors[1]->getImage(),
                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
             device.transitionImageLayout(m_worldPosImage->getImage(),
+                                         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+                                         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            device.transitionImageLayout(m_denoisingAccumulationImage->getImage(),
                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
             device.transitionImageLayout(offscreenImageDepth->getImage(), VK_IMAGE_LAYOUT_UNDEFINED,
@@ -499,8 +528,77 @@ namespace Kaamoo {
 
     }
 
-    const std::shared_ptr<Image> &Renderer::getOffscreenImageColor(int index) const {
-        return offscreenImageColors[index];
+#ifdef RAY_TRACING
+
+    void Renderer::setDenoiseComputeToPostSynchronization(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+        VkImageMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = m_offscreenImageColors[imageIndex]->getImage();
+
+        VkImageSubresourceRange subresourceRange{};
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresourceRange.baseMipLevel = 0;
+        subresourceRange.levelCount = 1;
+        subresourceRange.baseArrayLayer = 0;
+        subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+        barrier.subresourceRange = subresourceRange;
+
+        VkPipelineStageFlagBits srcStage, dstStage;
+
+        srcStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+
+        vkCmdPipelineBarrier(commandBuffer,
+                             srcStage, dstStage,
+                             0,
+                             0, nullptr,
+                             0, nullptr,
+                             1, &barrier);
+
     }
+
+    void Renderer::setDenoiseRtxToComputeSynchronization(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+        VkImageMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = m_offscreenImageColors[imageIndex]->getImage();
+
+        VkImageSubresourceRange subresourceRange{};
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresourceRange.baseMipLevel = 0;
+        subresourceRange.levelCount = 1;
+        subresourceRange.baseArrayLayer = 0;
+        subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+        barrier.subresourceRange = subresourceRange;
+
+        VkPipelineStageFlagBits srcStage, dstStage;
+
+        srcStage = VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+        dstStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+
+
+        vkCmdPipelineBarrier(commandBuffer,
+                             srcStage, dstStage,
+                             0,
+                             0, nullptr,
+                             0, nullptr,
+                             1, &barrier);
+
+    }
+
+#endif
+
 
 }

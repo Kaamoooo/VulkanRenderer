@@ -12,7 +12,7 @@ struct hitPayLoad {
     float accumulatedDistance;
     int bounceCount;
     bool isBouncing;
-    vec3 closestHitWorldPos;
+    vec4 closestHitWorldPos;
     int recursionDepth;
 };
 

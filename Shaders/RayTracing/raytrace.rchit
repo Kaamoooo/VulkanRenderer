@@ -105,7 +105,7 @@ void main()
     vec3 worldNormal = normalize(vec3(pbr.normal * gl_WorldToObjectEXT));
 
     if (payLoad.recursionDepth == 1) {
-        payLoad.closestHitWorldPos = worldPos;
+        payLoad.closestHitWorldPos = vec4(worldPos, 1);
     }
 
     vec3 lo = vec3(0, 0, 0);
@@ -173,11 +173,12 @@ void main()
     {
         float tMin = 0.001;
         float tMax = 1000;
-        vec3 randomVector = randomHemisphereVector(worldNormal, ubo.curTime + worldPos.x + worldPos.y + worldPos.z + gl_WorldRayDirectionEXT.x + gl_WorldRayDirectionEXT.y + gl_WorldRayDirectionEXT.z);
+        vec3 randomVector = randomHemisphereVector(worldNormal, ubo.curTime + worldPos.x + worldPos.y+worldPos.z);
+        vec3 reflectVector = reflect(gl_WorldRayDirectionEXT, worldNormal) + randomVector * pbr.roughness;
         uint flags = gl_RayFlagsNoneEXT;
         payLoad.bounceCount++;
         payLoad.isBouncing = true;
-        traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 0, worldPos, tMin, randomVector, tMax, 0);
+        traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 0, worldPos, tMin, reflectVector, tMax, 0);
     }
 
     //Transparent

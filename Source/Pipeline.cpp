@@ -28,6 +28,14 @@ namespace Kaamoo {
         VkComputePipelineCreateInfo computePipelineCreateInfo{};
         computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
         computePipelineCreateInfo.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        computePipelineCreateInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+        computePipelineCreateInfo.stage.module = *m_material->getShaderModulePointers()[0]->shaderModule;
+        computePipelineCreateInfo.stage.pName = "main";
+        computePipelineCreateInfo.layout = pipelineConfigureInfo.pipelineLayout;
+        
+        if (vkCreateComputePipelines(device.device(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_pipeline) != VK_SUCCESS) {
+            throw std::runtime_error("Creating compute pipeline failed");
+        }
     }
 
     void Pipeline::createRayTracingPipeline(const PipelineConfigureInfo &pipelineConfigureInfo) {

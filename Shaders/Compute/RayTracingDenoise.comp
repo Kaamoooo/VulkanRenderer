@@ -1,18 +1,104 @@
 #version 450
 
-layout(binding = 0, rgba8) uniform image2D img;
+struct Light {
+    vec4 position;
+    vec4 direction;
+    vec4 color;
+    // 0: point lights, 1: directional lights
+    int lightCategory;
+};
 
-layout(local_size_x = 16, local_size_y = 16) in; // 工作组大小
+layout (set = 0, binding = 0) uniform GlobalUbo {
+    mat4 viewMatrix;
+    mat4 inverseViewMatrix;
+    mat4 projectionMatrix;
+    mat4 inverseProjectionMatrix;
+    float curTime;
+    int lightNum;
+    Light lights[10];
+} ubo;
+
+
+layout (set = 0, binding = 1, rgba32f) uniform image2D storageImage[2];
+layout (set = 0, binding = 2, rgba32f) uniform image2D worldPosImage;
+layout (set = 0, binding = 3, rgba32f) uniform image2D denoisingAccumulationImage;
+layout (set = 0, binding = 4, rgba32f) uniform image2D viewPosImages[2];
+
+layout (push_constant, std430) uniform PushConstant {
+    int rayTracingImageIndex;
+    bool firstFrame;
+    mat4 viewMatrix[2];
+} pushConstant;
+
+layout (local_size_x = 16, local_size_y = 16) in; // 工作组大小
+
+const int filterSize = 3;
+const float sigma_d = 2.0;
+const float sigma_r = 0.3;
+
+vec4 bilateralFilter(int frameIndex, ivec2 coord) {
+    vec4 sum = vec4(0.0);
+    float w_sum = 0.0;
+    vec4 centerColor = imageLoad(storageImage[frameIndex], coord);
+    for (int x = -filterSize; x <= filterSize; x++)
+    {
+        for (int y = -filterSize; y <= filterSize; y++)
+        {
+            vec2 offset = vec2(x, y);
+            vec4 neighborColor = imageLoad(storageImage[frameIndex], coord + ivec2(offset));
+            float w = exp(-0.5 * (dot(offset, offset) / (sigma_d * sigma_d) + pow(length(centerColor - neighborColor), 2.0) / (sigma_r * sigma_r)));
+            sum += neighborColor * w;
+            w_sum += w;
+        }
+    }
+    return sum / w_sum;
+}
+
+bool isUVValid(vec2 uv) {
+    return uv.x >= 0 && uv.x < 1 && uv.y >= 0 && uv.y < 1;
+}
 
 void main() {
+    int lastFrameIndex = 1 - pushConstant.rayTracingImageIndex;
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
 
-    // 读取当前像素的颜色值
-    vec4 color = imageLoad(img, coord);
+    mat4 lastFrameViewMatrix = pushConstant.viewMatrix[lastFrameIndex];
+    vec4 worldPos = imageLoad(worldPosImage, coord);
+    vec4 viewPos = pushConstant.viewMatrix[pushConstant.rayTracingImageIndex] * worldPos;
+    imageStore(viewPosImages[pushConstant.rayTracingImageIndex], coord, viewPos);
 
-    // 进行一些修改（如反相颜色）
-    color.rgb = vec3(1.0) - color.rgb;
+    vec4 lastFrameViewPos = pushConstant.viewMatrix[lastFrameIndex] * worldPos;
+    vec4 clipPos = (ubo.projectionMatrix * lastFrameViewPos);
+    clipPos /= clipPos.w;
+    vec2 lastFrameUv = (clipPos.xy * 0.5 + 0.5);
+    ivec2 lastFrameCoord = ivec2(lastFrameUv * imageSize(storageImage[lastFrameIndex]));
+    vec4 denoisedLastFrameColor = bilateralFilter(lastFrameIndex, lastFrameCoord);
+    vec4 denoisedCurrentFrameColor = bilateralFilter(pushConstant.rayTracingImageIndex, coord);
 
-    // 写回修改后的颜色值
-    imageStore(img, coord, color);
+    if (worldPos.w == 0.0) {
+        imageStore(denoisingAccumulationImage, coord, vec4(denoisedCurrentFrameColor.xyz * 0.01, 0.01));
+        imageStore(storageImage[pushConstant.rayTracingImageIndex], coord, denoisedCurrentFrameColor);
+        return;
+    }
+
+    vec4 denoisingAccumulation = imageLoad(denoisingAccumulationImage, lastFrameCoord);
+    if (length(viewPos.xyz - lastFrameViewPos.xyz) > 0) {
+        if (isUVValid(lastFrameUv)) {
+            denoisingAccumulation.xyz = 0.01 * denoisedLastFrameColor.xyz * 5;
+            denoisingAccumulation.w = 0.01 * 5;
+        } else {
+            denoisingAccumulation.xyz = vec3(0);
+            denoisingAccumulation.w = 0;
+        }
+    }
+    denoisingAccumulation.xyz += 0.01 * denoisedCurrentFrameColor.xyz;
+    denoisingAccumulation.w += 0.01;
+
+    vec4 outColor = denoisingAccumulation.xyzw / denoisingAccumulation.w;
+
+    if (pushConstant.firstFrame) {
+        outColor = denoisedCurrentFrameColor;
+    }
+    imageStore(denoisingAccumulationImage, coord, denoisingAccumulation);
+    imageStore(storageImage[pushConstant.rayTracingImageIndex], coord, outColor);
 }

@@ -20,7 +20,7 @@ namespace Kaamoo {
 
 
         void render(FrameInfo &frameInfo) override {
-            m_pipeline->bind(frameInfo.commandBuffer);
+            m_pipeline->bind(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
 
             std::vector<VkDescriptorSet> descriptorSets;
             for (auto &descriptorSetPointer: m_material->getDescriptorSetPointers()) {
@@ -31,11 +31,10 @@ namespace Kaamoo {
 
             m_pushConstant.rayTracingImageIndex = frameInfo.frameIndex % 2;
             m_pushConstant.viewMatrix[m_pushConstant.rayTracingImageIndex] = frameInfo.globalUbo.viewMatrix;
-            vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &m_pushConstant);
-
+            vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstant), &m_pushConstant);
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    VK_PIPELINE_BIND_POINT_COMPUTE,
                     m_pipelineLayout,
                     0,
                     m_material->getDescriptorSetLayoutPointers().size(),
@@ -43,7 +42,10 @@ namespace Kaamoo {
                     0,
                     nullptr
             );
-            vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+
+            uint32_t groupCountX = (SCENE_WIDTH + 15) / 16;
+            uint32_t groupCountY = (SCENE_HEIGHT + 15) / 16;
+            vkCmdDispatch(frameInfo.commandBuffer, groupCountX, groupCountY, 1);
 
             m_pushConstant.firstFrame = false;
         }
@@ -63,7 +65,7 @@ namespace Kaamoo {
             pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
 
             VkPushConstantRange pushConstantRange = {};
-            pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            pushConstantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
             pushConstantRange.offset = 0;
             pushConstantRange.size = sizeof(PushConstant);
             pipelineLayoutCreateInfo.pushConstantRangeCount = 1;

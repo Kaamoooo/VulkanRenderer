@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240731140933028](./README.assets/image-20240731140933028.png)
+![image-20240822110838464](./README.assets/image-20240822110838464.png)
 
 ## Progress
 
@@ -93,3 +93,5 @@
 7.28 Added gizmos render pass. Added a fixed axis to indicate directions.
 
 7.31 Added selected model outline.
+
+8.22 Completed global illumination in static scene. Using bilateral filter and temporal denoising.

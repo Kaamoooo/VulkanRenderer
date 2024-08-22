@@ -3,12 +3,16 @@
 
 #include "RayTracingGlobal.glsl"
 
-layout(location=0) rayPayloadInEXT hitPayLoad payLoad;
-layout(set = 1, binding = 3) uniform samplerCube skyboxSampler;
+layout (location = 0) rayPayloadInEXT hitPayLoad payLoad;
+layout (set = 1, binding = 3) uniform samplerCube skyboxSampler;
 void main()
 {
     vec3 cubeMapUV = gl_WorldRayDirectionEXT;
     cubeMapUV.y = -cubeMapUV.y;
-    vec3 skyBoxColor = texture(skyboxSampler,cubeMapUV).rgb;
+    vec3 skyBoxColor = texture(skyboxSampler, cubeMapUV).rgb;
     payLoad.hitValue += (1 - payLoad.opacity) * skyBoxColor;
+    if (payLoad.recursionDepth == 0)
+    {
+        payLoad.closestHitWorldPos = vec4(0, 0, 0, 0);
+    }
 }

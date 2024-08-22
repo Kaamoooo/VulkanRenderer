@@ -48,6 +48,15 @@ namespace Kaamoo {
                 m_rayTracingSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_rayTracingSystem->rayTrace(frameInfo);
 
+                m_renderer.setDenoiseRtxToComputeSynchronization(commandBuffer, frameIndex % 2);
+                m_renderer.setDenoiseRtxToComputeSynchronization(commandBuffer, 1 - frameIndex % 2);
+
+                m_computeSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
+                m_computeSystem->render(frameInfo);
+
+                m_renderer.setDenoiseComputeToPostSynchronization(commandBuffer, frameIndex % 2);
+                m_renderer.setDenoiseComputeToPostSynchronization(commandBuffer, 1 - frameIndex % 2);
+
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
 
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -361,10 +370,8 @@ namespace Kaamoo {
         {
             auto postSystemDescriptorSetLayoutPtr =
                     DescriptorSetLayout::Builder(m_device).
-                            addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2).
-                            addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 2).
-                            addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT).
-                            addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT).
+                            addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT).
+                            addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2).
                             build();
 
 
@@ -376,15 +383,11 @@ namespace Kaamoo {
             offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             offscreenImageInfos.emplace_back(*offScreenPostImageInfo);
 
-            auto worldPosImageInfo = m_renderer.getWorldPosImageColor()->descriptorInfo();
-            worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             auto postSystemDescriptorSet = std::make_shared<VkDescriptorSet>();
             auto postDescriptorSet = std::make_shared<VkDescriptorSet>();
             DescriptorWriter(postSystemDescriptorSetLayoutPtr, *m_globalPool).
-                    writeImages(0, offscreenImageInfos).
+                    writeBuffer(0, globalUboBufferPtr->descriptorInfo()).
                     writeImages(1, offscreenImageInfos).
-                    writeBuffer(2, globalUboBufferPtr->descriptorInfo()).
-                    writeImage(3, worldPosImageInfo).
                     build(postDescriptorSet);
 
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
@@ -410,6 +413,8 @@ namespace Kaamoo {
                             addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT).
                             addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2).
                             addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT).
+                            addBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT).
+                            addBinding(4, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT,2).
                             build();
 
             std::vector<VkDescriptorImageInfo> offscreenImageInfos{};
@@ -423,11 +428,24 @@ namespace Kaamoo {
             auto worldPosImageInfo = m_renderer.getWorldPosImageColor()->descriptorInfo();
             worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
+            auto denoisingImageInfo = m_renderer.getDenoisingAccumulationImageColor()->descriptorInfo();
+            denoisingImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+            std::vector<VkDescriptorImageInfo> viewPosImageInfos{};
+            auto viewPosImageInfo = m_renderer.getViewPosImageColor(0)->descriptorInfo();
+            viewPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            viewPosImageInfos.emplace_back(*viewPosImageInfo);
+            viewPosImageInfo = m_renderer.getViewPosImageColor(1)->descriptorInfo();
+            viewPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            viewPosImageInfos.emplace_back(*viewPosImageInfo);
+
             auto postDescriptorSet = std::make_shared<VkDescriptorSet>();
             DescriptorWriter(computeSystemDescriptorSetLayoutPtr, *m_globalPool).
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo()).
                     writeImages(1, offscreenImageInfos).
                     writeImage(2, worldPosImageInfo).
+                    writeImage(3, denoisingImageInfo).
+                    writeImages(4, viewPosImageInfos).
                     build(postDescriptorSet);
 
             std::vector<std::shared_ptr<ShaderModule>> shaderModulePointers{
@@ -441,7 +459,7 @@ namespace Kaamoo {
 
             auto computeMaterial = std::make_shared<Material>(Material::MaterialId::compute, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers,
                                                               bufferPointers,
-                                                              PipelineCategory.Post);
+                                                              PipelineCategory.Compute);
             m_materials.emplace(Material::MaterialId::compute, std::move(computeMaterial));
         }
 #else
@@ -607,7 +625,8 @@ namespace Kaamoo {
             std::vector<std::shared_ptr<Sampler>> samplerPointers{};
             std::vector<std::shared_ptr<Buffer>> bufferPointers{globalUboBufferPtr};
 
-            auto uiMaterial = std::make_shared<Material>(Material::MaterialId::gizmos, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers, bufferPointers,
+            auto uiMaterial = std::make_shared<Material>(Material::MaterialId::gizmos, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers, imagePointers, samplerPointers,
+                                                         bufferPointers,
                                                          PipelineCategory.Gizmos);
             m_materials.emplace(Material::MaterialId::gizmos, std::move(uiMaterial));
         }

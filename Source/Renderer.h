@@ -22,18 +22,26 @@ namespace Kaamoo {
         void endFrame();
 
         void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-        
+
         void beginGizmosRenderPass(VkCommandBuffer commandBuffer);
 
         void beginShadowRenderPass(VkCommandBuffer commandBuffer);
 
         void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
-        
+
         void endGizmosRenderPass(VkCommandBuffer commandBuffer);
 
         void endShadowRenderPass(VkCommandBuffer commandBuffer);
 
         void setShadowMapSynchronization(VkCommandBuffer commandBuffer);
+
+#ifdef RAY_TRACING
+
+        void setDenoiseComputeToPostSynchronization(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+        void setDenoiseRtxToComputeSynchronization(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+#endif
 
         [[nodiscard]] std::shared_ptr<VkDescriptorImageInfo> getShadowImageInfo() const {
             return shadowImage->descriptorInfo(*shadowSampler);
@@ -67,10 +75,20 @@ namespace Kaamoo {
 
         const std::shared_ptr<Sampler> &getShadowSampler() const;
 
-        const std::shared_ptr<Image> &getOffscreenImageColor(int index) const;
-        
-        const std::shared_ptr<Image> &getWorldPosImageColor() const{
+        const std::shared_ptr<Image> &getOffscreenImageColor(int index) const {
+            return m_offscreenImageColors[index];
+        }
+
+        const std::shared_ptr<Image> &getViewPosImageColor(int index) const {
+            return m_viewPosImageColors[index];
+        }
+
+        const std::shared_ptr<Image> &getWorldPosImageColor() const {
             return m_worldPosImage;
+        };
+
+        const std::shared_ptr<Image> &getDenoisingAccumulationImageColor() const {
+            return m_denoisingAccumulationImage;
         };
 
     private:
@@ -87,7 +105,7 @@ namespace Kaamoo {
         void freeOffscreenResources();
 
         void loadOffscreenResources();
-        
+
         void loadGizmos();
 
         MyWindow &myWindow;
@@ -107,12 +125,14 @@ namespace Kaamoo {
         VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;
         VkRenderPass shadowRenderPass = VK_NULL_HANDLE;
 
-        std::vector<std::shared_ptr<Image>> offscreenImageColors;
+        std::vector<std::shared_ptr<Image>> m_offscreenImageColors;
+        std::vector<std::shared_ptr<Image>> m_viewPosImageColors;
         std::shared_ptr<Image> m_worldPosImage;
+        std::shared_ptr<Image> m_denoisingAccumulationImage;
         std::shared_ptr<Sampler> m_offscreenSampler;
         std::shared_ptr<Image> offscreenImageDepth;
 
-        VkFormat offscreenColorFormat{VK_FORMAT_R8G8B8A8_UNORM};
+        VkFormat offscreenColorFormat{VK_FORMAT_R32G32B32A32_SFLOAT};
         VkFormat worldPosColorFormat{VK_FORMAT_R32G32B32A32_SFLOAT};
         VkFormat offscreenDepthFormat{VK_FORMAT_D32_SFLOAT};
 

@@ -26,7 +26,7 @@ uint tea(uint val0, uint val1)
     uint v1 = val1;
     uint s0 = 0;
 
-    for(uint n = 0; n < 16; n++)
+    for (uint n = 0; n < 16; n++)
     {
         s0 += 0x9e3779b9;
         v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + s0) ^ ((v1 >> 5) + 0xc8013ea4);
@@ -42,7 +42,7 @@ uint lcg(inout uint prev)
 {
     uint LCG_A = 1664525u;
     uint LCG_C = 1013904223u;
-    prev       = (LCG_A * prev + LCG_C);
+    prev = (LCG_A * prev + LCG_C);
     return prev & 0x00FFFFFF;
 }
 
@@ -57,7 +57,7 @@ float rnd(float seed)
     return fract(sin(seed) * 43758.5453);
 }
 
-vec3 randomHemisphereVector(vec3 normal,float seed) {
+vec3 randomHemisphereVector(vec3 normal, float seed) {
     float u = rnd(seed);
     float v = rnd(seed);
     float theta = 2.0 * 3.1415926 * u;
@@ -66,5 +66,5 @@ vec3 randomHemisphereVector(vec3 normal,float seed) {
     if (dot(randomVector, normal) < 0.0) {
         randomVector = -randomVector;
     }
-    return randomVector;
+    return normalize(randomVector);
 }
