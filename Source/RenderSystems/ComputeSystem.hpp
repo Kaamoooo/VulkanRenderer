@@ -9,7 +9,8 @@ namespace Kaamoo {
     public:
         struct PushConstant {
             int rayTracingImageIndex;
-            bool firstFrame = true;
+            alignas(4) bool firstFrame = true;
+            alignas(4) bool sceneUpdated = false;
             alignas(16)glm::mat4 viewMatrix[2];
         };
 
@@ -31,6 +32,7 @@ namespace Kaamoo {
 
             m_pushConstant.rayTracingImageIndex = frameInfo.frameIndex % 2;
             m_pushConstant.viewMatrix[m_pushConstant.rayTracingImageIndex] = frameInfo.globalUbo.viewMatrix;
+            m_pushConstant.sceneUpdated = frameInfo.sceneUpdated;
             vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstant), &m_pushConstant);
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,

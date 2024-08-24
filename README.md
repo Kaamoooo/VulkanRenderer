@@ -94,4 +94,6 @@
 
 7.31 Added selected model outline.
 
-8.22 Completed global illumination in static scene. Using bilateral filter and temporal denoising.
+8.22 Completed simple global illumination in static scene. Using bilateral filter and temporal denoising.
+
+8.24 Completed simple global illumination in dynamic scene.

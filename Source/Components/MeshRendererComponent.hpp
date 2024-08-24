@@ -62,6 +62,7 @@ namespace Kaamoo {
             if (lastTransform != updateInfo.gameObject->transform->mat4()) {
                 lastTransform = updateInfo.gameObject->transform->mat4();
                 TLAS::updateTLAS(tlasId, lastTransform);
+                updateInfo.frameInfo->sceneUpdated = true;
             }
 #endif
         };

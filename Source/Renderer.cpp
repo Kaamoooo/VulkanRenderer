@@ -413,7 +413,7 @@ namespace Kaamoo {
             m_offscreenImageColors[1]->createImageView(*imageViewCreateInfo);
             m_offscreenImageColors[0]->sampler = m_offscreenSampler->getSampler();
             m_offscreenImageColors[1]->sampler = m_offscreenSampler->getSampler();
-            
+
             m_viewPosImageColors.push_back(std::make_shared<Image>(device));
             m_viewPosImageColors.push_back(std::make_shared<Image>(device));
             m_viewPosImageColors[0]->createImage(imageCreateInfo);
@@ -428,13 +428,19 @@ namespace Kaamoo {
             m_viewPosImageColors[0]->sampler = m_offscreenSampler->getSampler();
             m_viewPosImageColors[1]->sampler = m_offscreenSampler->getSampler();
 
-            m_worldPosImage = std::make_shared<Image>(device);
+            m_worldPosImage.push_back(std::make_shared<Image>(device));
+            m_worldPosImage.push_back(std::make_shared<Image>(device));
             imageCreateInfo.format = worldPosColorFormat;
-            m_worldPosImage->createImage(imageCreateInfo);
-            m_worldPosImage->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            m_worldPosImage[0]->createImage(imageCreateInfo);
+            m_worldPosImage[1]->createImage(imageCreateInfo);
+            m_worldPosImage[0]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
             imageViewCreateInfo->format = worldPosColorFormat;
-            m_worldPosImage->createImageView(*imageViewCreateInfo);
-            m_worldPosImage->sampler = m_offscreenSampler->getSampler();
+            m_worldPosImage[0]->createImageView(*imageViewCreateInfo);
+            m_worldPosImage[1]->setDefaultImageViewCreateInfo(*imageViewCreateInfo);
+            imageViewCreateInfo->format = worldPosColorFormat;
+            m_worldPosImage[1]->createImageView(*imageViewCreateInfo);
+            m_worldPosImage[0]->sampler = m_offscreenSampler->getSampler();
+            m_worldPosImage[1]->sampler = m_offscreenSampler->getSampler();
 
             m_denoisingAccumulationImage = std::make_shared<Image>(device);
             imageCreateInfo.format = offscreenColorFormat;
@@ -472,9 +478,13 @@ namespace Kaamoo {
             device.transitionImageLayout(m_viewPosImageColors[1]->getImage(),
                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-            device.transitionImageLayout(m_worldPosImage->getImage(),
+            device.transitionImageLayout(m_worldPosImage[0]->getImage(),
                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            device.transitionImageLayout(m_worldPosImage[1]->getImage(),
+                                         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+                                         {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+            
             device.transitionImageLayout(m_denoisingAccumulationImage->getImage(),
                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});

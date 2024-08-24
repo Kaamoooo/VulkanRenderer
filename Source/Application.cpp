@@ -37,7 +37,7 @@ namespace Kaamoo {
 
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent()};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent(),false};
                 frameInfo.selectedGameObjectId = GUI::GetSelectedId();
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
@@ -270,7 +270,7 @@ namespace Kaamoo {
             auto rayGenDescriptorSetLayoutPtr = DescriptorSetLayout::Builder(m_device).
                     addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR).
                     addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 2).
-                    addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR).
+                    addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 2).
                     build();
             auto rayGenDescriptorSet = std::make_shared<VkDescriptorSet>();
             descriptorSetLayoutPointers.push_back(rayGenDescriptorSetLayoutPtr);
@@ -289,13 +289,18 @@ namespace Kaamoo {
             offScreenImageInfo->imageView = m_renderer.getOffscreenImageColor(1)->imageView;
             offscreenImageInfos.emplace_back(*offScreenImageInfo);
 
-            auto worldPosImageInfo = std::make_shared<VkDescriptorImageInfo>();
+            std::vector<VkDescriptorImageInfo> worldPosImageInfos{};
+            auto worldPosImageInfo = m_renderer.getWorldPosImageColor(0)->descriptorInfo();
             worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-            worldPosImageInfo->imageView = m_renderer.getWorldPosImageColor()->imageView;
+            worldPosImageInfos.emplace_back(*worldPosImageInfo);
+            worldPosImageInfo = m_renderer.getWorldPosImageColor(1)->descriptorInfo();
+            worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            worldPosImageInfos.emplace_back(*worldPosImageInfo);
+
             DescriptorWriter(rayGenDescriptorSetLayoutPtr, *m_globalPool).
                     writeTLAS(0, accelerationStructureInfo).
                     writeImages(1, offscreenImageInfos).
-                    writeImage(2, worldPosImageInfo).
+                    writeImages(2, worldPosImageInfos).
                     build(rayGenDescriptorSet);
 
             //ObjectDesc
@@ -412,9 +417,9 @@ namespace Kaamoo {
                     DescriptorSetLayout::Builder(m_device).
                             addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT).
                             addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2).
-                            addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT).
+                            addBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2).
                             addBinding(3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT).
-                            addBinding(4, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT,2).
+                            addBinding(4, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2).
                             build();
 
             std::vector<VkDescriptorImageInfo> offscreenImageInfos{};
@@ -425,8 +430,13 @@ namespace Kaamoo {
             offScreenPostImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             offscreenImageInfos.emplace_back(*offScreenPostImageInfo);
 
-            auto worldPosImageInfo = m_renderer.getWorldPosImageColor()->descriptorInfo();
+            std::vector<VkDescriptorImageInfo> worldPosImageInfos{};
+            auto worldPosImageInfo = m_renderer.getWorldPosImageColor(0)->descriptorInfo();
             worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            worldPosImageInfos.emplace_back(*worldPosImageInfo);
+            worldPosImageInfo = m_renderer.getWorldPosImageColor(1)->descriptorInfo();
+            worldPosImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            worldPosImageInfos.emplace_back(*worldPosImageInfo);
 
             auto denoisingImageInfo = m_renderer.getDenoisingAccumulationImageColor()->descriptorInfo();
             denoisingImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -443,7 +453,7 @@ namespace Kaamoo {
             DescriptorWriter(computeSystemDescriptorSetLayoutPtr, *m_globalPool).
                     writeBuffer(0, globalUboBufferPtr->descriptorInfo()).
                     writeImages(1, offscreenImageInfos).
-                    writeImage(2, worldPosImageInfo).
+                    writeImages(2, worldPosImageInfos).
                     writeImage(3, denoisingImageInfo).
                     writeImages(4, viewPosImageInfos).
                     build(postDescriptorSet);
