@@ -66,6 +66,7 @@ namespace Kaamoo {
         GlobalUbo& globalUbo;
         VkExtent2D extent;
         id_t selectedGameObjectId;
+        bool sceneUpdated;
     };
     
     struct RendererInfo{

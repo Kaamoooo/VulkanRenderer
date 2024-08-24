@@ -20,13 +20,14 @@ layout (set = 0, binding = 0) uniform GlobalUbo {
 
 
 layout (set = 0, binding = 1, rgba32f) uniform image2D storageImage[2];
-layout (set = 0, binding = 2, rgba32f) uniform image2D worldPosImage;
+layout (set = 0, binding = 2, rgba32f) uniform image2D worldPosImage[2];
 layout (set = 0, binding = 3, rgba32f) uniform image2D denoisingAccumulationImage;
 layout (set = 0, binding = 4, rgba32f) uniform image2D viewPosImages[2];
 
 layout (push_constant, std430) uniform PushConstant {
     int rayTracingImageIndex;
     bool firstFrame;
+    bool sceneUpdated;
     mat4 viewMatrix[2];
 } pushConstant;
 
@@ -34,7 +35,7 @@ layout (local_size_x = 16, local_size_y = 16) in; // 工作组大小
 
 const int filterSize = 3;
 const float sigma_d = 2.0;
-const float sigma_r = 0.3;
+const float sigma_r = 0.2;
 
 vec4 bilateralFilter(int frameIndex, ivec2 coord) {
     vec4 sum = vec4(0.0);
@@ -63,7 +64,8 @@ void main() {
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
 
     mat4 lastFrameViewMatrix = pushConstant.viewMatrix[lastFrameIndex];
-    vec4 worldPos = imageLoad(worldPosImage, coord);
+    vec4 worldPos = imageLoad(worldPosImage[pushConstant.rayTracingImageIndex], coord);
+    vec4 lastFrameWorldPos = imageLoad(worldPosImage[lastFrameIndex], coord);
     vec4 viewPos = pushConstant.viewMatrix[pushConstant.rayTracingImageIndex] * worldPos;
     imageStore(viewPosImages[pushConstant.rayTracingImageIndex], coord, viewPos);
 
@@ -91,14 +93,16 @@ void main() {
             denoisingAccumulation.w = 0;
         }
     }
+    if (pushConstant.sceneUpdated) {
+        denoisingAccumulation.xyz = 0.01 * denoisedLastFrameColor.xyz * 5;
+        denoisingAccumulation.w = 0.01 * 5;
+    }
+
     denoisingAccumulation.xyz += 0.01 * denoisedCurrentFrameColor.xyz;
     denoisingAccumulation.w += 0.01;
 
     vec4 outColor = denoisingAccumulation.xyzw / denoisingAccumulation.w;
 
-    if (pushConstant.firstFrame) {
-        outColor = denoisedCurrentFrameColor;
-    }
     imageStore(denoisingAccumulationImage, coord, denoisingAccumulation);
     imageStore(storageImage[pushConstant.rayTracingImageIndex], coord, outColor);
 }

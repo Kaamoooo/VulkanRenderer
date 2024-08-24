@@ -83,8 +83,8 @@ namespace Kaamoo {
             return m_viewPosImageColors[index];
         }
 
-        const std::shared_ptr<Image> &getWorldPosImageColor() const {
-            return m_worldPosImage;
+        const std::shared_ptr<Image> &getWorldPosImageColor(int index) const {
+            return m_worldPosImage[index];
         };
 
         const std::shared_ptr<Image> &getDenoisingAccumulationImageColor() const {
@@ -127,7 +127,7 @@ namespace Kaamoo {
 
         std::vector<std::shared_ptr<Image>> m_offscreenImageColors;
         std::vector<std::shared_ptr<Image>> m_viewPosImageColors;
-        std::shared_ptr<Image> m_worldPosImage;
+        std::vector<std::shared_ptr<Image>> m_worldPosImage;
         std::shared_ptr<Image> m_denoisingAccumulationImage;
         std::shared_ptr<Sampler> m_offscreenSampler;
         std::shared_ptr<Image> offscreenImageDepth;
