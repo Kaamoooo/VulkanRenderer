@@ -165,7 +165,7 @@ void main()
         payLoad.hitValue += lo;
     } else {
         payLoad.accumulatedDistance += distance(gl_WorldRayOriginEXT, worldPos);
-        payLoad.hitValue += lo * (1.0 / pow(payLoad.accumulatedDistance, 1));
+        payLoad.hitValue += lo * (1.0 / pow(payLoad.accumulatedDistance + 1, 1));
     }
 
     //Global illumination
@@ -173,7 +173,7 @@ void main()
     {
         float tMin = 0.001;
         float tMax = 1000;
-        vec3 randomVector = randomHemisphereVector(worldNormal, ubo.curTime + worldPos.x + worldPos.y+worldPos.z);
+        vec3 randomVector = randomHemisphereVector(worldNormal, ubo.curTime + worldPos.x + worldPos.y + worldPos.z);
         vec3 reflectVector = reflect(gl_WorldRayDirectionEXT, worldNormal) + randomVector * pbr.roughness;
         uint flags = gl_RayFlagsNoneEXT;
         payLoad.bounceCount++;
