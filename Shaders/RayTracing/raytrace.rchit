@@ -46,7 +46,6 @@ PBR reloadPBR(PBR rawPBR, ivec2 textureEntry, vec2 uv, vec3 normal, mat3 TBN) {
         textureIndex++;
     } else {
         pbr.roughness = rawPBR.roughness;
-        pbr.roughness = 0.5;
     }
 
     if (rawPBR.opacity == -1) {
@@ -173,12 +172,13 @@ void main()
     {
         float tMin = 0.001;
         float tMax = 1000;
+        vec3 reflectVector = normalize(reflect(gl_WorldRayDirectionEXT, worldNormal));
         vec3 randomVector = randomHemisphereVector(worldNormal, ubo.curTime + worldPos.x + worldPos.y + worldPos.z);
-        vec3 reflectVector = reflect(gl_WorldRayDirectionEXT, worldNormal) + randomVector * pbr.roughness;
+        vec3 adjustedReflectVector = normalize(reflectVector * (1 - pbr.roughness) + randomVector * pbr.roughness);
         uint flags = gl_RayFlagsNoneEXT;
         payLoad.bounceCount++;
         payLoad.isBouncing = true;
-        traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 0, worldPos, tMin, reflectVector, tMax, 0);
+        traceRayEXT(topLevelAS, flags, 0xFF, 0, 0, 0, worldPos, tMin, adjustedReflectVector, tMax, 0);
     }
 
     //Transparent

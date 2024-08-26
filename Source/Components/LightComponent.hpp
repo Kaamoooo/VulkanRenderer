@@ -56,7 +56,7 @@ namespace Kaamoo {
         }
 
 #ifdef RAY_TRACING
-        void SetUI(std::vector<GameObjectDesc>*) override {
+        void SetUI(std::vector<GameObjectDesc>*,FrameInfo& frameInfo) override {
             ImGui::Text("Color:");
             ImGui::SameLine(90);
             ImGui::InputFloat3("##Color", &color.x);
@@ -71,7 +71,7 @@ namespace Kaamoo {
         }
 #else
 
-        void SetUI(Material::Map *) override {
+        void SetUI(Material::Map *, FrameInfo &frameInfo) override {
             ImGui::Text("Color:");
             ImGui::SameLine(90);
             ImGui::InputFloat3("##Color", &color.x);

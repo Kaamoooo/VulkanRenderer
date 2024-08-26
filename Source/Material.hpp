@@ -147,7 +147,8 @@ namespace Kaamoo {
         ~Material() {
             auto device = Device::getDeviceSingleton()->device();
             for (auto &shaderModule: shaderModules) {
-                vkDestroyShaderModule(device, *shaderModule->shaderModule, nullptr);
+                if (*(shaderModule->shaderModule) != VK_NULL_HANDLE && shaderModule->shaderModule != nullptr)
+                    vkDestroyShaderModule(device, *shaderModule->shaderModule, nullptr);
             }
 
         };

@@ -68,11 +68,12 @@ namespace Kaamoo {
         };
 
 #ifdef RAY_TRACING
+
         id_t GetTLASId() const {
             return tlasId;
         }
 
-        void SetUI(std::vector<GameObjectDesc> *gameObjectDesc) override {
+        void SetUI(std::vector<GameObjectDesc> *gameObjectDesc, FrameInfo &frameInfo) override {
             if (model == nullptr) {
                 return;
             }
@@ -86,35 +87,45 @@ namespace Kaamoo {
                             ImGui::Text("Albedo:");
                             ImGui::SameLine(120);
                             ImGui::SetNextItemWidth(140);
-                            ImGui::InputFloat3("##Albedo", &desc.pbr.albedo.x);
+                            if (ImGui::InputFloat3("##Albedo", &desc.pbr.albedo.x)) {
+                                frameInfo.sceneUpdated = true;
+                            }
                             Utils::ClampVec3(desc.pbr.albedo, 0, 1);
                             break;
                         case 2:
                             ImGui::Text("Metallic:");
                             ImGui::SameLine(120);
                             ImGui::SetNextItemWidth(140);
-                            ImGui::InputFloat("##Metallic", &desc.pbr.metallic);
+                            if (ImGui::InputFloat("##Metallic", &desc.pbr.metallic)) {
+                                frameInfo.sceneUpdated = true;
+                            }
                             Utils::ClampFloat(desc.pbr.metallic, 0, 1);
                             break;
                         case 3:
                             ImGui::Text("Roughness:");
                             ImGui::SameLine(120);
                             ImGui::SetNextItemWidth(140);
-                            ImGui::InputFloat("##Roughness", &desc.pbr.roughness);
+                            if (ImGui::InputFloat("##Roughness", &desc.pbr.roughness)) {
+                                frameInfo.sceneUpdated = true;
+                            }
                             Utils::ClampFloat(desc.pbr.roughness, 0, 1);
                             break;
                         case 4:
                             ImGui::Text("Opacity:");
                             ImGui::SameLine(120);
                             ImGui::SetNextItemWidth(140);
-                            ImGui::InputFloat("##Opacity", &desc.pbr.opacity);
+                            if (ImGui::InputFloat("##Opacity", &desc.pbr.opacity)) {
+                                frameInfo.sceneUpdated = true;
+                            }
                             Utils::ClampFloat(desc.pbr.opacity, 0, 1);
                             break;
                         case 6:
                             ImGui::Text("Emissive:");
                             ImGui::SameLine(120);
                             ImGui::SetNextItemWidth(140);
-                            ImGui::InputFloat3("##Emissive", &desc.pbr.emissive.x);
+                            if (ImGui::InputFloat3("##Emissive", &desc.pbr.emissive.x)) {
+                                frameInfo.sceneUpdated = true;
+                            }
                             Utils::ClampVec3(desc.pbr.emissive, 0, 1);
                             break;
                         default:
@@ -124,9 +135,10 @@ namespace Kaamoo {
                 ImGui::TreePop();
             }
         }
+
 #else
 
-        void SetUI(Material::Map *materialMap) override {
+        void SetUI(Material::Map *materialMap, FrameInfo &frameInfo) override {
             if (model == nullptr) {
                 return;
             }

@@ -86,7 +86,7 @@ namespace Kaamoo {
  * */
 #ifdef RAY_TRACING
 
-        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap, std::vector<GameObjectDesc> *pGameObjectDescs) {
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap, std::vector<GameObjectDesc> *pGameObjectDescs, FrameInfo &frameInfo) {
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags_NoMove;
             window_flags |= ImGuiWindowFlags_NoResize;
@@ -99,7 +99,7 @@ namespace Kaamoo {
                 if (ImGui::BeginListBox("##Hierarchy", ImVec2(-1, -1))) {
                     for (auto &gameObjectPair: *pGameObjectsMap) {
                         auto &gameObject = gameObjectPair.second;
-                        if (ImGui::Selectable(gameObject.getName().c_str(),selectedId == gameObjectPair.first)) {
+                        if (ImGui::Selectable(gameObject.getName().c_str(), selectedId == gameObjectPair.first)) {
                             selectedId = gameObjectPair.first;
                             bSelected = true;
                         }
@@ -142,7 +142,7 @@ namespace Kaamoo {
                     for (auto &component: gameObject.getComponents()) {
                         if (component->GetName() == ComponentName::TransformComponent)continue;
                         if (ImGui::TreeNode(component->GetName().c_str())) {
-                            component->SetUI(pGameObjectDescs);
+                            component->SetUI(pGameObjectDescs,frameInfo);
                             ImGui::TreePop();
                         }
                     }
@@ -153,7 +153,7 @@ namespace Kaamoo {
         }
 
 #else
-        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,Material::Map* pMaterialsMap) {
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,Material::Map* pMaterialsMap, FrameInfo &frameInfo) {
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags_NoMove;
             window_flags |= ImGuiWindowFlags_NoResize;
@@ -209,7 +209,7 @@ namespace Kaamoo {
                     for (auto &component: gameObject.getComponents()) {
                         if (component->GetName() == ComponentName::TransformComponent)continue;
                         if (ImGui::TreeNode(component->GetName().c_str())) {
-                            component->SetUI(pMaterialsMap);
+                            component->SetUI(pMaterialsMap,frameInfo);
                             ImGui::TreePop();
                         }
                     }

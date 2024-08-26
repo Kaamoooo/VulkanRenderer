@@ -1,6 +1,6 @@
 # Vulkan Renderer
 
-![image-20240822110838464](./README.assets/image-20240822110838464.png)
+![image-20240825114134759](./README.assets/image-20240825114134759.png)
 
 ## Progress
 
@@ -97,3 +97,5 @@
 8.22 Completed simple global illumination in static scene. Using bilateral filter and temporal denoising.
 
 8.24 Completed simple global illumination in dynamic scene.
+
+8.26 Released v0.1.0

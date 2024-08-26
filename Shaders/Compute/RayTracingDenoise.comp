@@ -96,7 +96,7 @@ void main() {
     if (pushConstant.sceneUpdated) {
         denoisingAccumulation.xyz = 0.01 * denoisedLastFrameColor.xyz * 5;
         denoisingAccumulation.w = 0.01 * 5;
-    }
+    } 
 
     denoisingAccumulation.xyz += 0.01 * denoisedCurrentFrameColor.xyz;
     denoisingAccumulation.w += 0.01;

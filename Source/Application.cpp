@@ -37,33 +37,31 @@ namespace Kaamoo {
 
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent(),false};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent(), false};
                 frameInfo.selectedGameObjectId = GUI::GetSelectedId();
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
 
 #ifdef RAY_TRACING
+                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
+                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
+                                &m_gameObjects, &m_pGameObjectDescs, frameInfo);
                 m_pGameObjectDescBuffer->writeToBuffer(m_pGameObjectDescs.data(), m_pGameObjectDescs.size() * sizeof(GameObjectDesc));
 
                 m_rayTracingSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_rayTracingSystem->rayTrace(frameInfo);
 
                 m_renderer.setDenoiseRtxToComputeSynchronization(commandBuffer, frameIndex % 2);
-                m_renderer.setDenoiseRtxToComputeSynchronization(commandBuffer, 1 - frameIndex % 2);
 
                 m_computeSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_computeSystem->render(frameInfo);
 
                 m_renderer.setDenoiseComputeToPostSynchronization(commandBuffer, frameIndex % 2);
-                m_renderer.setDenoiseComputeToPostSynchronization(commandBuffer, 1 - frameIndex % 2);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
 
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_postSystem->render(frameInfo);
-                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
-                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects, &m_pGameObjectDescs);
 
 #else
                 m_renderer.beginShadowRenderPass(commandBuffer);
@@ -82,7 +80,7 @@ namespace Kaamoo {
                 
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects,&m_materials);
+                                &m_gameObjects,&m_materials,frameInfo);
 #endif
                 GUI::EndFrame(commandBuffer);
                 m_renderer.endSwapChainRenderPass(commandBuffer);

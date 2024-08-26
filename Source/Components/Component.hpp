@@ -45,11 +45,12 @@ namespace Kaamoo {
         virtual void LateUpdate(const ComponentUpdateInfo &updateInfo) {};
 
 #ifdef RAY_TRACING
-        virtual void SetUI(std::vector<GameObjectDesc>*){};
+        virtual void SetUI(std::vector<GameObjectDesc>*,FrameInfo& frameInfo){};
 #else
-        virtual void SetUI(Material::Map*){};
+
+        virtual void SetUI(Material::Map *, FrameInfo &frameInfo) {};
 #endif
-        
+
     protected:
         std::string name = "Component";
 
