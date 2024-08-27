@@ -572,6 +572,13 @@ namespace Kaamoo {
                              0, nullptr,
                              1, &barrier);
 
+        barrier.image = m_denoisingAccumulationImage->getImage();
+        vkCmdPipelineBarrier(commandBuffer,
+                             srcStage, dstStage,
+                             0,
+                             0, nullptr,
+                             0, nullptr,
+                             1, &barrier);
     }
 
     void Renderer::setDenoiseRtxToComputeSynchronization(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
@@ -599,6 +606,14 @@ namespace Kaamoo {
         dstStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
 
+        vkCmdPipelineBarrier(commandBuffer,
+                             srcStage, dstStage,
+                             0,
+                             0, nullptr,
+                             0, nullptr,
+                             1, &barrier);
+        
+        barrier.image = m_viewPosImageColors[imageIndex]->getImage();
         vkCmdPipelineBarrier(commandBuffer,
                              srcStage, dstStage,
                              0,

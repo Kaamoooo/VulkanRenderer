@@ -5,6 +5,8 @@
 #extension GL_EXT_nonuniform_qualifier: enable
 
 int MAX_BOUNCE_COUNT = 5;
+int MAX_RECURSION_DEPTH = 15;
+
 
 struct hitPayLoad {
     vec3 hitValue;
@@ -14,6 +16,7 @@ struct hitPayLoad {
     bool isBouncing;
     vec4 closestHitWorldPos;
     int recursionDepth;
+    
 };
 
 struct ShadowPayload{
@@ -73,9 +76,3 @@ struct Vertex {
 layout (buffer_reference, std430) buffer VerticesBuffer {Vertex vertices[];};
 
 layout (buffer_reference, std430) buffer IndicesBuffer { uint indices[]; };
-//layout(push_constant) uniform struct PushConstantRay {
-//    vec4 clearColor;
-//    vec3 lightPosition;
-//    float lightIntensity;
-//    int lightType;
-//} pushConstantRay;

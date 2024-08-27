@@ -40,7 +40,7 @@ void main() {
         float attenuation = min(1, 1 / (c0 + c1 * d));
         vec3 directionToLight = normalize(light.position - worldPos).xyz;
 
-        //directrional light
+        //directional light
         if (light.lightCategory == 1) {
             attenuation = 1;
             directionToLight = normalize(-light.direction.xyz);

@@ -48,13 +48,11 @@ void main() {
         if (light.lightCategory == 1) {
             attenuation = 1;
             directionToLight = normalize(-light.direction.xyz);
-            continue;
         }
 
         vec3 lightColorWithAttenuation = light.color.xyz * light.color.w * attenuation;
 
         vec3 diffuse = max(0, dot(worldNormal.xyz, directionToLight)) * lightColorWithAttenuation;
-        diffuse = vec3(dot(worldNormal.xyz, directionToLight));
         vec3 halfVector = normalize(viewDirection + directionToLight);
         float blinn = dot(halfVector, worldNormal.xyz);
         blinn = clamp(blinn, 0, 1);

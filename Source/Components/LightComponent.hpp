@@ -56,19 +56,25 @@ namespace Kaamoo {
         }
 
 #ifdef RAY_TRACING
-        void SetUI(std::vector<GameObjectDesc>*,FrameInfo& frameInfo) override {
+
+        void SetUI(std::vector<GameObjectDesc> *, FrameInfo &frameInfo) override {
             ImGui::Text("Color:");
             ImGui::SameLine(90);
-            ImGui::InputFloat3("##Color", &color.x);
+            if (ImGui::InputFloat3("##Color", &color.x)) {
+                frameInfo.sceneUpdated = true;
+            }
 
             ImGui::Text("Intensity:");
             ImGui::SameLine(90);
-            ImGui::InputFloat("##Intensity", &lightIntensity);
+            if (ImGui::InputFloat("##Intensity", &lightIntensity)) {
+                frameInfo.sceneUpdated = true;
+            }
 
             ImGui::Text("Type:");
             ImGui::SameLine(90);
             ImGui::Text(lightTypeStr.c_str());
         }
+
 #else
 
         void SetUI(Material::Map *, FrameInfo &frameInfo) override {

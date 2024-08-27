@@ -14,7 +14,7 @@ namespace Kaamoo {
                 VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT |
                 VK_SHADER_STAGE_GEOMETRY_BIT;
         pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
+        pushConstantRange.size = sizeof(GrassPushConstant);
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -78,7 +78,7 @@ namespace Kaamoo {
 
         for (auto &pair: frameInfo.gameObjects) {
             auto &obj = pair.second;
-            SimplePushConstantData push{};
+            GrassPushConstant push{};
             if (moveObject == nullptr && obj.getName() == "Vase") {
                 moveObject = &obj;
             }
@@ -86,12 +86,12 @@ namespace Kaamoo {
             if (!obj.TryGetComponent<MeshRendererComponent>(meshRendererComponent))continue;
             if (meshRendererComponent->GetMaterialID() != m_material->getMaterialId())continue;
             if (moveObject != nullptr)
-                push.modelMatrix = moveObject->transform->mat4();
+                push.vaseModelMatrix = moveObject->transform->mat4();
             push.modelMatrix = pair.second.transform->mat4();
             vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout,
                                VK_SHADER_STAGE_ALL_GRAPHICS,
                                0,
-                               sizeof(SimplePushConstantData),
+                               sizeof(GrassPushConstant),
                                &push);
             meshRendererComponent->GetModelPtr()->bind(frameInfo.commandBuffer);
             meshRendererComponent->GetModelPtr()->draw(frameInfo.commandBuffer);

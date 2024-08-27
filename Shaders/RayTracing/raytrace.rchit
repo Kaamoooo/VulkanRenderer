@@ -73,6 +73,9 @@ PBR reloadPBR(PBR rawPBR, ivec2 textureEntry, vec2 uv, vec3 normal, mat3 TBN) {
 void main()
 {
     payLoad.recursionDepth++;
+    if (payLoad.recursionDepth >= MAX_RECURSION_DEPTH - 1) {
+        return;
+    }
     GameObjectDesc gameObjectDesc = gameObjectDescBuffer.gameObjectDescs[gl_InstanceCustomIndexEXT];
     VerticesBuffer verticesBuffer = VerticesBuffer(gameObjectDesc.verticesAddress);
     IndicesBuffer indicesBuffer = IndicesBuffer(gameObjectDesc.indicesAddress);

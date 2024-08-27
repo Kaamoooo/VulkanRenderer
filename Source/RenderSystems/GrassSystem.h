@@ -8,6 +8,11 @@ namespace Kaamoo {
         GrassSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) ;
 
     private:
+        struct GrassPushConstant{
+            glm::mat4 modelMatrix;
+            glm::mat4 vaseModelMatrix;
+        };
+        
         void createPipelineLayout() override;
 
         void createPipeline(VkRenderPass renderPass) override;
