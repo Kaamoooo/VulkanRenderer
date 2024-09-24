@@ -2,6 +2,8 @@
   {
     "name": "Sphere0",
     "transform": {
+      "id": 0,
+      "childrenIds": [1,2],
       "translation": [-1,0,0],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
@@ -11,7 +13,8 @@
   {
     "name": "Sphere1",
     "transform": {
-      "translation": [0,0,0],
+      "id": 1,
+      "translation": [1,0,0],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
@@ -20,7 +23,8 @@
   {
     "name": "Sphere2",
     "transform": {
-      "translation": [1,0,0],
+      "id": 2,
+      "translation": [2,0,0],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },

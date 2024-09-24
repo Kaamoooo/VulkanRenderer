@@ -39,17 +39,17 @@ namespace Kaamoo {
             if (lightCategory == LightCategory::POINT_LIGHT) {
                 auto rotateLight = glm::rotate(glm::mat4{1.f}, updateInfo.frameInfo->frameTime, glm::vec3(0, 1.f, 0));
 //                transform->translation = glm::vec3(rotateLight * glm::vec4(transform->translation, 1));
-                transform->translation = glm::vec3(glm::vec4(transform->translation, 1));
                 light.lightCategory = LightCategory::POINT_LIGHT;
             } else {
                 light.lightCategory = LightCategory::DIRECTIONAL_LIGHT;
             }
 
-            light.position = glm::vec4(transform->translation, 1.f);
+            light.position = glm::vec4(transform->GetTranslation(), 1.f);
             auto identity = glm::mat4(1.f);
-            auto rotateMatrix = glm::rotate(identity, transform->rotation.y, {0, 1, 0});
-            rotateMatrix = glm::rotate(rotateMatrix, transform->rotation.x, {1, 0, 0});
-            rotateMatrix = glm::rotate(rotateMatrix, transform->rotation.z, {0, 0, 1});
+            auto rotation = transform->GetRotation();
+            auto rotateMatrix = glm::rotate(identity, rotation.y, {0, 1, 0});
+            rotateMatrix = glm::rotate(rotateMatrix, rotation.x, {1, 0, 0});
+            rotateMatrix = glm::rotate(rotateMatrix, rotation.z, {0, 0, 1});
             light.color = glm::vec4(color, lightIntensity);
             light.direction = rotateMatrix * glm::vec4(0, 0, 1, 0);
             updateInfo.frameInfo->globalUbo.lights[lightIndex] = light;

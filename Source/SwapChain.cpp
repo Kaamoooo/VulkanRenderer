@@ -64,7 +64,6 @@ namespace Kaamoo {
         }
     }
 
-    //Todo: Wait for understanding
     VkResult SwapChain::acquireNextImage(uint32_t *imageIndex) {
         vkWaitForFences(
                 device.device(),

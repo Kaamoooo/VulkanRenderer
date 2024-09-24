@@ -82,9 +82,9 @@ namespace Kaamoo {
             if (!obj.TryGetComponent(lightComponent)) continue;
 
             PointLightPushConstant pointLightPushConstant{};
-            pointLightPushConstant.position = glm::vec4(obj.transform->translation, 1.f);
+            pointLightPushConstant.position = glm::vec4(obj.transform->GetTranslation(), 1.f);
             pointLightPushConstant.color = glm::vec4(lightComponent->getColor(), lightComponent->getLightIntensity());
-            pointLightPushConstant.radius = obj.transform->scale.x;
+            pointLightPushConstant.radius = obj.transform->GetScale().x;
 
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,

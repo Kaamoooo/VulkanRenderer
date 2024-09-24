@@ -4,8 +4,8 @@
 #extension GL_EXT_ray_tracing: require
 #extension GL_EXT_nonuniform_qualifier: enable
 
-int MAX_BOUNCE_COUNT = 5;
-int MAX_RECURSION_DEPTH = 15;
+int MAX_BOUNCE_COUNT = 3;
+int MAX_RECURSION_DEPTH = 8;
 
 
 struct hitPayLoad {

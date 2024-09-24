@@ -19,12 +19,13 @@ namespace Kaamoo {
             }
 
             //防止没有按下按键时，对0归一化导致错误   
-            if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon())
-                updateInfo.gameObject->transform->rotation +=
-                        glm::normalize(rotation) * lookSpeed * updateInfo.frameInfo->frameTime;
+            if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
+
+                updateInfo.gameObject->transform->SetRotation(glm::normalize(rotation) * lookSpeed * updateInfo.frameInfo->frameTime + updateInfo.gameObject->transform->GetRotation());
+            }
 
 
-            auto transformRotation = updateInfo.gameObject->transform->rotation;
+            auto transformRotation = updateInfo.gameObject->transform->GetRotation();
             auto forwardDirMatrix = Utils::GetRotateDirectionMatrix(transformRotation);
             const glm::vec3 forwardDir = forwardDirMatrix * glm::vec4{0, 0, 1, 1};
             forwardDirMatrix = Utils::GetRotateDirectionMatrix({transformRotation.x + 1, transformRotation.y, transformRotation.z});
@@ -42,7 +43,7 @@ namespace Kaamoo {
             if (glfwGetKey(window, keys.moveBack) == GLFW_PRESS) moveDir -= forwardDir;
 
             if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
-                updateInfo.gameObject->transform->translation += glm::normalize(moveDir) * moveSpeed * updateInfo.frameInfo->frameTime;
+                updateInfo.gameObject->transform->SetTranslation(glm::normalize(moveDir) * moveSpeed * updateInfo.frameInfo->frameTime + updateInfo.gameObject->transform->GetTranslation());
             }
         }
 

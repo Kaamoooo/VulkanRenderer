@@ -45,7 +45,7 @@ namespace Kaamoo {
 #ifdef RAY_TRACING
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects, &m_pGameObjectDescs, frameInfo);
+                                &m_gameObjects, &m_pGameObjectDescs,&m_hierarchyTree, frameInfo);
                 m_pGameObjectDescBuffer->writeToBuffer(m_pGameObjectDescs.data(), m_pGameObjectDescs.size() * sizeof(GameObjectDesc));
 
                 m_rayTracingSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
@@ -68,19 +68,19 @@ namespace Kaamoo {
                 m_shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_shadowSystem->renderShadow(frameInfo);
                 m_renderer.endShadowRenderPass(commandBuffer);
-                
+
                 m_renderer.setShadowMapSynchronization(commandBuffer);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                
+
                 for (const auto &item: m_renderSystems) {
                     item->UpdateGlobalUboBuffer(ubo, frameIndex);
                     item->render(frameInfo);
                 }
-                
+
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects,&m_materials,frameInfo);
+                                &m_gameObjects, &m_materials, &m_hierarchyTree, frameInfo);
 #endif
                 GUI::EndFrame(commandBuffer);
                 m_renderer.endSwapChainRenderPass(commandBuffer);
@@ -117,25 +117,44 @@ namespace Kaamoo {
             }
         }
 
+        std::unordered_map<int, GameObject *> transformIdToParentGameObjMap;
         auto *componentFactory = new ComponentFactory();
         if (gameObjectsDocument.IsArray()) {
             for (rapidjson::SizeType i = 0; i < gameObjectsDocument.Size(); i++) {
+                auto &gameObject = GameObject::createGameObject();
                 const rapidjson::Value &object = gameObjectsDocument[i];
 
-                const rapidjson::Value &transformObject = object["transform"];
+                const rapidjson::Value &transformJsonObj = object["transform"];
 
-                const rapidjson::Value &translationArray = transformObject["translation"];
+                int32_t transformId = HierarchyTree::DEFAULT_TRANSFORM_ID;
+                if (transformJsonObj.HasMember("id")) {
+                    transformId = transformJsonObj["id"].GetInt();
+                }
+
+                gameObject.transform->SetTransformId(transformId);
+
+                if (transformJsonObj.HasMember("childrenIds")) {
+                    const rapidjson::Value &childrenIdsArray = transformJsonObj["childrenIds"];
+                    for (rapidjson::SizeType j = 0; j < childrenIdsArray.Size(); j++) {
+                        const rapidjson::Value &arrayId = childrenIdsArray[j];
+                        const int childrenId = arrayId.GetInt();
+                        if (transformId != -1) {
+                            transformIdToParentGameObjMap[childrenId] = &gameObject;
+                        }
+                    }
+                }
+
+                const rapidjson::Value &translationArray = transformJsonObj["translation"];
                 glm::vec3 translation{translationArray[0].GetFloat(), translationArray[1].GetFloat(),
                                       translationArray[2].GetFloat()};
 
-                const rapidjson::Value &scaleArray = transformObject["scale"];
+                const rapidjson::Value &scaleArray = transformJsonObj["scale"];
                 glm::vec3 scale{scaleArray[0].GetFloat(), scaleArray[1].GetFloat(), scaleArray[2].GetFloat()};
 
-                const rapidjson::Value &rotationArray = transformObject["rotation"];
+                const rapidjson::Value &rotationArray = transformJsonObj["rotation"];
                 glm::vec3 rotation{rotationArray[0].GetFloat(), rotationArray[1].GetFloat(),
                                    rotationArray[2].GetFloat()};
 
-                auto &gameObject = GameObject::createGameObject();
 
                 if (object.HasMember("componentIds")) {
                     auto componentIdsArray = object["componentIds"].GetArray();
@@ -149,9 +168,9 @@ namespace Kaamoo {
                     }
                 }
                 gameObject.setName(object["name"].GetString());
-                gameObject.transform->translation = translation;
-                gameObject.transform->scale = scale;
-                gameObject.transform->rotation = glm::radians(rotation);
+                gameObject.transform->SetTranslation(translation);
+                gameObject.transform->SetScale(scale);
+                gameObject.transform->SetRotation(glm::radians(rotation));
 
                 m_gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
@@ -163,6 +182,14 @@ namespace Kaamoo {
 
         for (auto &pair: m_gameObjects) {
             auto &gameObject = pair.second;
+            if (transformIdToParentGameObjMap.find(gameObject.transform->GetTransformId()) != transformIdToParentGameObjMap.end()) {
+                auto parent = transformIdToParentGameObjMap[gameObject.transform->GetTransformId()];
+                parent->transform->AddChild(gameObject.transform);
+                //Make sure parent node exsits in the hierarchy tree before inserting child node.
+                m_hierarchyTree.AddNode(parent->getId(), gameObject.getId(), &gameObject);
+            } else {
+                m_hierarchyTree.AddNode(HierarchyTree::ROOT_ID, gameObject.getId(), &gameObject);
+            }
             gameObject.OnLoad();
         }
 
@@ -588,7 +615,7 @@ namespace Kaamoo {
                                                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                                                                     minUniformOffsetAlignment);
                     bufferPointers.push_back(shadowUboBuffer);
-                    auto shadowUboBufferInfo = shadowUboBuffer->descriptorInfo(sizeof(ShadowUbo)*SwapChain::MAX_FRAMES_IN_FLIGHT);
+                    auto shadowUboBufferInfo = shadowUboBuffer->descriptorInfo(sizeof(ShadowUbo) * SwapChain::MAX_FRAMES_IN_FLIGHT);
                     descriptorWriter.writeBuffer(writerBindingPoint++, shadowUboBufferInfo);
                 } else if (pipelineCategoryString == PipelineCategory.Overlay ||
                            pipelineCategoryString == PipelineCategory.Opaque ||
@@ -609,7 +636,7 @@ namespace Kaamoo {
 
 
                 auto m_material = std::make_shared<Material>(id, shaderModulePointers, descriptorSetLayoutPointers, descriptorSetPointers,
-                                    imagePointers, samplerPointers, bufferPointers, pipelineCategoryString);
+                                                             imagePointers, samplerPointers, bufferPointers, pipelineCategoryString);
 
                 m_materials.emplace(id, std::move(m_material));
             }
@@ -709,22 +736,21 @@ namespace Kaamoo {
             if (pipelineCategory == PipelineCategory.Shadow) {
                 m_shadowSystem = std::make_shared<ShadowSystem>(m_device, m_renderer.getShadowRenderPass(), material.second);
                 continue;
-            } else
-        if (pipelineCategory == PipelineCategory.TessellationGeometry) {
-            auto renderSystem = std::make_shared<GrassSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-            renderSystem->Init();
-            m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
-            continue;
-        } else if (pipelineCategory == PipelineCategory.SkyBox) {
-            auto renderSystem = std::make_shared<SkyBoxSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-            renderSystem->Init();
-            m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
-            continue;
-        } else if (pipelineCategory == PipelineCategory.Opaque) {
-            auto renderSystem = std::make_shared<RenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-            renderSystem->Init();
-            m_renderSystems.push_back(renderSystem);
-        }
+            } else if (pipelineCategory == PipelineCategory.TessellationGeometry) {
+                auto renderSystem = std::make_shared<GrassSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
+                renderSystem->Init();
+                m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
+                continue;
+            } else if (pipelineCategory == PipelineCategory.SkyBox) {
+                auto renderSystem = std::make_shared<SkyBoxSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
+                renderSystem->Init();
+                m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
+                continue;
+            } else if (pipelineCategory == PipelineCategory.Opaque) {
+                auto renderSystem = std::make_shared<RenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
+                renderSystem->Init();
+                m_renderSystems.push_back(renderSystem);
+            }
 #endif
             if (pipelineCategory == PipelineCategory.Gizmos) {
                 m_gizmosRenderSystem = std::make_shared<GizmosRenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);

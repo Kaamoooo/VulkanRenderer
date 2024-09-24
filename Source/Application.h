@@ -64,6 +64,7 @@ namespace Kaamoo {
 
         std::shared_ptr<DescriptorPool> m_globalPool;
         GameObject::Map m_gameObjects;
+        HierarchyTree m_hierarchyTree;
         ShaderBuilder m_shaderBuilder;
         Material::Map m_materials;
         std::shared_ptr<VkRenderPass> m_shadowPass;

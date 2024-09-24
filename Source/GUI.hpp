@@ -86,7 +86,7 @@ namespace Kaamoo {
  * */
 #ifdef RAY_TRACING
 
-        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap, std::vector<GameObjectDesc> *pGameObjectDescs, FrameInfo &frameInfo) {
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap, std::vector<GameObjectDesc> *pGameObjectDescs, HierarchyTree *hierarchyTree, FrameInfo &frameInfo) {
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags_NoMove;
             window_flags |= ImGuiWindowFlags_NoResize;
@@ -95,17 +95,9 @@ namespace Kaamoo {
             ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH, windowExtent.y), ImGuiCond_Always);
 
             ImGui::Begin("Scene", nullptr, window_flags);
+            ShowPerformance(frameInfo);
             if (ImGui::TreeNode("Hierarchy")) {
-                if (ImGui::BeginListBox("##Hierarchy", ImVec2(-1, -1))) {
-                    for (auto &gameObjectPair: *pGameObjectsMap) {
-                        auto &gameObject = gameObjectPair.second;
-                        if (ImGui::Selectable(gameObject.getName().c_str(), selectedId == gameObjectPair.first)) {
-                            selectedId = gameObjectPair.first;
-                            bSelected = true;
-                        }
-                    }
-                    ImGui::EndListBox();
-                }
+                ShowHierarchyTree(hierarchyTree->GetRoot());
                 ImGui::TreePop();
             }
             ImGui::End();
@@ -113,6 +105,8 @@ namespace Kaamoo {
             ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
             ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH_2, windowExtent.y), ImGuiCond_Always);
             ImGui::Begin("Inspector", nullptr, window_flags);
+
+
             if (bSelected) {
                 auto &gameObject = pGameObjectsMap->at(selectedId);
                 ImGui::Text("Name:");
@@ -123,18 +117,22 @@ namespace Kaamoo {
                 if (ImGui::TreeNode("Transform")) {
                     ImGui::Text("Position:");
                     ImGui::SameLine(90);
-                    ImGui::InputFloat3("##Position", &gameObject.transform->translation.x);
+                    //Todo: Gizmos on selected object: Axis
+                    glm::vec3 tempPosition = gameObject.transform->GetRelativeTranslation();
+                    ImGui::InputFloat3("##Position", &tempPosition.x);
+                    gameObject.transform->SetTranslation(tempPosition);
 
                     ImGui::Text("Rotation:");
                     ImGui::SameLine(90);
-                    glm::vec3 rotationByDegrees = glm::degrees(gameObject.transform->rotation);
+                    glm::vec3 rotationByDegrees = glm::degrees(gameObject.transform->GetRelativeRotation());
                     ImGui::InputFloat3("##Rotation", &rotationByDegrees.x);
-                    gameObject.transform->rotation = glm::radians(rotationByDegrees);
+                    gameObject.transform->SetRotation(glm::radians(rotationByDegrees));
 
                     ImGui::Text("Scale:");
                     ImGui::SameLine(90);
-                    ImGui::InputFloat3("##Scale", &gameObject.transform->scale.x);
-
+                    glm::vec3 tempScale = gameObject.transform->GetRelativeScale();
+                    ImGui::InputFloat3("##Scale", &tempScale.x);
+                    gameObject.transform->SetScale(tempScale);
                     ImGui::TreePop();
                 }
 
@@ -142,7 +140,7 @@ namespace Kaamoo {
                     for (auto &component: gameObject.getComponents()) {
                         if (component->GetName() == ComponentName::TransformComponent)continue;
                         if (ImGui::TreeNode(component->GetName().c_str())) {
-                            component->SetUI(pGameObjectDescs,frameInfo);
+                            component->SetUI(pGameObjectDescs, frameInfo);
                             ImGui::TreePop();
                         }
                     }
@@ -153,7 +151,8 @@ namespace Kaamoo {
         }
 
 #else
-        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap,Material::Map* pMaterialsMap, FrameInfo &frameInfo) {
+
+        static void ShowWindow(ImVec2 windowExtent, GameObject::Map *pGameObjectsMap, Material::Map *pMaterialsMap, HierarchyTree *hierarchyTree, FrameInfo &frameInfo) {
             ImGuiWindowFlags window_flags = 0;
             window_flags |= ImGuiWindowFlags_NoMove;
             window_flags |= ImGuiWindowFlags_NoResize;
@@ -163,16 +162,7 @@ namespace Kaamoo {
 
             ImGui::Begin("Scene", nullptr, window_flags);
             if (ImGui::TreeNode("Hierarchy")) {
-                if (ImGui::BeginListBox("##Hierarchy", ImVec2(-1, -1))) {
-                    for (auto &gameObjectPair: *pGameObjectsMap) {
-                        auto &gameObject = gameObjectPair.second;
-                        if (ImGui::Selectable(gameObject.getName().c_str())) {
-                            selectedId = gameObjectPair.first;
-                            bSelected = true;
-                        }
-                    }
-                    ImGui::EndListBox();
-                }
+                ShowHierarchyTree(hierarchyTree->GetRoot());
                 ImGui::TreePop();
             }
             ImGui::End();
@@ -190,18 +180,21 @@ namespace Kaamoo {
                 if (ImGui::TreeNode("Transform")) {
                     ImGui::Text("Position:");
                     ImGui::SameLine(90);
-                    ImGui::InputFloat3("##Position", &gameObject.transform->translation.x);
+                    glm::vec3 tempPosition = gameObject.transform->GetTranslation();
+                    ImGui::InputFloat3("##Position", &tempPosition.x);
+                    gameObject.transform->SetTranslation(tempPosition);
 
                     ImGui::Text("Rotation:");
                     ImGui::SameLine(90);
-                    glm::vec3 rotationByDegrees = glm::degrees(gameObject.transform->rotation);
+                    glm::vec3 rotationByDegrees = glm::degrees(gameObject.transform->GetRotation());
                     ImGui::InputFloat3("##Rotation", &rotationByDegrees.x);
-                    gameObject.transform->rotation = glm::radians(rotationByDegrees);
+                    gameObject.transform->SetRotation(glm::radians(rotationByDegrees));
 
                     ImGui::Text("Scale:");
                     ImGui::SameLine(90);
-                    ImGui::InputFloat3("##Scale", &gameObject.transform->scale.x);
-
+                    glm::vec3 tempScale = gameObject.transform->GetScale();
+                    ImGui::InputFloat3("##Scale", &tempScale.x);
+                    gameObject.transform->SetScale(tempScale);
                     ImGui::TreePop();
                 }
 
@@ -209,7 +202,7 @@ namespace Kaamoo {
                     for (auto &component: gameObject.getComponents()) {
                         if (component->GetName() == ComponentName::TransformComponent)continue;
                         if (ImGui::TreeNode(component->GetName().c_str())) {
-                            component->SetUI(pMaterialsMap,frameInfo);
+                            component->SetUI(pMaterialsMap, frameInfo);
                             ImGui::TreePop();
                         }
                     }
@@ -218,6 +211,7 @@ namespace Kaamoo {
             }
             ImGui::End();
         }
+
 #endif
 
         static void EndFrame(VkCommandBuffer &commandBuffer) {
@@ -230,5 +224,40 @@ namespace Kaamoo {
         inline static VkDescriptorPool imguiDescPool{};
         inline static bool bSelected;
         inline static id_t selectedId = -1;
+
+        static void ShowPerformance(FrameInfo &frameInfo) {
+            if (ImGui::TreeNode("Performance")) {
+                char fpsText[50];
+                std::string framePerSecondStr = std::to_string(static_cast<int>(1.0f / (frameInfo.frameTime)));
+                sprintf(fpsText, "FPS: %s", framePerSecondStr.c_str());
+                ImGui::Text(fpsText);
+
+                ImGui::TreePop();
+            }
+        }
+
+        static void ShowHierarchyTree(HierarchyTree::Node *node) {
+            for (auto &child: node->children) {
+                if (!child->children.empty()) {
+                    if (ImGui::TreeNodeEx(child->gameObject->getName().c_str(),
+                                          ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | (selectedId == child->gameObject->getId() ? ImGuiTreeNodeFlags_Selected : 0))) {
+                        if (ImGui::IsItemClicked()) {
+                            selectedId = child->gameObject->getId();
+                            bSelected = true;
+                        }
+                        ShowHierarchyTree(child);
+                        ImGui::TreePop();
+                    }
+                } else {
+                    ImGui::TreeNodeEx(child->gameObject->getName().c_str(),
+                                      ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth |
+                                      (selectedId == child->gameObject->getId() ? ImGuiTreeNodeFlags_Selected : 0));
+                    if (ImGui::IsItemClicked()) {
+                        selectedId = child->gameObject->getId();
+                        bSelected = true;
+                    }
+                }
+            }
+        }
     };
 }

@@ -37,7 +37,7 @@ namespace Kaamoo {
                 auto *meshRendererComponent = new MeshRendererComponent(modelFromFile, material->getMaterialId());
                 m_axisObjPtr = std::make_shared<GameObject>(std::move(GameObject::createGameObject("Axis")));
                 m_axisObjPtr->TryAddComponent(meshRendererComponent);
-                m_axisObjPtr->transform->scale = glm::vec3(0.4f);
+                m_axisObjPtr->transform->SetScale(glm::vec3(0.4f));
                 m_axisMaterial = std::make_shared<Material>(*material);
                 const std::string vertexShaderPath = GIZMOS_SHADER_PATH + axisVertexShaderName;
                 const std::string fragmentShaderPath = GIZMOS_SHADER_PATH + axisFragmentShaderName;

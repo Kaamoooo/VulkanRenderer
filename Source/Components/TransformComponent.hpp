@@ -24,6 +24,11 @@ namespace Kaamoo {
             translation += t;
         }
 
+        void AddChild(TransformComponent *child) {
+            childrenNodes.push_back(child);
+            child->parentNode = this;
+        }
+
         glm::mat3 normalMatrix() {
             glm::mat3 invScaleMatrix = glm::mat4{1.f};
             const glm::vec3 invScale = 1.0f / scale;
@@ -41,19 +46,75 @@ namespace Kaamoo {
 
         glm::mat4 mat4() const {
 
-            auto transform = glm::translate(glm::mat4{1.f}, translation);
+            auto transform = glm::translate(glm::mat4{1.f}, GetTranslation());
 
-            transform = glm::rotate(transform, rotation.y, {0, 1, 0});
-            transform = glm::rotate(transform, rotation.x, {1, 0, 0});
-            transform = glm::rotate(transform, rotation.z, {0, 0, 1});
+            auto worldRotation = GetRotation();
+            transform = glm::rotate(transform, worldRotation.x, {0, 1, 0});
+            transform = glm::rotate(transform, worldRotation.x, {1, 0, 0});
+            transform = glm::rotate(transform, worldRotation.z, {0, 0, 1});
 
-            transform = glm::scale(transform, scale);
+            transform = glm::scale(transform, GetScale());
             return transform;
         }
 
+        void SetTransformId(int32_t id) {
+            transformId = id;
+        }
+
+        int32_t GetTransformId() const {
+            return transformId;
+        }
+
+        void SetTranslation(glm::vec3 t) {
+            translation = t;
+        }
+
+        glm::vec3 GetTranslation() const {
+            if (parentNode != nullptr && transformId != -1)
+                return translation + parentNode->GetTranslation();
+            return translation;
+        }
+        
+        glm::vec3 GetRelativeTranslation() const {
+            return translation;
+        }
+
+        void SetScale(glm::vec3 s) {
+            scale = s;
+        }
+
+        glm::vec3 GetScale() const {
+            if (parentNode != nullptr && transformId != -1)
+                return scale * parentNode->GetScale();
+            return scale;
+        }
+        
+        glm::vec3 GetRelativeScale() const {
+            return scale;
+        }
+
+        void SetRotation(glm::vec3 r) {
+            rotation = r;
+        }
+
+        glm::vec3 GetRotation() const {
+            if (parentNode != nullptr && transformId != -1)
+                return rotation + parentNode->GetRotation();
+            return rotation;
+        }
+        
+        glm::vec3 GetRelativeRotation() const {
+            return rotation;
+        }
+
+    private:
+
+        int32_t transformId = -1;
         glm::vec3 translation{};
         glm::vec3 scale{1.f, 1.f, 1.f};
         glm::vec3 rotation{};
+        TransformComponent *parentNode{nullptr};
+        std::vector<TransformComponent *> childrenNodes{};
     };
 }
 

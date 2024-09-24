@@ -1,14 +1,5 @@
 [
   {
-    "name": "Vase",
-    "transform": {
-      "translation": [0,0,0],
-      "scale": [2.5,2.5,2.5],
-      "rotation": [0,0,0]
-    },
-    "componentIds":[0,1]
-  },
-  {
     "name": "Ground",
     "transform": {
       "translation": [0,0,0],
@@ -38,6 +29,7 @@
   {
     "name": "Cube",
     "transform": {
+      "id": 1,
       "translation": [1.5,-0.5,0],
       "scale": [0.1,0.3,0.1],
       "rotation": [0,0,0]
@@ -70,5 +62,16 @@
       "rotation": [0,0,0]
     },
     "componentIds":[9,10]
+  },
+  {
+    "name": "Vase",
+    "transform": {
+      "id": 0,
+      "childrenIds": [1],
+      "translation": [0,0,0],
+      "scale": [2.5,2.5,2.5],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[0,1]
   }
 ]

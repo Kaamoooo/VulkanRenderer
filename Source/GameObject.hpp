@@ -112,6 +112,77 @@ namespace Kaamoo {
 
         GameObject(id_t id, std::string name = "GameObject") : id{id}, name{std::move(name)} {};
     };
+
+    class HierarchyTree {
+    public:
+        struct Node {
+            int id;
+            GameObject *gameObject;
+            int parentTransformId;
+            std::vector<Node *> children;
+        };
+        static const int ROOT_ID = -1;
+        static const int DEFAULT_TRANSFORM_ID = -2;
+
+        HierarchyTree() {
+            m_root = new Node{ROOT_ID, nullptr};
+        };
+
+        Node *GetRoot() {
+            return m_root;
+        }
+
+        bool AddNode(int parentId, int childId, GameObject *childGameObject) {
+
+            auto parentNode = FindNode(parentId, m_root);
+
+            if (parentNode == nullptr) {
+                auto node = new Node{childId, childGameObject, parentId};
+                m_fakeNodes.push_back(node);
+                m_root->children.push_back(node);
+            } else {
+                auto node = new Node{childId, childGameObject};
+                parentNode->children.push_back(node);
+                for (auto &fakeNode: m_fakeNodes) {
+                    if (childGameObject->transform->GetTransformId() == fakeNode->parentTransformId) {
+                        node->children.push_back(fakeNode);
+                        auto it = std::find_if(m_root->children.begin(), m_root->children.end(), [&fakeNode](const Node *node) {
+                            return node->id == fakeNode->id;
+                        });
+                        if (it != m_root->children.end()) {
+                            m_root->children.erase(it);
+                        }
+
+                        it = std::find(m_fakeNodes.begin(), m_fakeNodes.end(), fakeNode);
+                        if (it != m_fakeNodes.end()) {
+                            m_fakeNodes.erase(it);
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+
+    private:
+        Node *m_root = nullptr;
+        std::vector<Node *> m_fakeNodes;
+
+        Node *FindNode(int id, Node *tmpNode) {
+            if (tmpNode->id == id) {
+                return tmpNode;
+            }
+            for (auto &child: tmpNode->children) {
+                auto node = FindNode(id, child);
+                if (node != nullptr) {
+                    return node;
+                }
+            }
+            return nullptr;
+        }
+    };
+
 }
 
 #endif

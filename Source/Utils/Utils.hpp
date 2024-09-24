@@ -4,6 +4,7 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <iomanip>
+#include <algorithm>
 
 namespace Kaamoo {
     using id_t = unsigned int;
