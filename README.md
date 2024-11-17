@@ -101,3 +101,5 @@
 8.26 Released v0.1.0
 
 9.24 Completed GameObjects hierarchy. There are parent and child objects now, and their transforms will be synchronized.
+
+11.17 Optimized synchronization between frames. In ray tracing rendering, the flickering while moving or rotating the camera is fixed.

@@ -37,15 +37,14 @@ namespace Kaamoo {
 
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent(), false};
-                frameInfo.selectedGameObjectId = GUI::GetSelectedId();
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent(), GUI::GetSelectedId(), false};
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
 
 #ifdef RAY_TRACING
                 GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
                 GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects, &m_pGameObjectDescs,&m_hierarchyTree, frameInfo);
+                                &m_gameObjects, &m_pGameObjectDescs, &m_hierarchyTree, frameInfo);
                 m_pGameObjectDescBuffer->writeToBuffer(m_pGameObjectDescs.data(), m_pGameObjectDescs.size() * sizeof(GameObjectDesc));
 
                 m_rayTracingSystem->UpdateGlobalUboBuffer(ubo, frameIndex);

@@ -585,12 +585,11 @@ namespace Kaamoo {
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT|VK_ACCESS_SHADER_READ_BIT;
         barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
         barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = m_offscreenImageColors[imageIndex]->getImage();
 
         VkImageSubresourceRange subresourceRange{};
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -605,7 +604,7 @@ namespace Kaamoo {
         srcStage = VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
         dstStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
-
+        barrier.image = m_offscreenImageColors[imageIndex]->getImage();
         vkCmdPipelineBarrier(commandBuffer,
                              srcStage, dstStage,
                              0,

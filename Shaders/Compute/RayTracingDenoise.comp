@@ -87,6 +87,7 @@ void main() {
     if (length(viewPos.xyz - lastFrameViewPos.xyz) > 0) {
         if (isUVValid(lastFrameUv)) {
             denoisingAccumulation.xyz = 0.01 * denoisedLastFrameColor.xyz * 5;
+//            denoisingAccumulation.xyz = 0.01 * denoisedCurrentFrameColor.xyz * 5;
             denoisingAccumulation.w = 0.01 * 5;
         } else {
             denoisingAccumulation.xyz = vec3(0);

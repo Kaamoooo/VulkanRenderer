@@ -1,5 +1,4 @@
-﻿#ifndef INPUT_CONTROLLER_COMPONENT_INCLUDED
-#define INPUT_CONTROLLER_COMPONENT_INCLUDED
+﻿#pragma once
 
 #include <string>
 #include <glm/vec3.hpp>
@@ -18,8 +17,7 @@ namespace Kaamoo {
             deltaPos = glm::vec2{0};
             curPos = glm::vec2{0};
             lastPos = glm::vec2{0};
-            mouseMoved = false;
-            mousePressed = false;
+            leftMousePressed = false;
             width = 0;
             height = 0;
             name = "InputControllerComponent";
@@ -53,13 +51,9 @@ namespace Kaamoo {
 
     protected:
         GLFWwindow *window;
-
-        float moveSpeed{3.f};
-        float lookSpeed{1.5f};
-        float mouseSensitivity{0.01f};
-
-        inline static bool mousePressed;
-        inline static bool mouseMoved;
+        
+        inline static bool leftMousePressed;
+        inline static bool rightMousePressed;
         inline static int width, height;
 
         inline static glm::vec2 lastPos;
@@ -69,8 +63,7 @@ namespace Kaamoo {
 
     private:
         static void cursor_position_callback(GLFWwindow *, double xpos, double ypos) {
-            if (mousePressed) {
-                mouseMoved = true;
+            if (rightMousePressed) {
                 lastPos = curPos;
                 curPos = glm::vec2{xpos / width, ypos / height};
                 deltaPos = curPos - lastPos;
@@ -80,17 +73,19 @@ namespace Kaamoo {
         static void mouse_button_callback(GLFWwindow *, int button, int action, int mods) {
             if (action == GLFW_PRESS) {
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    mousePressed = true;
-                    if (glm::dot(deltaPos, deltaPos) > std::numeric_limits<float>::epsilon()) {
-                        deltaPos = glm::normalize(curPos - lastPos);
-                        mouseMoved = true;
-                    } else {
-                        mouseMoved = false;
-                    }
+                    leftMousePressed = true;
                 }
-            } else if (action == GLFW_RELEASE) {
+                if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                    rightMousePressed = true;
+                }
+            }
+            
+            if (action == GLFW_RELEASE) {
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    mousePressed = false;
+                    leftMousePressed = false;
+                }
+                if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                    rightMousePressed = false;
                     lastPos = glm::vec2{0};
                     curPos = glm::vec2{0};
                     deltaPos = glm::vec2{0};
@@ -99,5 +94,3 @@ namespace Kaamoo {
         }
     };
 }
-
-#endif

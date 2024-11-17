@@ -65,10 +65,11 @@ namespace Kaamoo {
     }
 
     VkResult SwapChain::acquireNextImage(uint32_t *imageIndex) {
+        uint32_t lastFrameIndex = (MAX_FRAMES_IN_FLIGHT + currentFrame - 1) % MAX_FRAMES_IN_FLIGHT;
         vkWaitForFences(
                 device.device(),
                 1,
-                &inFlightFences[currentFrame],
+                &inFlightFences[lastFrameIndex],
                 VK_TRUE,
                 std::numeric_limits<uint64_t>::max());
 
@@ -114,14 +115,12 @@ namespace Kaamoo {
 
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
         VkSwapchainKHR swapChains[] = {swapChain};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
-
         presentInfo.pImageIndices = imageIndex;
 
         auto result = vkQueuePresentKHR(device.presentQueue(), &presentInfo);

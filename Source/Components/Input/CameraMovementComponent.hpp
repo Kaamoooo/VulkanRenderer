@@ -12,18 +12,15 @@ namespace Kaamoo {
         void Update(const ComponentUpdateInfo &updateInfo) override {
             glm::vec3 rotation{0};
 
-            if (mousePressed && mouseMoved) {
-                rotation.x += deltaPos.y;
-                rotation.y -= deltaPos.x;
-                mouseMoved = false;
+            if (rightMousePressed) {
+                rotation.x -= deltaPos.y;
+                rotation.y += deltaPos.x;
             }
 
             //防止没有按下按键时，对0归一化导致错误   
             if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
-
                 updateInfo.gameObject->transform->SetRotation(glm::normalize(rotation) * lookSpeed * updateInfo.frameInfo->frameTime + updateInfo.gameObject->transform->GetRotation());
             }
-
 
             auto transformRotation = updateInfo.gameObject->transform->GetRotation();
             auto forwardDirMatrix = Utils::GetRotateDirectionMatrix(transformRotation);
@@ -45,7 +42,13 @@ namespace Kaamoo {
             if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
                 updateInfo.gameObject->transform->SetTranslation(glm::normalize(moveDir) * moveSpeed * updateInfo.frameInfo->frameTime + updateInfo.gameObject->transform->GetTranslation());
             }
+
+            deltaPos = glm::vec2{0};
         }
+
+    private:
+        float lookSpeed{1.5f};
+        float moveSpeed{3.f};
 
     };
 }
