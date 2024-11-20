@@ -39,7 +39,8 @@ namespace Kaamoo {
         indexReference = modelIndex++;
         createVertexBuffers(builder.vertices);
         createIndexBuffers(builder.indices);
-
+        m_vertices = builder.vertices;
+        m_indices = builder.indices;
     }
 
     void Model::draw(VkCommandBuffer commandBuffer) {
@@ -58,33 +59,6 @@ namespace Kaamoo {
         if (hasIndexBuffer) {
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
         }
-    }
-
-    void Model::createVertexBuffers(const std::vector<Vertex> &vertices) {
-        vertexCount = static_cast<uint32_t>(vertices.size());
-
-        assert(vertexCount >= 3 && "vertex count must be at least 3");
-        uint32_t vertexSize = sizeof(vertices[0]);
-        uint32_t bufferSize = vertexSize * vertexCount;
-
-        Buffer stagingBuffer(device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-        stagingBuffer.map();
-        stagingBuffer.writeToBuffer((void *) vertices.data());
-
-#ifdef RAY_TRACING
-        vertexBuffer = std::make_unique<Buffer>(
-                device, vertexSize, vertexCount,
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | rayTracingFlags,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-        );
-#else
-        vertexBuffer = std::make_unique<Buffer>(
-                device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-        );
-#endif
-        device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
     }
 
     void Model::createIndexBuffers(const std::vector<uint32_t> &indices) {
@@ -114,13 +88,6 @@ namespace Kaamoo {
 
         device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
     }
-
-    std::unique_ptr<Model> Model::createModelFromFile(Device &device, const std::string &filePath) {
-        Builder builder{};
-        builder.loadModel(filePath);
-        return std::make_unique<Model>(device, builder);
-    }
-
 
     std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
@@ -153,7 +120,6 @@ namespace Kaamoo {
             throw std::runtime_error(warn + err);
         }
 
-        //使用无序表存储vertex与index的对应关系
         std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
         for (const auto &shape: shapes) {
@@ -227,6 +193,6 @@ namespace Kaamoo {
                 indices.push_back(uniqueVertices[vertex]);
             }
         }
-
+        
     }
 }

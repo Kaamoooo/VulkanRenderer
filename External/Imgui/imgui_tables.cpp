@@ -788,7 +788,7 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
     table->MinColumnWidth = ImMax(1.0f, g.Style.FramePadding.x * 1.0f); // g.Style.ColumnsMinSpacing; // FIXME-TABLE
 
     // [Part 1] Apply/lock Enabled and Order states. Calculate auto/ideal m_windowWidth for columns. Count fixed/stretch columns.
-    // Process columns in their visible orders as we are building the Prev/Next indices.
+    // Process columns in their visible orders as we are building the Prev/Next m_indices.
     int count_fixed = 0;                // Number of columns that have fixed sizing policies
     int count_stretch = 0;              // Number of columns that have stretch sizing policies
     int prev_visible_column_idx = -1;
@@ -1386,7 +1386,7 @@ void    ImGui::EndTable()
     // Strip out dummy channel draw calls
     // We have no way to prevent user submitting direct ImDrawList calls into a hidden column (but ImGui:: calls will be clipped out)
     // Pros: remove draw calls which will have no effect. since they'll have zero-size cliprect they may be early out anyway.
-    // Cons: making it harder for users watching metrics/debugger to spot the wasted vertices.
+    // Cons: making it harder for users watching metrics/debugger to spot the wasted m_vertices.
     if (table->DummyDrawChannel != (ImGuiTableColumnIdx)-1)
     {
         ImDrawChannel* dummy_channel = &table->DrawSplitter._Channels[table->DummyDrawChannel];

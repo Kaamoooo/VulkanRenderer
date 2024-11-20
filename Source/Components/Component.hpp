@@ -26,8 +26,11 @@ namespace Kaamoo {
         RendererInfo *rendererInfo;
     };
 
+    const float FIXED_UPDATE_INTERVAL = 0.01;
+
     class Component {
     public:
+
         virtual std::string GetName() { return name; }
 
         virtual ~Component() = default;
@@ -42,10 +45,13 @@ namespace Kaamoo {
 
         virtual void Update(const ComponentUpdateInfo &updateInfo) {};
 
+        virtual void FixedUpdate(const ComponentUpdateInfo &updateInfo) {};
+
         virtual void LateUpdate(const ComponentUpdateInfo &updateInfo) {};
 
 #ifdef RAY_TRACING
-        virtual void SetUI(std::vector<GameObjectDesc>*,FrameInfo& frameInfo){};
+
+        virtual void SetUI(std::vector<GameObjectDesc> *, FrameInfo &frameInfo) {};
 #else
 
         virtual void SetUI(Material::Map *, FrameInfo &frameInfo) {};

@@ -40,9 +40,18 @@
     "componentIds":[14]
   },
   {
+    "name": "Vase",
+    "transform": {
+      "translation": [0,0,-2],
+      "scale": [2,2,2],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[16,15]
+  },
+  {
     "name": "Ground",
     "transform": {
-      "translation": [0,1,0],
+      "translation": [0,0,0],
       "scale": [4,1,4],
       "rotation": [0,0,180]
     },

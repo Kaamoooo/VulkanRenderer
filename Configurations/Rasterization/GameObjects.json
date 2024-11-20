@@ -34,7 +34,7 @@
       "scale": [0.1,0.3,0.1],
       "rotation": [0,0,0]
     },
-    "componentIds":[5]
+    "componentIds":[5,11]
   },
   {
     "name": "PointLight",

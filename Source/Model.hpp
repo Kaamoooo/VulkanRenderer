@@ -39,12 +39,15 @@ namespace Kaamoo {
         struct Builder {
             std::vector<Vertex> vertices{};
             std::vector<uint32_t> indices{};
-            glm::vec3 scaleOrigin;
 
             void loadModel(const std::string &filePath);
         };
 
-        static std::unique_ptr<Model> createModelFromFile(Device &device, const std::string &filePath);
+        static std::unique_ptr<Model> createModelFromFile(Device &device, const std::string &filePath) {
+            Builder builder;
+            builder.loadModel(filePath);
+            return std::make_unique<Model>(device, builder);
+        }
 
         Model(Device &device, const Builder &builder);
 
@@ -68,10 +71,54 @@ namespace Kaamoo {
 
         std::string GetName() const { return name; }
 
-    private:
-        void createVertexBuffers(const std::vector<Vertex> &vertices);
+        std::vector<Vertex> &GetVertices() { return m_vertices; }
+
+        std::vector<uint32_t> &GetIndices() { return m_indices; }
+        
+        void RefreshVertexBuffer(const std::vector<Vertex> &vertices){
+            vertexCount = static_cast<uint32_t>(vertices.size());
+
+            uint32_t vertexSize = sizeof(vertices[0]);
+            uint32_t bufferSize = vertexSize * vertexCount;
+
+            Buffer stagingBuffer(device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            stagingBuffer.map();
+            stagingBuffer.writeToBuffer((void *) vertices.data());
+            
+            device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
+        }
+        
+        void createVertexBuffers(const std::vector<Vertex> &vertices){
+            vertexCount = static_cast<uint32_t>(vertices.size());
+
+            assert(vertexCount >= 3 && "vertex count must be at least 3");
+            uint32_t vertexSize = sizeof(vertices[0]);
+            uint32_t bufferSize = vertexSize * vertexCount;
+
+            Buffer stagingBuffer(device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            stagingBuffer.map();
+            stagingBuffer.writeToBuffer((void *) vertices.data());
+
+#ifdef RAY_TRACING
+            vertexBuffer = std::make_unique<Buffer>(
+                device, vertexSize, vertexCount,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | rayTracingFlags,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
+#else
+            vertexBuffer = std::make_unique<Buffer>(
+                    device, vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            );
+#endif
+            device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
+        }
 
         void createIndexBuffers(const std::vector<uint32_t> &indices);
+
+    private:
 
 #ifdef RAY_TRACING
         const VkBufferUsageFlags flags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
@@ -81,6 +128,7 @@ namespace Kaamoo {
 #endif
 
         Device &device;
+        std::string name;
 
         std::unique_ptr<Buffer> vertexBuffer;
         uint32_t vertexCount{};
@@ -91,6 +139,7 @@ namespace Kaamoo {
 
         uint32_t indexReference;
 
-        std::string name;
+        std::vector<Vertex> m_vertices{};
+        std::vector<uint32_t> m_indices{};
     };
 }

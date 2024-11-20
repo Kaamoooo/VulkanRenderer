@@ -625,7 +625,7 @@ void ImDrawList::PopTextureID()
     _OnChangedTextureID();
 }
 
-// Reserve space for a number of vertices and indices.
+// Reserve space for a number of m_vertices and m_indices.
 // You must finish filling your reserved data before calling PrimReserve() again, as it may reallocate or
 // submit the intermediate results. PrimUnreserve() can be used to release unused allocations.
 void ImDrawList::PrimReserve(int idx_count, int vtx_count)
@@ -653,7 +653,7 @@ void ImDrawList::PrimReserve(int idx_count, int vtx_count)
     _IdxWritePtr = IdxBuffer.Data + idx_buffer_old_size;
 }
 
-// Release the number of reserved vertices/indices from the end of the last reservation made with PrimReserve().
+// Release the number of reserved m_vertices/m_indices from the end of the last reservation made with PrimReserve().
 void ImDrawList::PrimUnreserve(int idx_count, int vtx_count)
 {
     IM_ASSERT_PARANOID(idx_count >= 0 && vtx_count >= 0);
@@ -770,7 +770,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
         if (!closed)
             temp_normals[points_count - 1] = temp_normals[points_count - 2];
 
-        // If we are drawing a one-pixel-wide line without a texture, or a textured line of any m_windowWidth, we only need 2 or 3 vertices per point
+        // If we are drawing a one-pixel-wide line without a texture, or a textured line of any m_windowWidth, we only need 2 or 3 m_vertices per point
         if (use_texture || !thick_line)
         {
             // [PATH 1] Texture-based lines (thick or non-thick)
@@ -792,7 +792,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
                 temp_points[(points_count-1)*2+1] = points[points_count-1] - temp_normals[points_count-1] * half_draw_size;
             }
 
-            // Generate the indices to form a number of triangles for each line segment, and the vertices for the line edges
+            // Generate the m_indices to form a number of triangles for each line segment, and the m_vertices for the line edges
             // This takes points n and n+1 and writes into n+1, with the first point in a closed line being generated from the final one (as n+1 wraps)
             // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
             unsigned int idx1 = _VtxCurrentIdx; // Vertex index for start of line segment
@@ -817,7 +817,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
 
                 if (use_texture)
                 {
-                    // Add indices for two triangles
+                    // Add m_indices for two triangles
                     _IdxWritePtr[0] = (ImDrawIdx)(idx2 + 0); _IdxWritePtr[1] = (ImDrawIdx)(idx1 + 0); _IdxWritePtr[2] = (ImDrawIdx)(idx1 + 1); // Right tri
                     _IdxWritePtr[3] = (ImDrawIdx)(idx2 + 1); _IdxWritePtr[4] = (ImDrawIdx)(idx1 + 1); _IdxWritePtr[5] = (ImDrawIdx)(idx2 + 0); // Left tri
                     _IdxWritePtr += 6;
@@ -838,7 +838,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
             // Add vertexes for each point on the line
             if (use_texture)
             {
-                // If we're using textures we only need to emit the left/right edge vertices
+                // If we're using textures we only need to emit the left/right edge m_vertices
                 ImVec4 tex_uvs = _Data->TexUvLines[integer_thickness];
                 /*if (fractional_thickness != 0.0f) // Currently always zero when use_texture==false!
                 {
@@ -871,7 +871,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
         }
         else
         {
-            // [PATH 2] Non texture-based lines (thick): we need to draw the solid line core and thus require four vertices per point
+            // [PATH 2] Non texture-based lines (thick): we need to draw the solid line core and thus require four m_vertices per point
             const float half_inner_thickness = (thickness - AA_SIZE) * 0.5f;
 
             // If line is not closed, the first and last points need to be generated differently as there are no normals to blend
@@ -888,7 +888,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
                 temp_points[points_last * 4 + 3] = points[points_last] - temp_normals[points_last] * (half_inner_thickness + AA_SIZE);
             }
 
-            // Generate the indices to form a number of triangles for each line segment, and the vertices for the line edges
+            // Generate the m_indices to form a number of triangles for each line segment, and the m_vertices for the line edges
             // This takes points n and n+1 and writes into n+1, with the first point in a closed line being generated from the final one (as n+1 wraps)
             // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
             unsigned int idx1 = _VtxCurrentIdx; // Vertex index for start of line segment
@@ -906,7 +906,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
                 float dm_in_x = dm_x * half_inner_thickness;
                 float dm_in_y = dm_y * half_inner_thickness;
 
-                // Add temporary vertices
+                // Add temporary m_vertices
                 ImVec2* out_vtx = &temp_points[i2 * 4];
                 out_vtx[0].x = points[i2].x + dm_out_x;
                 out_vtx[0].y = points[i2].y + dm_out_y;
@@ -929,7 +929,7 @@ void ImDrawList::AddPolyline(const ImVec2* points, const int points_count, ImU32
                 idx1 = idx2;
             }
 
-            // Add vertices
+            // Add m_vertices
             for (int i = 0; i < points_count; i++)
             {
                 _VtxWritePtr[0].pos = temp_points[i * 4 + 0]; _VtxWritePtr[0].uv = opaque_uv; _VtxWritePtr[0].col = col_trans;
@@ -1026,7 +1026,7 @@ void ImDrawList::AddConvexPolyFilled(const ImVec2* points, const int points_coun
             dm_x *= AA_SIZE * 0.5f;
             dm_y *= AA_SIZE * 0.5f;
 
-            // Add vertices
+            // Add m_vertices
             _VtxWritePtr[0].pos.x = (points[i1].x - dm_x); _VtxWritePtr[0].pos.y = (points[i1].y - dm_y); _VtxWritePtr[0].uv = uv; _VtxWritePtr[0].col = col;        // Inner
             _VtxWritePtr[1].pos.x = (points[i1].x + dm_x); _VtxWritePtr[1].pos.y = (points[i1].y + dm_y); _VtxWritePtr[1].uv = uv; _VtxWritePtr[1].col = col_trans;  // Outer
             _VtxWritePtr += 2;
@@ -1887,7 +1887,7 @@ void ImTriangulator::FlipNodeList()
     _Nodes = prev;
 }
 
-// A triangle is an ear is no other vertex is inside it. We can test reflexes vertices only (see reference algorithm)
+// A triangle is an ear is no other vertex is inside it. We can test reflexes m_vertices only (see reference algorithm)
 bool ImTriangulator::IsEar(int i0, int i1, int i2, const ImVec2& v0, const ImVec2& v1, const ImVec2& v2) const
 {
     ImTriangulatorNode** p_end = _Reflexes.Data + _Reflexes.Size;
@@ -1988,7 +1988,7 @@ void ImDrawList::AddConcavePolyFilled(const ImVec2* points, const int points_cou
             dm_x *= AA_SIZE * 0.5f;
             dm_y *= AA_SIZE * 0.5f;
 
-            // Add vertices
+            // Add m_vertices
             _VtxWritePtr[0].pos.x = (points[i1].x - dm_x); _VtxWritePtr[0].pos.y = (points[i1].y - dm_y); _VtxWritePtr[0].uv = uv; _VtxWritePtr[0].col = col;        // Inner
             _VtxWritePtr[1].pos.x = (points[i1].x + dm_x); _VtxWritePtr[1].pos.y = (points[i1].y + dm_y); _VtxWritePtr[1].uv = uv; _VtxWritePtr[1].col = col_trans;  // Outer
             _VtxWritePtr += 2;
@@ -2119,7 +2119,7 @@ void ImDrawListSplitter::Merge(ImDrawList* draw_list)
     draw_list->CmdBuffer.resize(draw_list->CmdBuffer.Size + new_cmd_buffer_count);
     draw_list->IdxBuffer.resize(draw_list->IdxBuffer.Size + new_idx_buffer_count);
 
-    // Write commands and indices in order (they are fairly small structures, we don't copy vertices only indices)
+    // Write commands and m_indices in order (they are fairly small structures, we don't copy m_vertices only m_indices)
     ImDrawCmd* cmd_write = draw_list->CmdBuffer.Data + draw_list->CmdBuffer.Size - new_cmd_buffer_count;
     ImDrawIdx* idx_write = draw_list->IdxBuffer.Data + draw_list->IdxBuffer.Size - new_idx_buffer_count;
     for (int i = 1; i < _Count; i++)
@@ -2197,23 +2197,23 @@ void ImGui::AddDrawListToDrawDataEx(ImDrawData* draw_data, ImVector<ImDrawList*>
     if (!(draw_list->Flags & ImDrawListFlags_AllowVtxOffset))
         IM_ASSERT((int)draw_list->_VtxCurrentIdx == draw_list->VtxBuffer.Size);
 
-    // Check that draw_list doesn't use more vertices than indexable (default ImDrawIdx = unsigned short = 2 bytes = 64K vertices per ImDrawList = per window)
+    // Check that draw_list doesn't use more m_vertices than indexable (default ImDrawIdx = unsigned short = 2 bytes = 64K m_vertices per ImDrawList = per window)
     // If this assert triggers because you are drawing lots of stuff manually:
     // - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
-    //   Be mindful that the lower-level ImDrawList API doesn't filter vertices. Use the Metrics/Debugger window to inspect draw list contents.
-    // - If you want large meshes with more than 64K vertices, you can either:
+    //   Be mindful that the lower-level ImDrawList API doesn't filter m_vertices. Use the Metrics/Debugger window to inspect draw list contents.
+    // - If you want large meshes with more than 64K m_vertices, you can either:
     //   (A) Handle the ImDrawCmd::VtxOffset value in your m_renderer backend, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
     //       Most example backends already support this from 1.71. Pre-1.71 backends won't.
     //       Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
-    //   (B) Or handle 32-bit indices in your m_renderer backend, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
+    //   (B) Or handle 32-bit m_indices in your m_renderer backend, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
     //       Most example backends already support this. For example, the OpenGL example code detect index size at compile-time:
     //         glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
     //       Your own engine or render API may use different parameters or function calls to specify index sizes.
-    //       2 and 4 bytes indices are generally supported by most graphics API.
+    //       2 and 4 bytes m_indices are generally supported by most graphics API.
     // - If for some reason neither of those solutions works for you, a workaround is to call BeginChild()/EndChild() before reaching
     //   the 64K limit to split your draw commands in multiple draw lists.
     if (sizeof(ImDrawIdx) == 2)
-        IM_ASSERT(draw_list->_VtxCurrentIdx < (1 << 16) && "Too many vertices in ImDrawList using 16-bit indices. Read comment above");
+        IM_ASSERT(draw_list->_VtxCurrentIdx < (1 << 16) && "Too many m_vertices in ImDrawList using 16-bit m_indices. Read comment above");
 
     // Add to output list + records state in ImDrawData
     out_list->push_back(draw_list);
@@ -2685,7 +2685,7 @@ bool    ImFontAtlas::Build()
     if (ConfigData.Size == 0)
         AddFontDefault();
 
-    // Select builder
+    // Select m_builder
     // - Note that we do not reassign to atlas->FontBuilderIO, since it is likely to point to static data which
     //   may mess with some hot-reloading schemes. If you need to assign to this (for dynamic selection) AND are
     //   using a hot-reloading scheme that messes up static data, store your own instance of ImFontBuilderIO somewhere
@@ -2790,7 +2790,7 @@ static bool ImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas)
         ImFontConfig& cfg = atlas->ConfigData[src_i];
         IM_ASSERT(cfg.DstFont && (!cfg.DstFont->IsLoaded() || cfg.DstFont->ContainerAtlas == atlas));
 
-        // Find index from cfg.DstFont (we allow the user to set cfg.DstFont. Also it makes casual debugging nicer than when storing indices)
+        // Find index from cfg.DstFont (we allow the user to set cfg.DstFont. Also it makes casual debugging nicer than when storing m_indices)
         src_tmp.DstIndex = -1;
         for (int output_i = 0; output_i < atlas->Fonts.Size && src_tmp.DstIndex == -1; output_i++)
             if (cfg.DstFont == atlas->Fonts[output_i])
@@ -3202,7 +3202,7 @@ static void ImFontAtlasBuildRenderLinesTexData(ImFontAtlas* atlas)
     }
 }
 
-// Note: this is called / shared by both the stb_truetype and the FreeType builder
+// Note: this is called / shared by both the stb_truetype and the FreeType m_builder
 void ImFontAtlasBuildInit(ImFontAtlas* atlas)
 {
     // Round font size
@@ -3230,7 +3230,7 @@ void ImFontAtlasBuildInit(ImFontAtlas* atlas)
     }
 }
 
-// This is called/shared by both the stb_truetype and the FreeType builder.
+// This is called/shared by both the stb_truetype and the FreeType m_builder.
 void ImFontAtlasBuildFinish(ImFontAtlas* atlas)
 {
     // Render into our custom data blocks
@@ -4066,7 +4066,7 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, const ImVec2& pos, Im
     if (s == text_end)
         return;
 
-    // Reserve vertices for remaining worse case (over-reserving is useful and easily amortized)
+    // Reserve m_vertices for remaining worse case (over-reserving is useful and easily amortized)
     const int vtx_count_max = (int)(text_end - s) * 4;
     const int idx_count_max = (int)(text_end - s) * 6;
     const int idx_expected_size = draw_list->IdxBuffer.Size + idx_count_max;
@@ -4189,7 +4189,7 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, const ImVec2& pos, Im
         x += char_width;
     }
 
-    // Give back unused vertices (clipped ones, blanks) ~ this is essentially a PrimUnreserve() action.
+    // Give back unused m_vertices (clipped ones, blanks) ~ this is essentially a PrimUnreserve() action.
     draw_list->VtxBuffer.Size = (int)(vtx_write - draw_list->VtxBuffer.Data); // Same as calling shrink()
     draw_list->IdxBuffer.Size = (int)(idx_write - draw_list->IdxBuffer.Data);
     draw_list->CmdBuffer[draw_list->CmdBuffer.Size - 1].ElemCount -= (idx_expected_size - draw_list->IdxBuffer.Size);

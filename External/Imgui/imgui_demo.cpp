@@ -1895,7 +1895,7 @@ static void ShowDemoWindowWidgets()
         }
 
         // Use functions to generate output
-        // FIXME: This is actually VERY awkward because current plot API only pass in indices.
+        // FIXME: This is actually VERY awkward because current plot API only pass in m_indices.
         // We probably want an API passing floats and user provide sample rate/count.
         struct Funcs
         {
@@ -7297,7 +7297,7 @@ struct ExampleAppConsole
             //   without processing all the ones before)
             // You cannot this code as-is if a filter is active because it breaks the 'cheap random-access' property.
             // We would need random-access on the post-filtered list.
-            // A typical application wanting coarse clipping and filtering may want to pre-compute an array of indices
+            // A typical application wanting coarse clipping and filtering may want to pre-compute an array of m_indices
             // or offsets of items that passed the filtering test, recomputing this array when user changes the filter,
             // and appending newly elements as they are inserted. This is left as a task to the user until we can manage
             // to improve this example code!
@@ -8445,7 +8445,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
                 draw_list->AddRectFilled(ImVec2(p1.x + 25, p1.y + 25), ImVec2(p1.x + 75, p1.y + 75), IM_COL32(255, 0, 0, 255)); // Red
 
                 // Flatten/reorder channels. Red shape is in channel 0 and it appears below the Blue shape in channel 1.
-                // This works by copying draw indices only (vertices are not copied).
+                // This works by copying draw m_indices only (m_vertices are not copied).
                 draw_list->ChannelsMerge();
                 ImGui::Dummy(ImVec2(75, 75));
                 ImGui::Text("After reordering, contents of channel 0 appears below channel 1.");

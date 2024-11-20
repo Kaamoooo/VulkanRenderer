@@ -6,6 +6,7 @@
 #include "Components/MeshRendererComponent.hpp"
 #include "Components/LightComponent.hpp"
 #include "Components/RayTracingManagerComponent.hpp"
+#include "Components/RigidBodyComponent.hpp"
 
 namespace Kaamoo {
     struct ComponentName {
@@ -16,6 +17,7 @@ namespace Kaamoo {
         inline static const std::string CameraComponent = "CameraComponent";
         inline static const std::string LightComponent = "LightComponent";
         inline static const std::string RayTracingManagerComponent = "RayTracingManagerComponent";
+        inline static const std::string RigidBodyComponent = "RigidBodyComponent";
     };
 
     class ComponentFactory {
@@ -40,6 +42,7 @@ namespace Kaamoo {
             componentConstructorMap[ComponentName::ObjectMovementComponent] = [](const rapidjson::Value& object)->Component*{return new ObjectMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraMovementComponent] = [](const rapidjson::Value& object)->Component*{return new CameraMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraComponent] = [](const rapidjson::Value& object)->Component*{return new CameraComponent();};
+            componentConstructorMap[ComponentName::RigidBodyComponent] = [](const rapidjson::Value& object)->Component*{return new RigidBodyComponent();};
 #ifdef RAY_TRACING
             componentConstructorMap[ComponentName::RayTracingManagerComponent] = [](const rapidjson::Value& object)->Component*{return new RayTracingManagerComponent();};
 #endif

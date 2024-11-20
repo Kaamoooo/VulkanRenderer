@@ -24,6 +24,10 @@
     "type": "CameraMovementComponent"
   },
   {
+    "id": 11,
+    "type": "RayTracingManagerComponent"
+  },
+  {
     "id": 12,
     "type": "MeshRendererComponent",
     "model": "sphere.obj",
@@ -42,6 +46,16 @@
     "materialId": 6
   },
   {
+    "id": 15,
+    "type": "MeshRendererComponent",
+    "model": "smooth_vase.obj",
+    "materialId": 8
+  },
+  {
+    "id": 16,
+    "type": "RigidBodyComponent"
+  },
+  {
     "id": 50,
     "type": "LightComponent",
     "category": "Directional",
@@ -54,10 +68,6 @@
     "category": "Point",
     "color": [1, 1, 1],
     "intensity": 3
-  },
-  {
-    "id": 11,
-    "type": "RayTracingManagerComponent"
   },
   {
     "id": 60,

@@ -23,6 +23,10 @@ namespace Kaamoo {
         void Translate(glm::vec3 t) {
             translation += t;
         }
+        
+        void Rotate(glm::vec3 r,glm::vec3 rotateCenter = glm::vec3(0.f)) {
+            rotation += r;
+        }
 
         void AddChild(TransformComponent *child) {
             childrenNodes.push_back(child);
@@ -36,12 +40,9 @@ namespace Kaamoo {
             invScaleMatrix[1][1] = invScale.y;
             invScaleMatrix[2][2] = invScale.z;
 
-            auto rotationMatrix = glm::mat4(1.0f);
-            rotationMatrix = glm::rotate(rotationMatrix, rotation.y, {0, 1, 0});
-            rotationMatrix = glm::rotate(rotationMatrix, rotation.x, {1, 0, 0});
-            rotationMatrix = glm::rotate(rotationMatrix, rotation.z, {0, 0, 1});
+            auto rotationMatrix = GetRotationMatrix();
 
-            return glm::mat3(rotationMatrix) * invScaleMatrix;
+            return rotationMatrix * invScaleMatrix;
         }
 
         glm::mat4 mat4() const {
@@ -49,7 +50,7 @@ namespace Kaamoo {
             auto transform = glm::translate(glm::mat4{1.f}, GetTranslation());
 
             auto worldRotation = GetRotation();
-            transform = glm::rotate(transform, worldRotation.x, {0, 1, 0});
+            transform = glm::rotate(transform, worldRotation.y, {0, 1, 0});
             transform = glm::rotate(transform, worldRotation.x, {1, 0, 0});
             transform = glm::rotate(transform, worldRotation.z, {0, 0, 1});
 
@@ -105,6 +106,14 @@ namespace Kaamoo {
         
         glm::vec3 GetRelativeRotation() const {
             return rotation;
+        }
+        
+        glm::mat3 GetRotationMatrix() const {
+            auto rotationMatrix = glm::mat4(1.0f);
+            rotationMatrix = glm::rotate(rotationMatrix, rotation.y, {0, 1, 0});
+            rotationMatrix = glm::rotate(rotationMatrix, rotation.x, {1, 0, 0});
+            rotationMatrix = glm::rotate(rotationMatrix, rotation.z, {0, 0, 1});
+            return glm::mat3(rotationMatrix);
         }
 
     private:

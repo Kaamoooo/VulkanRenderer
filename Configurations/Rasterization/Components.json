@@ -62,6 +62,6 @@
   },
   {
     "id": 11,
-    "type": "RayTracingManagerComponent"
+    "type": "RigidBodyComponent"
   }
 ]

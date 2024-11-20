@@ -1504,9 +1504,9 @@ struct ImGuiListClipperRange
 {
     int     Min;
     int     Max;
-    bool    PosToIndexConvert;      // Begin/End are absolute position (will be converted to indices later)
-    ImS8    PosToIndexOffsetMin;    // Add to Min after converting to indices
-    ImS8    PosToIndexOffsetMax;    // Add to Min after converting to indices
+    bool    PosToIndexConvert;      // Begin/End are absolute position (will be converted to m_indices later)
+    ImS8    PosToIndexOffsetMin;    // Add to Min after converting to m_indices
+    ImS8    PosToIndexOffsetMax;    // Add to Min after converting to m_indices
 
     static ImGuiListClipperRange    FromIndices(int min, int max)                               { ImGuiListClipperRange r = { min, max, false, 0, 0 }; return r; }
     static ImGuiListClipperRange    FromPositions(float y1, float y2, int off_min, int off_max) { ImGuiListClipperRange r = { (int)y1, (int)y2, true, (ImS8)off_min, (ImS8)off_max }; return r; }
@@ -1712,7 +1712,7 @@ struct ImGuiOldColumns
 // [SECTION] Multi-select support
 //-----------------------------------------------------------------------------
 
-// We always assume that -1 is an invalid value (which works for indices and pointers)
+// We always assume that -1 is an invalid value (which works for m_indices and pointers)
 #define ImGuiSelectionUserData_Invalid        ((ImGuiSelectionUserData)-1)
 
 #ifdef IMGUI_HAS_MULTI_SELECT
@@ -3508,7 +3508,7 @@ namespace ImGui
     // Plot
     IMGUI_API int           PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, const ImVec2& size_arg);
 
-    // Shade functions (write over already created vertices)
+    // Shade functions (write over already created m_vertices)
     IMGUI_API void          ShadeVertsLinearColorGradientKeepAlpha(ImDrawList* draw_list, int vert_start_idx, int vert_end_idx, ImVec2 gradient_p0, ImVec2 gradient_p1, ImU32 col0, ImU32 col1);
     IMGUI_API void          ShadeVertsLinearUV(ImDrawList* draw_list, int vert_start_idx, int vert_end_idx, const ImVec2& a, const ImVec2& b, const ImVec2& uv_a, const ImVec2& uv_b, bool clamp);
     IMGUI_API void          ShadeVertsTransformPos(ImDrawList* draw_list, int vert_start_idx, int vert_end_idx, const ImVec2& pivot_in, float cos_a, float sin_a, const ImVec2& pivot_out);
@@ -3582,7 +3582,7 @@ struct ImFontBuilderIO
     bool    (*FontBuilder_Build)(ImFontAtlas* atlas);
 };
 
-// Helper for font builder
+// Helper for font m_builder
 #ifdef IMGUI_ENABLE_STB_TRUETYPE
 IMGUI_API const ImFontBuilderIO* ImFontAtlasGetBuilderForStbTruetype();
 #endif

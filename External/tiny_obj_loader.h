@@ -336,13 +336,13 @@ struct joint_and_weight_t {
 };
 
 struct skin_weight_t {
-  int vertex_id;  // Corresponding vertex index in `attrib_t::vertices`.
+  int vertex_id;  // Corresponding vertex index in `attrib_t::m_vertices`.
                   // Compared to `index_t`, this index must be positive and
                   // start with 0(does not allow relative indexing)
   std::vector<joint_and_weight_t> weightValues;
 };
 
-// Index struct to support different indices for vtx/normal/texcoord.
+// Index struct to support different m_indices for vtx/normal/texcoord.
 // -1 means not used.
 struct index_t {
   int vertex_index;
@@ -353,9 +353,9 @@ struct index_t {
 struct mesh_t {
   std::vector<index_t> indices;
   std::vector<unsigned char>
-      num_face_vertices;          // The number of vertices per
+      num_face_vertices;          // The number of m_vertices per
                                   // face. 3 = triangle, 4 = quad,
-                                  // ... Up to 255 vertices per face.
+                                  // ... Up to 255 m_vertices per face.
   std::vector<int> material_ids;  // per-face m_material ID
   std::vector<unsigned int> smoothing_group_ids;  // per-face smoothing group
                                                   // ID(0 = off. positive value
@@ -364,17 +364,17 @@ struct mesh_t {
 };
 
 // struct path_t {
-//  std::vector<int> indices;  // pairs of indices for lines
+//  std::vector<int> m_indices;  // pairs of m_indices for lines
 //};
 
 struct lines_t {
-  // Linear flattened indices.
-  std::vector<index_t> indices;        // indices for vertices(poly lines)
-  std::vector<int> num_line_vertices;  // The number of vertices per line.
+  // Linear flattened m_indices.
+  std::vector<index_t> indices;        // m_indices for m_vertices(poly lines)
+  std::vector<int> num_line_vertices;  // The number of m_vertices per line.
 };
 
 struct points_t {
-  std::vector<index_t> indices;  // indices for points
+  std::vector<index_t> indices;  // m_indices for points
 };
 
 struct shape_t {
@@ -429,7 +429,7 @@ struct callback_t {
   // `vt` line.
   void (*texcoord_cb)(void *user_data, real_t x, real_t y, real_t z);
 
-  // called per 'f' line. num_indices is the number of face indices(e.g. 3 for
+  // called per 'f' line. num_indices is the number of face m_indices(e.g. 3 for
   // triangle, 4 for quad)
   // 0 will be passed for undefined index in index_t members.
   void (*index_cb)(void *user_data, index_t *indices, int num_indices);
@@ -704,7 +704,7 @@ struct face_t {
   unsigned int
       smoothing_group_id;  // smoothing group id. 0 = smoothing groupd is off.
   int pad_;
-  std::vector<vertex_index_t> vertex_indices;  // face vertex indices.
+  std::vector<vertex_index_t> vertex_indices;  // face vertex m_indices.
 
   face_t() : smoothing_group_id(0), pad_(0) {}
 };
@@ -826,7 +826,7 @@ static inline bool fixIndex(int idx, int n, int *ret, bool allow_zero, const war
   if (idx == 0) {
     // zero is not allowed according to the spec.
     if (context.warn) {
-      (*context.warn) += "A zero value index found (will have a value of -1 for normal and tex indices. Line "
+      (*context.warn) += "A zero value index found (will have a value of -1 for normal and tex m_indices. Line "
           + toString(context.line_number) + ").\n";
     }
 
@@ -1471,14 +1471,14 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
 
   // polygon
   if (!prim_group.faceGroup.empty()) {
-    // Flatten vertices and indices
+    // Flatten m_vertices and m_indices
     for (size_t i = 0; i < prim_group.faceGroup.size(); i++) {
       const face_t &face = prim_group.faceGroup[i];
 
       size_t npolys = face.vertex_indices.size();
 
       if (npolys < 3) {
-        // Face must have 3+ vertices.
+        // Face must have 3+ m_vertices.
         if (warn) {
           (*warn) += "Degenerated face found\n.";
         }
@@ -1658,7 +1658,7 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
           //TMW change: Find best normal and project v0x and v0y to those coordinates, instead of
           //picking a plane aligned with an axis (which can flip polygons).
 
-          // Fill polygon data(facevarying vertices).
+          // Fill polygon data(facevarying m_vertices).
           for (size_t k = 0; k < npolys; k++) {
             i0 = face.vertex_indices[k];
             size_t vi0 = size_t(i0.v_idx);
@@ -1676,34 +1676,34 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
           }
 
           polygon.push_back(polyline);
-          std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
+          std::vector<uint32_t> m_indices = mapbox::earcut<uint32_t>(polygon);
           // => result = 3 * faces, clockwise
 
-          assert(indices.size() % 3 == 0);
+          assert(m_indices.size() % 3 == 0);
 
           // Reconstruct vertex_index_t
-          for (size_t k = 0; k < indices.size() / 3; k++) {
+          for (size_t k = 0; k < m_indices.size() / 3; k++) {
             {
               index_t idx0, idx1, idx2;
-              idx0.vertex_index = face.vertex_indices[indices[3 * k + 0]].v_idx;
+              idx0.vertex_index = face.vertex_indices[m_indices[3 * k + 0]].v_idx;
               idx0.normal_index =
-                face.vertex_indices[indices[3 * k + 0]].vn_idx;
+                face.vertex_indices[m_indices[3 * k + 0]].vn_idx;
               idx0.texcoord_index =
-                face.vertex_indices[indices[3 * k + 0]].vt_idx;
-              idx1.vertex_index = face.vertex_indices[indices[3 * k + 1]].v_idx;
+                face.vertex_indices[m_indices[3 * k + 0]].vt_idx;
+              idx1.vertex_index = face.vertex_indices[m_indices[3 * k + 1]].v_idx;
               idx1.normal_index =
-                face.vertex_indices[indices[3 * k + 1]].vn_idx;
+                face.vertex_indices[m_indices[3 * k + 1]].vn_idx;
               idx1.texcoord_index =
-                face.vertex_indices[indices[3 * k + 1]].vt_idx;
-              idx2.vertex_index = face.vertex_indices[indices[3 * k + 2]].v_idx;
+                face.vertex_indices[m_indices[3 * k + 1]].vt_idx;
+              idx2.vertex_index = face.vertex_indices[m_indices[3 * k + 2]].v_idx;
               idx2.normal_index =
-                face.vertex_indices[indices[3 * k + 2]].vn_idx;
+                face.vertex_indices[m_indices[3 * k + 2]].vn_idx;
               idx2.texcoord_index =
-                face.vertex_indices[indices[3 * k + 2]].vt_idx;
+                face.vertex_indices[m_indices[3 * k + 2]].vt_idx;
 
-              shape->mesh.indices.push_back(idx0);
-              shape->mesh.indices.push_back(idx1);
-              shape->mesh.indices.push_back(idx2);
+              shape->mesh.m_indices.push_back(idx0);
+              shape->mesh.m_indices.push_back(idx1);
+              shape->mesh.m_indices.push_back(idx2);
 
               shape->mesh.num_face_vertices.push_back(3);
               shape->mesh.material_ids.push_back(material_id);
@@ -1778,7 +1778,7 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
           real_t vy[3];
 
           // How many iterations can we do without decreasing the remaining
-          // vertices.
+          // m_vertices.
           size_t remainingIterations = face.vertex_indices.size();
           size_t previousRemainingVertices =
               remainingFace.vertex_indices.size();
@@ -1794,7 +1794,7 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
             }
 
             if (previousRemainingVertices != npolys) {
-              // The number of remaining vertices decreased. Reset counters.
+              // The number of remaining m_vertices decreased. Reset counters.
               previousRemainingVertices = npolys;
               remainingIterations = npolys;
             } else {
@@ -1958,7 +1958,7 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
 
   // line
   if (!prim_group.lineGroup.empty()) {
-    // Flatten indices
+    // Flatten m_indices
     for (size_t i = 0; i < prim_group.lineGroup.size(); i++) {
       for (size_t j = 0; j < prim_group.lineGroup[i].vertex_indices.size();
            j++) {
@@ -1979,7 +1979,7 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
 
   // points
   if (!prim_group.pointsGroup.empty()) {
-    // Flatten & convert indices
+    // Flatten & convert m_indices
     for (size_t i = 0; i < prim_group.pointsGroup.size(); i++) {
       for (size_t j = 0; j < prim_group.pointsGroup[i].vertex_indices.size();
            j++) {
@@ -3061,7 +3061,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
     // Ignore unknown command.
   }
 
-  // not all vertices have colors, no default colors desired? -> clear colors
+  // not all m_vertices have colors, no default colors desired? -> clear colors
   if (!found_all_colors && !default_vcols_fallback) {
     vc.clear();
   }
@@ -3069,21 +3069,21 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
   if (greatest_v_idx >= static_cast<int>(v.size() / 3)) {
     if (warn) {
       std::stringstream ss;
-      ss << "Vertex indices out of bounds (line " << line_num << ".)\n\n";
+      ss << "Vertex m_indices out of bounds (line " << line_num << ".)\n\n";
       (*warn) += ss.str();
     }
   }
   if (greatest_vn_idx >= static_cast<int>(vn.size() / 3)) {
     if (warn) {
       std::stringstream ss;
-      ss << "Vertex normal indices out of bounds (line " << line_num << ".)\n\n";
+      ss << "Vertex normal m_indices out of bounds (line " << line_num << ".)\n\n";
       (*warn) += ss.str();
     }
   }
   if (greatest_vt_idx >= static_cast<int>(vt.size() / 2)) {
     if (warn) {
       std::stringstream ss;
-      ss << "Vertex texcoord indices out of bounds (line " << line_num << ".)\n\n";
+      ss << "Vertex texcoord m_indices out of bounds (line " << line_num << ".)\n\n";
       (*warn) += ss.str();
     }
   }
@@ -3093,7 +3093,7 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
   // exportGroupsToShape return false when `usemtl` is called in the last
   // line.
   // we also add `shape` to `shapes` when `shape.mesh` has already some
-  // faces(indices)
+  // faces(m_indices)
   if (ret || shape.mesh.indices
                  .size()) {  // FIXME(syoyo): Support other prims(e.g. lines)
     shapes->push_back(shape);

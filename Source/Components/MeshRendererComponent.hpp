@@ -16,6 +16,7 @@ namespace Kaamoo {
             name = "MeshRendererComponent";
         }
 
+        //Todo: Rotate around the center of mass
         explicit MeshRendererComponent(const rapidjson::Value &object) {
             if (!object.HasMember("model")) {
                 this->model = nullptr;
@@ -44,9 +45,6 @@ namespace Kaamoo {
             name = "MeshRendererComponent";
         }
 
-        id_t GetMaterialID() const { return materialId; }
-
-        std::shared_ptr<Model> GetModelPtr() { return model; }
 
         void Loaded(GameObject *gameObject) override {
             if (model == nullptr) {
@@ -148,6 +146,10 @@ namespace Kaamoo {
         }
 
 #endif
+
+        id_t GetMaterialID() const { return materialId; }
+
+        std::shared_ptr<Model> GetModelPtr() { return model; }
 
     private:
         id_t tlasId;

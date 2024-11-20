@@ -408,7 +408,7 @@
 #endif
 RAPIDJSON_NAMESPACE_BEGIN
 //! Size type (for string lengths, array sizes, etc.)
-/*! RapidJSON uses 32-bit array/string indices even on 64-bit platforms,
+/*! RapidJSON uses 32-bit array/string m_indices even on 64-bit platforms,
     instead of using \c size_t. Users may override the SizeType by defining
     \ref RAPIDJSON_NO_SIZETYPEDEFINE.
 */

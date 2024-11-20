@@ -103,6 +103,12 @@ namespace Kaamoo {
             }
         }
 
+        void FixedUpdate(const ComponentUpdateInfo &updateInfo) {
+            for (auto &component: m_components) {
+                component->FixedUpdate(updateInfo);
+            }
+        }
+
     private:
         std::vector<Component *> m_components;
 

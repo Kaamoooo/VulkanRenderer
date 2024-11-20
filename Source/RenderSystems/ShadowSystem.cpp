@@ -2,7 +2,7 @@
 
 #include <utility>
 #include "../StructureInfos.h"
-#include "../Application.h"
+#include "../Application.hpp"
 #include "../Components/MeshRendererComponent.hpp"
 
 namespace Kaamoo {
