@@ -105,3 +105,5 @@
 11.17 Optimized synchronization between frames. In ray tracing rendering, the flickering while moving or rotating the camera is fixed.
 
 11.20 Realised RigidBodyComponent.
+
+11.25 Accomplished simple collision effects.

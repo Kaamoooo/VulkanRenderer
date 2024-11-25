@@ -94,6 +94,7 @@ namespace Kaamoo {
                 m_renderer.endGizmosRenderPass(commandBuffer);
 
                 m_renderer.endFrame();
+//                std::cout << "Frame Time: " << frameTime << std::endl;
             }
 
         }

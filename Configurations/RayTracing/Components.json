@@ -30,19 +30,19 @@
   {
     "id": 12,
     "type": "MeshRendererComponent",
-    "model": "sphere.obj",
+    "model": "cube.obj",
     "materialId": 4
   },
   {
     "id": 13,
     "type": "MeshRendererComponent",
-    "model": "sphere.obj",
+    "model": "cube.obj",
     "materialId": 5
   },
   {
     "id": 14,
     "type": "MeshRendererComponent",
-    "model": "sphere.obj",
+    "model": "cube.obj",
     "materialId": 6
   },
   {

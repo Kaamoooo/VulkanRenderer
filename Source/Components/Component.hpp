@@ -26,7 +26,7 @@ namespace Kaamoo {
         RendererInfo *rendererInfo;
     };
 
-    const float FIXED_UPDATE_INTERVAL = 0.01;
+    const float FIXED_UPDATE_INTERVAL = 0.02;
 
     class Component {
     public:

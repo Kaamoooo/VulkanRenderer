@@ -3,7 +3,7 @@
     "name": "Sphere0",
     "transform": {
       "id": 0,
-      "childrenIds": [1,2],
+      "childrenIds": [1],
       "translation": [-1,0,0],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
@@ -14,35 +14,34 @@
     "name": "Sphere1",
     "transform": {
       "id": 1,
-      "translation": [1,0,0],
+      "translation": [1.35,-1,-1],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
-    "componentIds":[12]
+    "componentIds":[12,16]
   },
   {
     "name": "Sphere2",
     "transform": {
-      "id": 2,
-      "translation": [2,0,0],
+      "translation": [1,-1,-1],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
-    "componentIds":[13]
+    "componentIds":[13,16]
   },
   {
     "name": "Sphere3",
     "transform": {
-      "translation": [2,0,0],
+      "translation": [-2,-2,2],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
-    "componentIds":[14]
+    "componentIds":[14,16]
   },
   {
     "name": "Vase",
     "transform": {
-      "translation": [0,0,-2],
+      "translation": [-2,-2,-2],
       "scale": [2,2,2],
       "rotation": [0,0,0]
     },

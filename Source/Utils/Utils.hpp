@@ -16,6 +16,14 @@ namespace Kaamoo {
         static std::string TypeName() {
             return typeid(T).name();
         }
+        
+        static glm::mat3 SkewSymmetric(const glm::vec3& a) {
+            return glm::mat3(
+                    0,      -a.z,   a.y,
+                    a.z,    0,     -a.x,
+                    -a.y,   a.x,    0
+            );
+        }
 
         static VkTransformMatrixKHR GlmMatrixToVulkanMatrix(glm::mat4 glmMatrix) {
             VkTransformMatrixKHR transformMatrix;
