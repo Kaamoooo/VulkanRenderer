@@ -18,7 +18,7 @@
   {
     "id": 3,
     "type": "MeshRendererComponent",
-    "model": "quad.obj",
+    "model": "cube.obj",
     "materialId": 5
   },
   {
@@ -62,6 +62,13 @@
   },
   {
     "id": 11,
-    "type": "RigidBodyComponent"
+    "type": "RigidBodyComponent",
+    "omega": [0,0,0],
+    "velocity": [0,0,0]
+  },
+  {
+    "id": 12,
+    "type": "RigidBodyComponent",
+    "isKinematic": true
   }
 ]

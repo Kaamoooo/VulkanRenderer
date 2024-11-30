@@ -42,7 +42,7 @@ namespace Kaamoo {
             componentConstructorMap[ComponentName::ObjectMovementComponent] = [](const rapidjson::Value& object)->Component*{return new ObjectMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraMovementComponent] = [](const rapidjson::Value& object)->Component*{return new CameraMovementComponent(Device::getDeviceSingleton()->getWindow().getGLFWwindow());};
             componentConstructorMap[ComponentName::CameraComponent] = [](const rapidjson::Value& object)->Component*{return new CameraComponent();};
-            componentConstructorMap[ComponentName::RigidBodyComponent] = [](const rapidjson::Value& object)->Component*{return new RigidBodyComponent();};
+            componentConstructorMap[ComponentName::RigidBodyComponent] = [](const rapidjson::Value& object)->Component*{return new RigidBodyComponent(object);};
 #ifdef RAY_TRACING
             componentConstructorMap[ComponentName::RayTracingManagerComponent] = [](const rapidjson::Value& object)->Component*{return new RayTracingManagerComponent();};
 #endif
