@@ -17,6 +17,15 @@ namespace Kaamoo {
             return typeid(T).name();
         }
         
+        static glm::vec3 TruncVec3(const glm::vec3& vec, int precision) {
+            float scale = std::pow(10.0f, precision);
+            return glm::vec3(
+                    std::trunc(vec.x * scale) / scale,
+                    std::trunc(vec.y * scale) / scale,
+                    std::trunc(vec.z * scale) / scale
+            );
+        }
+        
         static glm::mat3 SkewSymmetric(const glm::vec3& a) {
             return glm::mat3(
                     0,      -a.z,   a.y,

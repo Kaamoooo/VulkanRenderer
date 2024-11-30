@@ -4,7 +4,7 @@
     "transform": {
       "id": 0,
       "childrenIds": [1],
-      "translation": [-1,0,0],
+      "translation": [0,-1,0],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
@@ -14,7 +14,7 @@
     "name": "Sphere1",
     "transform": {
       "id": 1,
-      "translation": [1.35,-1,-1],
+      "translation": [-1,-1,-1],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
@@ -23,8 +23,8 @@
   {
     "name": "Sphere2",
     "transform": {
-      "translation": [1,-1,-1],
-      "scale": [0.4,0.4,0.4],
+      "translation": [0.4,-1,-1],
+      "scale": [0.3,0.3,0.3],
       "rotation": [0,0,0]
     },
     "componentIds":[13,16]
@@ -32,7 +32,7 @@
   {
     "name": "Sphere3",
     "transform": {
-      "translation": [-2,-2,2],
+      "translation": [1.6,-1,-1],
       "scale": [0.4,0.4,0.4],
       "rotation": [0,0,0]
     },
@@ -52,7 +52,7 @@
     "transform": {
       "translation": [0,0,0],
       "scale": [4,1,4],
-      "rotation": [0,0,180]
+      "rotation": [0,0,0]
     },
     "componentIds":[2]
   },

@@ -192,7 +192,7 @@ namespace Kaamoo {
 
                     ImGui::Text("Scale:");
                     ImGui::SameLine(90);
-                    glm::vec3 tempScale = gameObject.transform->GetScale();
+                    glm::vec3 tempScale = gameObject.transform->GetRelativeScale();
                     ImGui::InputFloat3("##Scale", &tempScale.x);
                     gameObject.transform->SetScale(tempScale);
                     ImGui::TreePop();

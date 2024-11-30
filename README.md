@@ -107,3 +107,5 @@
 11.20 Realised RigidBodyComponent.
 
 11.25 Accomplished simple collision effects.
+
+11.30 Optimized collision
