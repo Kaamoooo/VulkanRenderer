@@ -163,6 +163,8 @@ namespace Kaamoo {
                 }
                 firstFrame = false;
             }
+            
+            FixedUpdateComponents(frameInfo);
 
             for (auto &pair: m_gameObjects) {
                 updateInfo.gameObject = &pair.second;

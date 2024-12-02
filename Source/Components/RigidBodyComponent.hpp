@@ -66,6 +66,7 @@ namespace Kaamoo {
         }
 
         void FixedUpdate(const ComponentUpdateInfo &updateInfo) override {
+            updated = false;
             auto _startTime = std::chrono::high_resolution_clock::now();
             auto _gameObjects = GetBroadPhaseCollisions(updateInfo.gameObject);
             if (!_gameObjects.empty()) {
@@ -82,7 +83,18 @@ namespace Kaamoo {
             m_transformComponent->Translate(m_velocity * FIXED_UPDATE_INTERVAL);
             m_transformComponent->Rotate(m_omega * FIXED_UPDATE_INTERVAL);
             m_I0 = _rotationMatrix * m_I0 * glm::transpose(_rotationMatrix);
+
+            gameObjectAABBs[updateInfo.gameObject] = GetAABB(m_transformComponent);
         }
+
+        void LateUpdate(const ComponentUpdateInfo &updateInfo) override {
+            if (!updated) {
+                UpdateOctree();
+                updated = true;
+            }
+        }
+
+        //Todo: Static objects do not need to reconstruct
 
         AABB GetAABB(TransformComponent *transformComponent) const {
             //Jim Arvo
@@ -136,7 +148,7 @@ namespace Kaamoo {
         bool IsKinematic() const {
             return m_isKinematic;
         }
-
+    
     private:
         AABB m_aabb;
         TransformComponent *m_transformComponent;
@@ -480,6 +492,8 @@ namespace Kaamoo {
 
 //Octree
     private:
+        inline static bool updated = false;
+        inline static std::unordered_map<GameObject *, AABB> gameObjectAABBs = {};
         struct SplitEntry {
             float min;
             float max;
@@ -488,44 +502,42 @@ namespace Kaamoo {
         struct Node {
             SplitEntry splitEntry[3];
             std::vector<GameObject *> gameObjects{};
-            std::vector<Node *> children{};
+            std::vector<std::shared_ptr<Node>> children{};
         };
-        inline static Node *root = nullptr;
+        inline static std::shared_ptr<Node> root = nullptr;
         static const int MAX_DEPTH = 12;
 
-        static void Insert(AABB aabb, GameObject *gameObject) {
+        static void InitRoot() {
             if (root == nullptr) {
-                root = new Node();
+                root = std::make_shared<Node>();
                 root->splitEntry[0] = {-100, +100};
                 root->splitEntry[1] = {-100, +100};
                 root->splitEntry[2] = {-100, +100};
             }
+        }
+
+        static void Insert(AABB aabb, GameObject *gameObject) {
+            InitRoot();
             InsertRecursive(aabb, gameObject, root, 0);
         }
 
 //Todo: Simplify the collider of complex mesh.
-        static void InsertRecursive(AABB aabb, GameObject *gameObject, Node *node, int depth) {
-            if (node->children.size() != 0) {
+        static void InsertRecursive(AABB aabb, GameObject *gameObject, std::shared_ptr<Node> node, int depth) {
+            glm::vec3 _min = {node->splitEntry[0].min, node->splitEntry[1].min, node->splitEntry[2].min};
+            glm::vec3 _max = {node->splitEntry[0].max, node->splitEntry[1].max, node->splitEntry[2].max};
+            AABB _sectorAABB = MakeAABB(_min, _max);
+            bool _isIntersect = AABBIntersect(aabb, _sectorAABB);
+
+            if (!_isIntersect) return;
+
+            if (!node->children.empty()) {
                 for (auto &_childNode: node->children) {
                     InsertRecursive(aabb, gameObject, _childNode, depth + 1);
                 }
                 return;
             }
 
-            bool _isInside = true;
-            for (int i = 0; i < 3; ++i) {
-                if (aabb.min[i] < node->splitEntry[i].min || aabb.max[i] > node->splitEntry[i].max) {
-                    _isInside = false;
-                    break;
-                }
-            }
-
-            glm::vec3 _min = {node->splitEntry[0].min, node->splitEntry[1].min, node->splitEntry[2].min};
-            glm::vec3 _max = {node->splitEntry[0].max, node->splitEntry[1].max, node->splitEntry[2].max};
-            AABB _sectorAABB = MakeAABB(_min, _max);
-            bool _isIntersect = AABBIntersect(aabb, _sectorAABB);
-
-            if (_isInside || _isIntersect) {
+            if (_isIntersect) {
                 node->gameObjects.push_back(gameObject);
             }
 
@@ -540,14 +552,14 @@ namespace Kaamoo {
             return _gameObjects;
         }
 
-        static void GetBroadPhaseCollisionsRecursive(GameObject *gameObject, Node *node, std::vector<GameObject *> &_gameObjects) {
+        static void GetBroadPhaseCollisionsRecursive(GameObject *gameObject, std::shared_ptr<Node> node, std::vector<GameObject *> &_gameObjects) {
             if (node->children.size() != 0) {
                 for (auto &_childNode: node->children) {
                     GetBroadPhaseCollisionsRecursive(gameObject, _childNode, _gameObjects);
                 }
                 return;
             }
-
+//Todo: Press F to focus on selected object
             for (auto &_gameObject: node->gameObjects) {
                 if (_gameObject == gameObject) {
                     for (auto &_gameObject1: node->gameObjects) {
@@ -570,66 +582,66 @@ namespace Kaamoo {
             }
         }
 
-        static void Split(Node *node, int depth) {
+        static void Split(std::shared_ptr<Node> node, int depth) {
 
             glm::vec3 _mid = {(node->splitEntry[0].min + node->splitEntry[0].max) / 2,
                               (node->splitEntry[1].min + node->splitEntry[1].max) / 2,
                               (node->splitEntry[2].min + node->splitEntry[2].max) / 2};
             //x+,y+,z+
-            Node *_child = new Node();
+            auto _child = std::make_shared<Node>();
             _child->splitEntry[0] = {_mid.x, node->splitEntry[0].max};
             _child->splitEntry[1] = {_mid.y, node->splitEntry[1].max};
             _child->splitEntry[2] = {_mid.z, node->splitEntry[2].max};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             //x+,y+,z-
-            _child = new Node();
+            _child = std::make_shared<Node>();
             _child->splitEntry[0] = {_mid.x, node->splitEntry[0].max};
             _child->splitEntry[1] = {_mid.y, node->splitEntry[1].max};
             _child->splitEntry[2] = {node->splitEntry[2].min, _mid.z};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             //x+,y-,z+
-            _child = new Node();
+            _child = std::make_shared<Node>();
             _child->splitEntry[0] = {_mid.x, node->splitEntry[0].max};
             _child->splitEntry[1] = {node->splitEntry[1].min, _mid.y};
             _child->splitEntry[2] = {_mid.z, node->splitEntry[2].max};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             //x+,y-,z-
-            _child = new Node();
+            _child = std::make_shared<Node>();
             _child->splitEntry[0] = {_mid.x, node->splitEntry[0].max};
             _child->splitEntry[1] = {node->splitEntry[1].min, _mid.y};
             _child->splitEntry[2] = {node->splitEntry[2].min, _mid.z};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             //x-,y+,z+
-            _child = new Node();
+            _child = std::make_shared<Node>();
             _child->splitEntry[0] = {node->splitEntry[0].min, _mid.x};
             _child->splitEntry[1] = {_mid.y, node->splitEntry[1].max};
             _child->splitEntry[2] = {_mid.z, node->splitEntry[2].max};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             //x-,y+,z-
-            _child = new Node();
+            _child = std::make_shared<Node>();
             _child->splitEntry[0] = {node->splitEntry[0].min, _mid.x};
             _child->splitEntry[1] = {_mid.y, node->splitEntry[1].max};
             _child->splitEntry[2] = {node->splitEntry[2].min, _mid.z};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             //x-,y-,z+
-            _child = new Node();
+            _child = std::make_shared<Node>();
             _child->splitEntry[0] = {node->splitEntry[0].min, _mid.x};
             _child->splitEntry[1] = {node->splitEntry[1].min, _mid.y};
             _child->splitEntry[2] = {_mid.z, node->splitEntry[2].max};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             //x-,y-,z-
-            _child = new Node();
+            _child = std::make_shared<Node>();
             _child->splitEntry[0] = {node->splitEntry[0].min, _mid.x};
             _child->splitEntry[1] = {node->splitEntry[1].min, _mid.y};
             _child->splitEntry[2] = {node->splitEntry[2].min, _mid.z};
-            node->children.push_back(_child);
+            node->children.push_back(std::move(_child));
 
             auto _gameObjects = std::move(node->gameObjects);
             node->gameObjects.clear();
@@ -638,6 +650,14 @@ namespace Kaamoo {
                 if (_gameObject->TryGetComponent(_rigidBodyComponent)) {
                     InsertRecursive(_rigidBodyComponent->GetAABB(_gameObject->transform), _gameObject, node, depth);
                 }
+            }
+        }
+
+        static void UpdateOctree() {
+            root = nullptr;
+            InitRoot();
+            for (auto &_gameObjectAABB: gameObjectAABBs) {
+                Insert(_gameObjectAABB.second, _gameObjectAABB.first);
             }
         }
     };

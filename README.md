@@ -109,3 +109,5 @@
 11.25 Accomplished simple collision effects.
 
 11.30 Optimized collision
+
+12.2 Completed dynamically updated octree.

@@ -38,7 +38,6 @@ namespace Kaamoo {
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent(), GUI::GetSelectedId(), false};
-                FixedUpdateComponents(frameInfo);
                 UpdateComponents(frameInfo);
                 UpdateUbo(ubo, totalTime);
 
@@ -62,8 +61,8 @@ namespace Kaamoo {
 
                 m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_postSystem->render(frameInfo);
-
 #else
+                
                 m_renderer.beginShadowRenderPass(commandBuffer);
                 m_shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
                 m_shadowSystem->renderShadow(frameInfo);
