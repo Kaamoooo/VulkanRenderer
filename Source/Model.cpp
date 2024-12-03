@@ -41,6 +41,7 @@ namespace Kaamoo {
         createIndexBuffers(builder.indices);
         m_vertices = builder.vertices;
         m_indices = builder.indices;
+        m_maxRadius = builder.maxRadius;
     }
 
     void Model::draw(VkCommandBuffer commandBuffer) {
@@ -134,7 +135,8 @@ namespace Kaamoo {
                             attrib.vertices[3 * index.vertex_index + 1],
                             attrib.vertices[3 * index.vertex_index + 2]
                     };
-
+                    maxRadius = std::max(maxRadius, glm::length(vertex.position));
+                    
                     vertex.color = {
                             attrib.colors[3 * index.vertex_index + 0],
                             attrib.colors[3 * index.vertex_index + 1],

@@ -46,6 +46,15 @@
     "componentIds":[5,11]
   },
   {
+    "name": "Cube2",
+    "transform": {
+      "translation": [1,-2,2],
+      "scale": [0.3,0.6,0.3],
+      "rotation": [0,0,0]
+    },
+    "componentIds":[5,11]
+  },
+  {
     "name": "Vase",
     "transform": {
       "id": 0,

@@ -71,6 +71,9 @@ namespace Kaamoo {
     
     struct RendererInfo{
         float aspectRatio;
+        float fovY;
+        float near;
+        float far;
     };
     
     struct ShadowUbo{

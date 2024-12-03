@@ -39,7 +39,7 @@ namespace Kaamoo {
         struct Builder {
             std::vector<Vertex> vertices{};
             std::vector<uint32_t> indices{};
-
+            float maxRadius = 0.0f;
             void loadModel(const std::string &filePath);
         };
 
@@ -117,6 +117,10 @@ namespace Kaamoo {
         }
 
         void createIndexBuffers(const std::vector<uint32_t> &indices);
+        
+        float GetMaxRadius() const { return m_maxRadius; }
+        
+        void SetMaxRadius(float maxRadius) { m_maxRadius = maxRadius; }
 
     private:
 
@@ -141,5 +145,7 @@ namespace Kaamoo {
 
         std::vector<Vertex> m_vertices{};
         std::vector<uint32_t> m_indices{};
+        
+        float m_maxRadius;
     };
 }

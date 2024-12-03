@@ -16,8 +16,22 @@ namespace Kaamoo {
         static std::string TypeName() {
             return typeid(T).name();
         }
-        
-        static glm::vec3 TruncVec3(const glm::vec3& vec, int precision) {
+
+        static glm::vec3 VectorToRotation(const glm::vec3 &target) {
+            // 归一化目标向量
+            glm::vec3 _direction = glm::normalize(target);
+
+            // 计算 Yaw 和 Pitch
+            float yaw = std::atan2(_direction.x, _direction.z);  // 水平方向 (绕y轴)
+            float pitch = std::asin(-_direction.y);            // 垂直方向 (绕x轴)
+
+            // Roll 通常为 0，除非有额外信息
+            float roll = 0.0f;
+
+            return {pitch, yaw, roll};
+        }
+
+        static glm::vec3 TruncVec3(const glm::vec3 &vec, int precision) {
             float scale = std::pow(10.0f, precision);
             return glm::vec3(
                     std::trunc(vec.x * scale) / scale,
@@ -25,12 +39,12 @@ namespace Kaamoo {
                     std::trunc(vec.z * scale) / scale
             );
         }
-        
-        static glm::mat3 SkewSymmetric(const glm::vec3& a) {
+
+        static glm::mat3 SkewSymmetric(const glm::vec3 &a) {
             return glm::mat3(
-                    0,      -a.z,   a.y,
-                    a.z,    0,     -a.x,
-                    -a.y,   a.x,    0
+                    0, -a.z, a.y,
+                    a.z, 0, -a.x,
+                    -a.y, a.x, 0
             );
         }
 

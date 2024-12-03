@@ -180,7 +180,7 @@ namespace Kaamoo {
                 if (ImGui::TreeNode("Transform")) {
                     ImGui::Text("Position:");
                     ImGui::SameLine(90);
-                    glm::vec3 tempPosition = gameObject.transform->GetTranslation();
+                    glm::vec3 tempPosition = gameObject.transform->GetRelativeTranslation();
                     ImGui::InputFloat3("##Position", &tempPosition.x);
                     gameObject.transform->SetTranslation(tempPosition);
 

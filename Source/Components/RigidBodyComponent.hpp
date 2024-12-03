@@ -52,10 +52,12 @@ namespace Kaamoo {
 
             auto &_vertices = m_meshRendererComponent->GetModelPtr()->GetVertices();
             glm::vec3 _min = _vertices[0].position, _max = _vertices[0].position;
+            float _maxRadius = 0;
             for (auto &_vertex: _vertices) {
                 _vertex.position -= _massCenter;
                 _min = glm::min(_min, _vertex.position);
                 _max = glm::max(_max, _vertex.position);
+                _maxRadius = glm::max(_maxRadius, glm::length(_vertex.position));
             }
 
             m_aabb.min = _min;
@@ -63,6 +65,7 @@ namespace Kaamoo {
             Insert(GetAABB(gameObject->transform), gameObject);
 
             m_meshRendererComponent->GetModelPtr()->RefreshVertexBuffer(_vertices);
+            m_meshRendererComponent->GetModelPtr()->SetMaxRadius(_maxRadius);
         }
 
         void FixedUpdate(const ComponentUpdateInfo &updateInfo) override {
@@ -559,7 +562,7 @@ namespace Kaamoo {
                 }
                 return;
             }
-//Todo: Press F to focus on selected object
+            
             for (auto &_gameObject: node->gameObjects) {
                 if (_gameObject == gameObject) {
                     for (auto &_gameObject1: node->gameObjects) {

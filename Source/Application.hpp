@@ -105,23 +105,23 @@ namespace Kaamoo {
                 }
 #else
                 if (pipelineCategory == PipelineCategory.Shadow) {
-                m_shadowSystem = std::make_shared<ShadowSystem>(m_device, m_renderer.getShadowRenderPass(), material.second);
-                continue;
-            } else if (pipelineCategory == PipelineCategory.TessellationGeometry) {
-                auto renderSystem = std::make_shared<GrassSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-                renderSystem->Init();
-                m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
-                continue;
-            } else if (pipelineCategory == PipelineCategory.SkyBox) {
-                auto renderSystem = std::make_shared<SkyBoxSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-                renderSystem->Init();
-                m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
-                continue;
-            } else if (pipelineCategory == PipelineCategory.Opaque) {
-                auto renderSystem = std::make_shared<RenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-                renderSystem->Init();
-                m_renderSystems.push_back(renderSystem);
-            }
+                    m_shadowSystem = std::make_shared<ShadowSystem>(m_device, m_renderer.getShadowRenderPass(), material.second);
+                    continue;
+                } else if (pipelineCategory == PipelineCategory.TessellationGeometry) {
+                    auto renderSystem = std::make_shared<GrassSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
+                    renderSystem->Init();
+                    m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
+                    continue;
+                } else if (pipelineCategory == PipelineCategory.SkyBox) {
+                    auto renderSystem = std::make_shared<SkyBoxSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
+                    renderSystem->Init();
+                    m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
+                    continue;
+                } else if (pipelineCategory == PipelineCategory.Opaque) {
+                    auto renderSystem = std::make_shared<RenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
+                    renderSystem->Init();
+                    m_renderSystems.push_back(renderSystem);
+                }
 #endif
                 if (pipelineCategory == PipelineCategory.Gizmos) {
                     m_gizmosRenderSystem = std::make_shared<GizmosRenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
@@ -136,13 +136,13 @@ namespace Kaamoo {
             ubo.curTime = totalTime;
 #ifndef RAY_TRACING
             ubo.shadowViewMatrix[0] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 90, 180));
-        ubo.shadowViewMatrix[1] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, -90, 180));
-        ubo.shadowViewMatrix[2] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(-90, 0, 0));
-        ubo.shadowViewMatrix[3] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(90, 0, 0));
-        ubo.shadowViewMatrix[4] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(180, 0, 0));
-        ubo.shadowViewMatrix[5] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 0, 180));
-        ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 5.0f);
-        ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
+            ubo.shadowViewMatrix[1] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, -90, 180));
+            ubo.shadowViewMatrix[2] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(-90, 0, 0));
+            ubo.shadowViewMatrix[3] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(90, 0, 0));
+            ubo.shadowViewMatrix[4] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(180, 0, 0));
+            ubo.shadowViewMatrix[5] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 0, 180));
+            ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 5.0f);
+            ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
 #endif
 
         }
@@ -151,7 +151,7 @@ namespace Kaamoo {
 
         void UpdateComponents(FrameInfo &frameInfo) {
             ComponentUpdateInfo updateInfo{};
-            RendererInfo rendererInfo{m_renderer.getAspectRatio()};
+            RendererInfo rendererInfo{m_renderer.getAspectRatio(),m_renderer.FOV_Y, m_renderer.NEAR_CLIP, m_renderer.FAR_CLIP};
             updateInfo.frameInfo = &frameInfo;
             updateInfo.rendererInfo = &rendererInfo;
 
@@ -163,7 +163,7 @@ namespace Kaamoo {
                 }
                 firstFrame = false;
             }
-            
+
             FixedUpdateComponents(frameInfo);
 
             for (auto &pair: m_gameObjects) {

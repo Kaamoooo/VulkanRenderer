@@ -132,10 +132,10 @@ namespace Kaamoo {
         };
 
         void Update(const ComponentUpdateInfo &updateInfo) override {
-            float aspectRatio = updateInfo.rendererInfo->aspectRatio;
+            auto _rendererInfo = updateInfo.rendererInfo;
             FrameInfo &frameInfo = *updateInfo.frameInfo;
             setViewYXZ(updateInfo.gameObject->transform->GetTranslation(), updateInfo.gameObject->transform->GetRotation());
-            setPerspectiveProjection(glm::radians(50.f), aspectRatio, 0.1f, 20.f);
+            setPerspectiveProjection(glm::radians(_rendererInfo->fovY), _rendererInfo->aspectRatio, _rendererInfo->near, _rendererInfo->far);
             frameInfo.globalUbo.viewMatrix = getViewMatrix();
             frameInfo.globalUbo.inverseViewMatrix = getInverseViewMatrix();
             frameInfo.globalUbo.projectionMatrix = getProjectionMatrix();

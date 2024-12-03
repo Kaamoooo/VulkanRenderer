@@ -111,3 +111,5 @@
 11.30 Optimized collision
 
 12.2 Completed dynamically updated octree.
+
+12.3 Optimized camera movement. Now press "F" can focus on selected object.

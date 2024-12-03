@@ -115,6 +115,7 @@ namespace Kaamoo {
             rotationMatrix = glm::rotate(rotationMatrix, rotation.z, {0, 0, 1});
             return glm::mat3(rotationMatrix);
         }
+        
 
     private:
 

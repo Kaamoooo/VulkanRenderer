@@ -9,6 +9,10 @@
 namespace Kaamoo {
     class Renderer {
     public:
+        const float FOV_Y = 50.f;
+        const float NEAR_CLIP = 0.1f;
+        const float FAR_CLIP = 20.f;
+        
         Renderer(MyWindow &, Device &);
 
         ~Renderer();

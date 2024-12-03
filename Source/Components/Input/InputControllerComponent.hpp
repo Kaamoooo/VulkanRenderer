@@ -36,6 +36,8 @@ namespace Kaamoo {
             int moveUp = GLFW_KEY_E;
             int moveDown = GLFW_KEY_Q;
 
+            int KEY_F = GLFW_KEY_F;
+
             int lookLeft = GLFW_KEY_LEFT;
             int lookRight = GLFW_KEY_RIGHT;
             int lookUp = GLFW_KEY_UP;
@@ -51,7 +53,7 @@ namespace Kaamoo {
 
     protected:
         GLFWwindow *window;
-        
+
         inline static bool leftMousePressed;
         inline static bool rightMousePressed;
         inline static int width, height;
@@ -67,6 +69,8 @@ namespace Kaamoo {
                 lastPos = curPos;
                 curPos = glm::vec2{xpos / width, ypos / height};
                 deltaPos = curPos - lastPos;
+            } else {
+                curPos = glm::vec2{xpos / width, ypos / height};
             }
         }
 
@@ -79,7 +83,7 @@ namespace Kaamoo {
                     rightMousePressed = true;
                 }
             }
-            
+
             if (action == GLFW_RELEASE) {
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
                     leftMousePressed = false;
