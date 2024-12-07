@@ -18,20 +18,26 @@ namespace Kaamoo {
 
     private:
         float m_focusMoveTime = 1;
-        float lookSpeed{120.f};
+        float m_lookSpeed{2.f};
         float moveSpeed{3.f};
+        glm::vec2 m_deltaPos;
+
 
         void MoveCamera(const ComponentUpdateInfo &updateInfo) {
             glm::vec3 rotation{0};
 
-            if (rightMousePressed) {
-                rotation.x -= deltaPos.y;
-                rotation.y += deltaPos.x;
+            static glm::vec2 _lastFrameCurPos = glm::vec2{std::numeric_limits<float>::max()};
+            if (rightMousePressed && glm::length(_lastFrameCurPos - curPos) > std::numeric_limits<float>::epsilon()) {
+                m_deltaPos = curPos - lastPos;
+                _lastFrameCurPos = curPos;
+                rotation.x -= m_deltaPos.y;
+                rotation.y += m_deltaPos.x;
             }
 
             //防止没有按下按键时，对0归一化导致错误   
-            if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon() && glm::length(deltaPos) > 0.01) {
-                updateInfo.gameObject->transform->SetRotation(rotation * lookSpeed * updateInfo.frameInfo->frameTime + updateInfo.gameObject->transform->GetRotation());
+            if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
+                std::cout << "rotation: " << rotation.x << " " << rotation.y << std::endl;
+                updateInfo.gameObject->transform->SetRotation(rotation * m_lookSpeed + updateInfo.gameObject->transform->GetRotation());
             }
 
             auto transformRotation = updateInfo.gameObject->transform->GetRotation();

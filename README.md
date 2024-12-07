@@ -113,3 +113,5 @@
 12.2 Completed dynamically updated octree.
 
 12.3 Optimized camera movement. Now press "F" can focus on selected object.
+
+12.7 Now camera can move more smoothly.

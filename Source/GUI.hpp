@@ -161,6 +161,7 @@ namespace Kaamoo {
             ImGui::SetNextWindowSize(ImVec2(UI_LEFT_WIDTH, windowExtent.y), ImGuiCond_Always);
 
             ImGui::Begin("Scene", nullptr, window_flags);
+            ShowPerformance(frameInfo);
             if (ImGui::TreeNode("Hierarchy")) {
                 ShowHierarchyTree(hierarchyTree->GetRoot());
                 ImGui::TreePop();

@@ -14,7 +14,6 @@ namespace Kaamoo {
     class InputControllerComponent : public Component {
     public:
         InputControllerComponent(GLFWwindow *window) {
-            deltaPos = glm::vec2{0};
             curPos = glm::vec2{0};
             lastPos = glm::vec2{0};
             leftMousePressed = false;
@@ -60,18 +59,11 @@ namespace Kaamoo {
 
         inline static glm::vec2 lastPos;
         inline static glm::vec2 curPos;
-        inline static glm::vec2 deltaPos;
-
 
     private:
         static void cursor_position_callback(GLFWwindow *, double xpos, double ypos) {
-            if (rightMousePressed) {
-                lastPos = curPos;
-                curPos = glm::vec2{xpos / width, ypos / height};
-                deltaPos = curPos - lastPos;
-            } else {
-                curPos = glm::vec2{xpos / width, ypos / height};
-            }
+            lastPos = curPos;
+            curPos = glm::vec2{xpos / width, ypos / height};
         }
 
         static void mouse_button_callback(GLFWwindow *, int button, int action, int mods) {
@@ -90,9 +82,6 @@ namespace Kaamoo {
                 }
                 if (button == GLFW_MOUSE_BUTTON_RIGHT) {
                     rightMousePressed = false;
-                    lastPos = glm::vec2{0};
-                    curPos = glm::vec2{0};
-                    deltaPos = glm::vec2{0};
                 }
             }
         }
