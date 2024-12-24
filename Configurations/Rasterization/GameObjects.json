@@ -39,18 +39,18 @@
   {
     "name": "Cube1",
     "transform": {
-      "translation": [1,-2,0],
+      "translation": [1,-2,-1],
       "scale": [0.3,0.6,0.3],
       "rotation": [0,0,0]
     },
-    "componentIds":[5,11]
+    "componentIds":[5,13]
   },
   {
     "name": "Cube2",
     "transform": {
-      "translation": [1,-2,2],
+      "translation": [1,-2,0.7],
       "scale": [0.3,0.6,0.3],
-      "rotation": [0,0,0]
+      "rotation": [0,0,45]
     },
     "componentIds":[5,11]
   },

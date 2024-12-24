@@ -39,6 +39,13 @@ namespace Kaamoo {
                     std::trunc(vec.z * scale) / scale
             );
         }
+        
+        static glm::vec3 TruncSmallValues(glm::vec3 vec, float threshold) {
+            if (std::abs(vec.x) < threshold) vec.x = 0;
+            if (std::abs(vec.y) < threshold) vec.y = 0;
+            if (std::abs(vec.z) < threshold) vec.z = 0;
+            return vec;
+        }
 
         static glm::mat3 SkewSymmetric(const glm::vec3 &a) {
             return glm::mat3(

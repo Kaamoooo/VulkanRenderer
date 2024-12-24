@@ -64,11 +64,19 @@
     "id": 11,
     "type": "RigidBodyComponent",
     "omega": [0,0,0],
-    "velocity": [0,0,0]
+    "velocity": [0,0,0],
+    "useGravity": true
   },
   {
     "id": 12,
     "type": "RigidBodyComponent",
     "isKinematic": true
+  },
+  {
+    "id": 13,
+    "type": "RigidBodyComponent",
+    "omega": [0,0,1],
+    "velocity": [0,0,0],
+    "useGravity": true
   }
 ]

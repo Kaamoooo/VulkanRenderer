@@ -17,6 +17,7 @@ namespace Kaamoo {
     class RigidBodyComponent : public Component {
     public:
         inline const static float EPSILON = 0.0001f;
+        inline const static glm::vec3 GRAVITY = glm::vec3(0, 0.98f, 0);
 
         RigidBodyComponent(const rapidjson::Value &object) {
             if (object.HasMember("isKinematic")) {
@@ -29,6 +30,9 @@ namespace Kaamoo {
             if (object.HasMember("velocity")) {
                 auto _velocityArray = object["velocity"].GetArray();
                 m_velocity = glm::vec3(_velocityArray[0].GetFloat(), _velocityArray[1].GetFloat(), _velocityArray[2].GetFloat());
+            }
+            if (object.HasMember("useGravity")) {
+                m_useGravity = object["useGravity"].GetBool();
             }
             name = "RigidBodyComponent";
         }
@@ -70,6 +74,9 @@ namespace Kaamoo {
 
         void FixedUpdate(const ComponentUpdateInfo &updateInfo) override {
             updated = false;
+            if (m_useGravity) {
+                m_velocity += GRAVITY * FIXED_UPDATE_INTERVAL;
+            }
             auto _startTime = std::chrono::high_resolution_clock::now();
             auto _gameObjects = GetBroadPhaseCollisions(updateInfo.gameObject);
             if (!_gameObjects.empty()) {
@@ -81,6 +88,12 @@ namespace Kaamoo {
                         ProcessCollision(_collidedPoint.value(), _collidedFaceNormal, _collisionPoint, updateInfo.gameObject, _gameObject);
                     }
                 }
+            }
+            if (glm::length(m_velocity) < EPSILON) {
+                m_velocity = glm::vec3(0);
+            }
+            if (glm::length(m_omega) < EPSILON) {
+                m_omega = glm::vec3(0);
             }
             auto _rotationMatrix = m_transformComponent->GetRotationMatrix();
             m_transformComponent->Translate(m_velocity * FIXED_UPDATE_INTERVAL);
@@ -151,7 +164,7 @@ namespace Kaamoo {
         bool IsKinematic() const {
             return m_isKinematic;
         }
-    
+
     private:
         AABB m_aabb;
         TransformComponent *m_transformComponent;
@@ -163,10 +176,11 @@ namespace Kaamoo {
         glm::mat3 m_invI0;
         float m_totalMass;
         float m_invMass;
-        float m_e = 1.0f;
+        float m_e = 0.7f;
         float m_u = 0.5f;
 
         bool m_isKinematic = false;
+        bool m_useGravity = false;
 
         void ProcessCollision(glm::vec3 intersectionPoint, glm::vec3 collidedFaceNormal, glm::vec3 collisionPoint, GameObject *gameObject, GameObject *otherObject) {
             RigidBodyComponent *_otherRigidBodyComponent;
@@ -174,20 +188,21 @@ namespace Kaamoo {
                 throw std::runtime_error("RigidBodyComponent not found");
             }
             glm::vec3 _massCenter = GetMassCenter(gameObject->transform);
-            glm::vec3 _r = intersectionPoint - _massCenter;
-            glm::vec3 _n = -glm::normalize(collidedFaceNormal);
-
+            glm::vec3 _r = Utils::TruncSmallValues(intersectionPoint - _massCenter, EPSILON);
+            glm::vec3 _n = Utils::TruncSmallValues(glm::normalize(collidedFaceNormal), EPSILON);
+//Todo: Subtle swizzles
             TransformComponent *_otherTransformComponent = otherObject->transform;
             glm::vec3 _velocityOther = _otherRigidBodyComponent->GetVelocity();
             glm::vec3 _omegaOther = _otherRigidBodyComponent->GetOmega();
             float _otherInvMass = _otherRigidBodyComponent->GetInvMass();
             glm::mat3 _otherInvI0 = _otherRigidBodyComponent->GetInvI0(_otherTransformComponent);
-            glm::vec3 _rOther = intersectionPoint - _otherRigidBodyComponent->GetMassCenter(otherObject->transform);
+            glm::vec3 _rOther =
+                    Utils::TruncSmallValues(intersectionPoint - _otherRigidBodyComponent->GetMassCenter(otherObject->transform), EPSILON);
 
             glm::vec3 _relativeVelocity = m_velocity - _velocityOther + glm::cross(m_omega, _r) - glm::cross(_omegaOther, _rOther);
             auto _invI0 = GetInvI0(m_transformComponent);
 
-            if (glm::length(_relativeVelocity) < 0.001f || glm::dot(_relativeVelocity, _n) < 0) {
+            if (glm::length(_relativeVelocity) < 0.001f || glm::dot(_relativeVelocity, -_n) < 0) {
                 return;
             }
 
@@ -198,31 +213,42 @@ namespace Kaamoo {
             if (glm::length(_Vt) < EPSILON) {
                 _t = glm::vec3(0);
             } else {
-                _t = -glm::normalize(_Vt);
+                _t = glm::normalize(_Vt);
             }
 
-            glm::vec3 _Jn = (1 + m_e) * _Vn / (m_invMass + _otherInvMass +
-                                               glm::dot(_n, glm::cross(_otherInvI0 * glm::cross(_rOther, _n), _rOther) + glm::cross(_invI0 * glm::cross(_r, _n), _r)));
-            glm::vec3 _Jt = _Vt / (m_invMass + _otherInvMass +
-                                   glm::dot(_t, glm::cross(_otherInvI0 * glm::cross(_rOther, _t), _rOther) + glm::cross(_invI0 * glm::cross(_r, _t), _r)));
-            if (glm::length(_Jt) > m_u * glm::length(_Jn)) {
-                _Jt = m_u * glm::length(_Jn) * _t;
+            glm::vec3 _J;
+            if (_otherRigidBodyComponent->IsKinematic()) {
+                _J = -(1 + m_e) * _Vn /
+                     (m_invMass + glm::dot(_n, glm::cross(_invI0 * glm::cross(_r, _n), _r)));
+            } else {
+                _J = -(1 + m_e) * _Vn /
+                     (m_invMass + _otherInvMass + glm::dot(_n, glm::cross(_invI0 * glm::cross(_r, _n), _r)) + glm::dot(_n, glm::cross(_otherInvI0 * glm::cross(_rOther, _n), _rOther)));
             }
-            auto _J = _Jn * _n + _Jt * _t;
-
-            m_velocity -= _J * m_invMass;
-            m_omega -= _invI0 * glm::cross(_r, _J);
-
+            glm::mat3 _M = glm::transpose(glm::mat3(
+                    1.0f, 0.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f,
+                    0.0f, 0.0f, 1.0f
+            ));
+            glm::vec3 result = glm::transpose(_M) * m_omega;
+            float _energy0 = 0.5 * m_totalMass * glm::dot(m_velocity, m_velocity) + 0.5 * glm::dot(m_omega, m_I0 * m_omega);
+            m_velocity += Utils::TruncSmallValues(_J * m_invMass, EPSILON);
+            m_omega += _invI0 * glm::cross(_r, _J);
+            float _energy1 = 0.5 * m_totalMass * glm::dot(m_velocity, m_velocity) + 0.5 * glm::dot(m_omega, m_I0 * m_omega);
+            std::cout << "Differ: " << _energy1 - _energy0 << std::endl;
+            if (std::isnan(_energy1 - _energy0)) {
+                std::cout << "Differ: " << _energy1 - _energy0 << std::endl;
+            }
+//Todo: Intersection between two triangles
             if (!_otherRigidBodyComponent->IsKinematic()) {
-                _velocityOther += _J * _otherInvMass;
+                _velocityOther -= _J * _otherInvMass;
                 _otherRigidBodyComponent->SetVelocity(_velocityOther);
-                _omegaOther += _otherInvI0 * glm::cross(_rOther, _J);
+                _omegaOther -= glm::cross(_rOther, _J) * _otherInvI0;
                 _otherRigidBodyComponent->SetOmega(_omegaOther);
             }
 
-            if (glm::length(m_omega) > 3) {
-                std::cout << "omega: " << m_omega.x << ", " << m_omega.y << ", " << m_omega.z << std::endl;
-            }
+//            if (glm::length(m_omega) > 3) {
+//                std::cout << "omega: " << m_omega.x << ", " << m_omega.y << ", " << m_omega.z << std::endl;
+//            }
         }
 
         static std::optional<glm::vec3> GetNarrowPhaseCollision(GameObject *main, GameObject *other, glm::vec3 &normal, glm::vec3 &collisionPoint) {
@@ -320,6 +346,9 @@ namespace Kaamoo {
             for (auto &point: _collidedPoints) {
                 _averageCollisionPoint += point;
             }
+            if (std::isnan(normal.x)){
+                std::cout << "Normal is nan" << std::endl;
+            }
             _averageCollisionPoint /= _collidedPoints.size();
             collisionPoint = _averageCollisionPoint;
 
@@ -338,7 +367,7 @@ namespace Kaamoo {
             for (int i = 0; i < _indices.size(); i += 3) {
                 glm::vec3 _triangleVertices[3];
                 for (int j = 0; j < 3; j++) {
-                    _triangleVertices[j] = transformComponent->GetRotationMatrix() * transformComponent->GetScale() * _vertices[_indices[i + j]].position;
+                    _triangleVertices[j] = transformComponent->GetScale() * _vertices[_indices[i + j]].position;
                 }
 
                 //Todo: The algorithm below is copied and should be understood later
@@ -374,10 +403,10 @@ namespace Kaamoo {
             );
 
             //Todo: Plan mesh has no mass, so I assigned a maximum value to it for now
-            if (_mass < EPSILON) {
-                _mass = 1000000;
-                _massCenter = glm::vec3(0);
-            }
+//            if (_mass < EPSILON) {
+//                _mass = 1000000;
+//                _massCenter = glm::vec3(0);
+//            }
 
             *I0 = _I;
             *massCenter = _massCenter;
@@ -562,7 +591,7 @@ namespace Kaamoo {
                 }
                 return;
             }
-            
+
             for (auto &_gameObject: node->gameObjects) {
                 if (_gameObject == gameObject) {
                     for (auto &_gameObject1: node->gameObjects) {

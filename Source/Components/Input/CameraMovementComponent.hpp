@@ -13,7 +13,6 @@ namespace Kaamoo {
             MoveCamera(updateInfo);
 
             FocusOnObject(updateInfo);
-
         }
 
     private:
@@ -36,7 +35,6 @@ namespace Kaamoo {
 
             //防止没有按下按键时，对0归一化导致错误   
             if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
-                std::cout << "rotation: " << rotation.x << " " << rotation.y << std::endl;
                 updateInfo.gameObject->transform->SetRotation(rotation * m_lookSpeed + updateInfo.gameObject->transform->GetRotation());
             }
 
