@@ -1,6 +1,19 @@
-# Vulkan Renderer
+# Tiny Vulkan Renderer
 
-![image-20240924235946764](./README.assets/image-20240924235946764.png)
+
+
+<img src="./README.assets/image-20240924235946764.png" alt="image-20240924235946764" style="zoom:50%;" />
+
+![RigidBody](./README.assets/RigidBody.gif)
+
+## Introduction
+
+- Support both rasterization and ray tracing pipeline
+- ECS architecture
+- PBR material
+- Layered transform
+- Simple gizmos, GUI
+- And so on...
 
 ## Progress
 
@@ -115,3 +128,5 @@
 12.3 Optimized camera movement. Now press "F" can focus on selected object.
 
 12.7 Now camera can move more smoothly.
+
+12.26 Updated rigidbody component, but there are still some issues.

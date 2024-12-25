@@ -109,6 +109,12 @@ namespace Kaamoo {
             }
         }
 
+        void LateFixedUpdate(const ComponentUpdateInfo &updateInfo) {
+            for (auto &component: m_components) {
+                component->LateFixedUpdate(updateInfo);
+            }
+        }
+
     private:
         std::vector<Component *> m_components;
 

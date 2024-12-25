@@ -45,9 +45,13 @@ namespace Kaamoo {
 
         virtual void Update(const ComponentUpdateInfo &updateInfo) {};
 
-        virtual void FixedUpdate(const ComponentUpdateInfo &updateInfo) {};
-
         virtual void LateUpdate(const ComponentUpdateInfo &updateInfo) {};
+        
+        virtual void FixedUpdate(const ComponentUpdateInfo &updateInfo) {};
+        
+        virtual void LateFixedUpdate(const ComponentUpdateInfo &updateInfo) {};
+
+        
 
 #ifdef RAY_TRACING
 

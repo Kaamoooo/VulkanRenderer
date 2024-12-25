@@ -11,11 +11,31 @@ namespace Kaamoo {
 
     class Utils {
     public:
+        inline const static float EPSILON = 0.0001f;
 
         template<typename T>
         static std::string TypeName() {
             return typeid(T).name();
         }
+
+        struct Vec3Hash {
+            std::size_t operator()(const glm::vec3& v) const {
+                auto roundToEpsilon = [](float value) {
+                    return std::round(value / EPSILON); // 舍入到指定精度
+                };
+
+                std::size_t hx = std::hash<int>()(static_cast<int>(roundToEpsilon(v.x)));
+                std::size_t hy = std::hash<int>()(static_cast<int>(roundToEpsilon(v.y)));
+                std::size_t hz = std::hash<int>()(static_cast<int>(roundToEpsilon(v.z)));
+                return hx ^ (hy << 1) ^ (hz << 2); // 合并哈希值
+            }
+        };
+
+        struct Vec3Equal {
+            bool operator()(const glm::vec3 &v1, const glm::vec3 &v2) const {
+                return abs(v1.x - v2.x) < EPSILON && abs(v1.y - v2.y) < EPSILON && abs(v1.z - v2.z) < EPSILON;
+            }
+        };
 
         static glm::vec3 VectorToRotation(const glm::vec3 &target) {
             // 归一化目标向量
@@ -39,7 +59,7 @@ namespace Kaamoo {
                     std::trunc(vec.z * scale) / scale
             );
         }
-        
+
         static glm::vec3 TruncSmallValues(glm::vec3 vec, float threshold) {
             if (std::abs(vec.x) < threshold) vec.x = 0;
             if (std::abs(vec.y) < threshold) vec.y = 0;

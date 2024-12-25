@@ -72,20 +72,36 @@ namespace Kaamoo {
             m_meshRendererComponent->GetModelPtr()->SetMaxRadius(_maxRadius);
         }
 
+        //Todo: Damn gravity!
         void FixedUpdate(const ComponentUpdateInfo &updateInfo) override {
-            updated = false;
+            auto _massCenter = GetMassCenter(m_transformComponent);
             if (m_useGravity) {
-                m_velocity += GRAVITY * FIXED_UPDATE_INTERVAL;
+                AddJ(_massCenter, FIXED_UPDATE_INTERVAL * m_totalMass * GRAVITY);
             }
+            for (auto &pair: m_momentum) {
+                auto _r = std::get<0>(pair) - _massCenter;
+                m_velocity += std::get<1>(pair) * m_invMass;
+                m_omega += m_invI0 * glm::cross(_r, std::get<1>(pair));
+            }
+            m_momentum.clear();
+
+            updated = false;
             auto _startTime = std::chrono::high_resolution_clock::now();
             auto _gameObjects = GetBroadPhaseCollisions(updateInfo.gameObject);
             if (!_gameObjects.empty()) {
-                for (auto &_gameObject: _gameObjects) {
+                for (auto &_gameObjectPair: _gameObjects) {
+                    auto _gameObject = _gameObjectPair.first;
+                    RigidBodyComponent *_otherRigidBodyComponent;
+                    if (!_gameObject->TryGetComponent(_otherRigidBodyComponent)) {
+                        throw std::runtime_error("RigidBodyComponent not found");
+                    }
+                    if (_otherRigidBodyComponent->GetCollisionMap().find(updateInfo.gameObject) != _otherRigidBodyComponent->GetCollisionMap().end()) {
+                        continue;
+                    }
                     glm::vec3 _collidedFaceNormal{};
-                    glm::vec3 _collisionPoint{};
-                    auto _collidedPoint = GetNarrowPhaseCollision(updateInfo.gameObject, _gameObject, _collidedFaceNormal, _collisionPoint);
+                    auto _collidedPoint = GetNarrowPhaseCollision(updateInfo.gameObject, _gameObject, _collidedFaceNormal);
                     if (_collidedPoint.has_value()) {
-                        ProcessCollision(_collidedPoint.value(), _collidedFaceNormal, _collisionPoint, updateInfo.gameObject, _gameObject);
+                        ProcessCollision(_otherRigidBodyComponent, _collidedPoint.value(), _collidedFaceNormal, updateInfo.gameObject, _gameObject);
                     }
                 }
             }
@@ -103,11 +119,12 @@ namespace Kaamoo {
             gameObjectAABBs[updateInfo.gameObject] = GetAABB(m_transformComponent);
         }
 
-        void LateUpdate(const ComponentUpdateInfo &updateInfo) override {
+        void LateFixedUpdate(const ComponentUpdateInfo &updateInfo) override {
             if (!updated) {
                 UpdateOctree();
                 updated = true;
             }
+            m_collisionMap.clear();
         }
 
         //Todo: Static objects do not need to reconstruct
@@ -155,6 +172,18 @@ namespace Kaamoo {
             return m_invMass;
         }
 
+        auto GetJ() const {
+            return m_momentum;
+        }
+
+        void AddJ(glm::vec3 position, glm::vec3 j) {
+            m_momentum.push_back(std::make_tuple(position, j));
+        }
+
+        std::unordered_map<GameObject *, int> GetCollisionMap() const {
+            return m_collisionMap;
+        }
+
         glm::mat3 GetInvI0(TransformComponent *transformComponent) const {
             auto _rotateMatrix = transformComponent->GetRotationMatrix();
             auto _I0 = _rotateMatrix * m_I0 * glm::transpose(_rotateMatrix);
@@ -166,12 +195,15 @@ namespace Kaamoo {
         }
 
     private:
-        AABB m_aabb;
         TransformComponent *m_transformComponent;
         MeshRendererComponent *m_meshRendererComponent;
+        std::unordered_map<GameObject *, int> m_collisionMap;
+        AABB m_aabb;
+
         glm::vec3 m_velocity{0, 0, 0};
         glm::vec3 m_omega{0, 0, 0};
         glm::vec3 m_nativeMassCenter{0};
+        std::vector<std::tuple<glm::vec3, glm::vec3>> m_momentum;
         glm::mat3 m_I0;
         glm::mat3 m_invI0;
         float m_totalMass;
@@ -182,22 +214,19 @@ namespace Kaamoo {
         bool m_isKinematic = false;
         bool m_useGravity = false;
 
-        void ProcessCollision(glm::vec3 intersectionPoint, glm::vec3 collidedFaceNormal, glm::vec3 collisionPoint, GameObject *gameObject, GameObject *otherObject) {
-            RigidBodyComponent *_otherRigidBodyComponent;
-            if (!otherObject->TryGetComponent(_otherRigidBodyComponent)) {
-                throw std::runtime_error("RigidBodyComponent not found");
-            }
+        void ProcessCollision(RigidBodyComponent *otherRigidBodyComponent, glm::vec3 intersectionPoint, glm::vec3 collidedFaceNormal, GameObject *gameObject, GameObject *otherObject) {
             glm::vec3 _massCenter = GetMassCenter(gameObject->transform);
             glm::vec3 _r = Utils::TruncSmallValues(intersectionPoint - _massCenter, EPSILON);
             glm::vec3 _n = Utils::TruncSmallValues(glm::normalize(collidedFaceNormal), EPSILON);
+
 //Todo: Subtle swizzles
             TransformComponent *_otherTransformComponent = otherObject->transform;
-            glm::vec3 _velocityOther = _otherRigidBodyComponent->GetVelocity();
-            glm::vec3 _omegaOther = _otherRigidBodyComponent->GetOmega();
-            float _otherInvMass = _otherRigidBodyComponent->GetInvMass();
-            glm::mat3 _otherInvI0 = _otherRigidBodyComponent->GetInvI0(_otherTransformComponent);
+            glm::vec3 _velocityOther = otherRigidBodyComponent->GetVelocity();
+            glm::vec3 _omegaOther = otherRigidBodyComponent->GetOmega();
+            float _otherInvMass = otherRigidBodyComponent->GetInvMass();
+            glm::mat3 _otherInvI0 = otherRigidBodyComponent->GetInvI0(_otherTransformComponent);
             glm::vec3 _rOther =
-                    Utils::TruncSmallValues(intersectionPoint - _otherRigidBodyComponent->GetMassCenter(otherObject->transform), EPSILON);
+                    Utils::TruncSmallValues(intersectionPoint - otherRigidBodyComponent->GetMassCenter(otherObject->transform), EPSILON);
 
             glm::vec3 _relativeVelocity = m_velocity - _velocityOther + glm::cross(m_omega, _r) - glm::cross(_omegaOther, _rOther);
             auto _invI0 = GetInvI0(m_transformComponent);
@@ -216,42 +245,27 @@ namespace Kaamoo {
                 _t = glm::normalize(_Vt);
             }
 
-            glm::vec3 _J;
-            if (_otherRigidBodyComponent->IsKinematic()) {
+            glm::vec3 _J = glm::vec3(0);
+
+            if (IsKinematic()) {
+                _J = -(1 + m_e) * _Vn /
+                     (_otherInvMass + glm::dot(_n, glm::cross(_otherInvI0 * glm::cross(_rOther, _n), _rOther)));
+                otherRigidBodyComponent->AddJ(intersectionPoint, -_J);
+            } else if (otherRigidBodyComponent->IsKinematic()) {
                 _J = -(1 + m_e) * _Vn /
                      (m_invMass + glm::dot(_n, glm::cross(_invI0 * glm::cross(_r, _n), _r)));
+                AddJ(intersectionPoint, _J);
             } else {
                 _J = -(1 + m_e) * _Vn /
                      (m_invMass + _otherInvMass + glm::dot(_n, glm::cross(_invI0 * glm::cross(_r, _n), _r)) + glm::dot(_n, glm::cross(_otherInvI0 * glm::cross(_rOther, _n), _rOther)));
-            }
-            glm::mat3 _M = glm::transpose(glm::mat3(
-                    1.0f, 0.0f, 0.0f,
-                    0.0f, 1.0f, 0.0f,
-                    0.0f, 0.0f, 1.0f
-            ));
-            glm::vec3 result = glm::transpose(_M) * m_omega;
-            float _energy0 = 0.5 * m_totalMass * glm::dot(m_velocity, m_velocity) + 0.5 * glm::dot(m_omega, m_I0 * m_omega);
-            m_velocity += Utils::TruncSmallValues(_J * m_invMass, EPSILON);
-            m_omega += _invI0 * glm::cross(_r, _J);
-            float _energy1 = 0.5 * m_totalMass * glm::dot(m_velocity, m_velocity) + 0.5 * glm::dot(m_omega, m_I0 * m_omega);
-            std::cout << "Differ: " << _energy1 - _energy0 << std::endl;
-            if (std::isnan(_energy1 - _energy0)) {
-                std::cout << "Differ: " << _energy1 - _energy0 << std::endl;
-            }
-//Todo: Intersection between two triangles
-            if (!_otherRigidBodyComponent->IsKinematic()) {
-                _velocityOther -= _J * _otherInvMass;
-                _otherRigidBodyComponent->SetVelocity(_velocityOther);
-                _omegaOther -= glm::cross(_rOther, _J) * _otherInvI0;
-                _otherRigidBodyComponent->SetOmega(_omegaOther);
+                AddJ(intersectionPoint, _J);
+                otherRigidBodyComponent->AddJ(intersectionPoint, -_J);
             }
 
-//            if (glm::length(m_omega) > 3) {
-//                std::cout << "omega: " << m_omega.x << ", " << m_omega.y << ", " << m_omega.z << std::endl;
-//            }
+            m_collisionMap[otherObject] = 1;
         }
 
-        static std::optional<glm::vec3> GetNarrowPhaseCollision(GameObject *main, GameObject *other, glm::vec3 &normal, glm::vec3 &collisionPoint) {
+        static std::optional<glm::vec3> GetNarrowPhaseCollision(GameObject *main, GameObject *other, glm::vec3 &normal) {
             RigidBodyComponent *_mainRigidBodyComponent, *_otherRigidBodyComponent;
             MeshRendererComponent *_mainMeshRendererComponent, *_otherMeshRendererComponent;
             if (!main->TryGetComponent(_mainRigidBodyComponent) || !other->TryGetComponent(_otherRigidBodyComponent)) {
@@ -277,82 +291,93 @@ namespace Kaamoo {
             }
 
             auto &_mainVertices = _mainMeshRendererComponent->GetModelPtr()->GetVertices();
+            auto &_mainIndices = _mainMeshRendererComponent->GetModelPtr()->GetIndices();
             auto &_otherVertices = _otherMeshRendererComponent->GetModelPtr()->GetVertices();
             auto &_otherIndices = _otherMeshRendererComponent->GetModelPtr()->GetIndices();
 
-            std::vector<glm::vec3> _mainValidVertices;
-            for (int i = 0; i < _mainVertices.size(); ++i) {
-                glm::vec3 _mainWorldVertex = main->transform->mat4() * glm::vec4(_mainVertices[i].position, 1);
-                if (_mainWorldVertex.x > _intersectionAABB.min.x - EPSILON && _mainWorldVertex.x < _intersectionAABB.max.x + EPSILON
-                    && _mainWorldVertex.y > _intersectionAABB.min.y - EPSILON && _mainWorldVertex.y < _intersectionAABB.max.y + EPSILON
-                    && _mainWorldVertex.z > _intersectionAABB.min.z - EPSILON && _mainWorldVertex.z < _intersectionAABB.max.z + EPSILON) {
-                    _mainValidVertices.push_back(_mainWorldVertex);
-                }
-            }
-
-            std::vector<Triangle> _otherValidTriangles;
-            for (int i = 0; i < _otherIndices.size(); i += 3) {
-                glm::vec3 _triangleVertices[3];
-                AABB _triangleAABB;
-                _triangleAABB.min = glm::vec3(FLT_MAX);
-                _triangleAABB.max = glm::vec3(-FLT_MAX);
-                for (int j = 0; j < 3; ++j) {
-                    _triangleVertices[j] = other->transform->mat4() * glm::vec4(_otherVertices[_otherIndices[i + j]].position, 1);
-                    for (int k = 0; k < 3; ++k) {
-                        _triangleAABB.min[k] = glm::min(_triangleAABB.min[k], _triangleVertices[j][k]);
-                        _triangleAABB.max[k] = glm::max(_triangleAABB.max[k], _triangleVertices[j][k]);
+            auto getValidTriangles = [](GameObject *object, std::vector<Model::Vertex> &vertices, std::vector<unsigned int> &indices, const AABB &_intersectionAABB) {
+                std::vector<Triangle> _validTriangles;
+                for (int i = 0; i < indices.size(); i += 3) {
+                    glm::vec3 _triangleVertices[3];
+                    AABB _triangleAABB;
+                    _triangleAABB.min = glm::vec3(FLT_MAX);
+                    _triangleAABB.max = glm::vec3(-FLT_MAX);
+                    for (int j = 0; j < 3; ++j) {
+                        _triangleVertices[j] = object->transform->mat4() * glm::vec4(vertices[indices[i + j]].position, 1);
+                        for (int k = 0; k < 3; ++k) {
+                            _triangleAABB.min[k] = glm::min(_triangleAABB.min[k], _triangleVertices[j][k]);
+                            _triangleAABB.max[k] = glm::max(_triangleAABB.max[k], _triangleVertices[j][k]);
+                        }
+                    }
+                    if (AABBIntersect(_triangleAABB, _intersectionAABB)) {
+                        Triangle _triangle;
+                        _triangle.vertices[0] = _triangleVertices[0];
+                        _triangle.vertices[1] = _triangleVertices[1];
+                        _triangle.vertices[2] = _triangleVertices[2];
+                        _triangle.normal = glm::normalize(glm::cross(_triangle.vertices[1] - _triangle.vertices[0], _triangle.vertices[2] - _triangle.vertices[0]));
+                        _validTriangles.push_back(_triangle);
                     }
                 }
-                _intersect = AABBIntersect(_triangleAABB, _intersectionAABB);
-                if (_intersect) {
-                    Triangle _triangle;
-                    _triangle.vertices[0] = _triangleVertices[0];
-                    _triangle.vertices[1] = _triangleVertices[1];
-                    _triangle.vertices[2] = _triangleVertices[2];
-                    _triangle.normal = glm::normalize(glm::cross(_triangle.vertices[1] - _triangle.vertices[0], _triangle.vertices[2] - _triangle.vertices[0]));
-                    _otherValidTriangles.push_back(_triangle);
-                }
-            }
+                return _validTriangles;
+            };
+            auto _mainValidTriangles = getValidTriangles(main, _mainVertices, _mainIndices, _intersectionAABB);
+            auto _otherValidTriangles = getValidTriangles(other, _otherVertices, _otherIndices, _intersectionAABB);
 
-            glm::vec3 _rayOrigin = _mainRigidBodyComponent->GetMassCenter(main->transform);
-            std::vector<glm::vec3> _intersectionPoints{};
-            std::vector<glm::vec3> _collidedPoints{};
+            glm::vec3 _center = _mainRigidBodyComponent->GetMassCenter(main->transform);
+            std::vector<glm::vec3> _intersectionPoints;
+            std::unordered_map<glm::vec3, int, Utils::Vec3Hash, Utils::Vec3Equal> _intersectionPointsMap{};
+            glm::vec3 _centroid{};
             std::vector<Triangle> _collidedTriangles{};
-            for (const auto &_mainValidVertex: _mainValidVertices) {
-                glm::vec3 _rayVector = _mainValidVertex - _rayOrigin;
-                for (const auto &_otherValidTriangle: _otherValidTriangles) {
-                    auto _intersectionPoint = RayIntersectsTriangle(_rayOrigin, _rayVector, _otherValidTriangle);
-                    if (_intersectionPoint.has_value()) {
-                        _collidedPoints.push_back(_mainValidVertex);
-                        _intersectionPoints.push_back(_intersectionPoint.value());
-                        _collidedTriangles.push_back(_otherValidTriangle);
+
+            for (const auto &_mainValidTriangle: _mainValidTriangles) {
+                for (int i = 0; i < 3; ++i) {
+                    for (const auto &_otherValidTriangle: _otherValidTriangles) {
+                        auto _intersectionPoint = RayIntersectsTriangle(_mainValidTriangle.vertices[i], _mainValidTriangle.vertices[(i + 1) % 3], _otherValidTriangle);
+                        if (_intersectionPoint.has_value()) {
+                            if (_intersectionPointsMap.find(_intersectionPoint.value()) == _intersectionPointsMap.end()) {
+                                _intersectionPointsMap[_intersectionPoint.value()] = 1;
+                                _intersectionPoints.push_back(_intersectionPoint.value());
+                                _centroid += _intersectionPoint.value();
+                            }
+                            _collidedTriangles.push_back(_otherValidTriangle);
+                        }
                     }
                 }
             }
-            if (_intersectionPoints.empty() || _collidedTriangles.empty()) {
+            if (_intersectionPointsMap.empty() || _collidedTriangles.empty()) {
                 return {};
             }
 
+            _centroid /= _intersectionPointsMap.size();
+            glm::vec3 _u = glm::normalize(_intersectionPoints[0] - _centroid);
+            glm::vec3 _v = glm::normalize(glm::cross(_u, glm::cross(_u, glm::normalize(_intersectionPoints[1] - _centroid))));
+            std::sort(_intersectionPoints.begin(), _intersectionPoints.end(), [&](const glm::vec3 &a, const glm::vec3 &b) {
+                float _angleA = glm::atan(glm::dot(a - _centroid, _v), glm::dot(a - _centroid, _u));
+                float _angleB = glm::atan(glm::dot(b - _centroid, _v), glm::dot(b - _centroid, _u));
+                return _angleA > _angleB;
+            });
             glm::vec3 _averageIntersectionPoint{};
-            glm::vec3 _averageCollisionPoint{};
-            glm::vec3 _averageNormal{};
-            for (const auto &_intersectionPoint: _intersectionPoints) {
-                _averageIntersectionPoint += _intersectionPoint;
+            float totalArea = 0;
+            for (int i = 0; i < _intersectionPoints.size(); ++i) {
+                auto _p1 = _intersectionPoints[i], _p2 = _intersectionPoints[(i + 1) % _intersectionPoints.size()];
+                auto _v1 = _p1 - _centroid, _v2 = _p2 - _centroid;
+                float _s = 0.5 * glm::length(glm::cross(_v1, _v2));
+                _averageIntersectionPoint += _s * (_centroid + _p1 + _p2) / 3.0f;
+                totalArea += _s;
             }
+            _averageIntersectionPoint /= totalArea;
+
+            if (totalArea == 0) return {};
+
+            glm::vec3 _averageNormal{};
             for (auto &triangle: _collidedTriangles) {
                 _averageNormal += triangle.normal;
             }
             normal = glm::normalize(_averageNormal);
-            for (auto &point: _collidedPoints) {
-                _averageCollisionPoint += point;
+            if (std::isnan(normal.x) || std::isnan(normal.y) || std::isnan(normal.z)) {
+                return {};
             }
-            if (std::isnan(normal.x)){
-                std::cout << "Normal is nan" << std::endl;
-            }
-            _averageCollisionPoint /= _collidedPoints.size();
-            collisionPoint = _averageCollisionPoint;
 
-            _averageIntersectionPoint /= _intersectionPoints.size();
             return _averageIntersectionPoint;
         }
 
@@ -452,10 +477,10 @@ namespace Kaamoo {
 
         //Möller–Trumbore ray-triangle intersection algorithm
         static std::optional<glm::vec3> RayIntersectsTriangle(const glm::vec3 ray_origin,
-                                                              const glm::vec3 ray_vector,
+                                                              const glm::vec3 ray_target,
                                                               const Triangle triangle) {
             constexpr float epsilon = std::numeric_limits<float>::epsilon();
-
+            auto ray_vector = ray_target - ray_origin;
             glm::vec3 edge1 = triangle.vertices[1] - triangle.vertices[0];
             glm::vec3 edge2 = triangle.vertices[2] - triangle.vertices[0];
             glm::vec3 ray_cross_e2 = cross(ray_vector, edge2);
@@ -480,11 +505,16 @@ namespace Kaamoo {
             // At this stage we can compute t to find out where the intersection point is on the line.
             float t = inv_det * dot(edge2, s_cross_e1);
 
-            if (t > epsilon) // ray intersection
-            {
+//            if (t > epsilon) // ray intersection
+//            {
+//                return glm::vec3(ray_origin + ray_vector * t);
+//            } else // This means that there is a line intersection but not a ray intersection.
+//                return {};
+            if (t < 1 + EPSILON && t > -EPSILON) {
                 return glm::vec3(ray_origin + ray_vector * t);
-            } else // This means that there is a line intersection but not a ray intersection.
+            } else {
                 return {};
+            }
         }
 
 #ifdef RAY_TRACING
@@ -537,7 +567,7 @@ namespace Kaamoo {
             std::vector<std::shared_ptr<Node>> children{};
         };
         inline static std::shared_ptr<Node> root = nullptr;
-        static const int MAX_DEPTH = 12;
+        static const int MAX_DEPTH = 4;
 
         static void InitRoot() {
             if (root == nullptr) {
@@ -578,13 +608,13 @@ namespace Kaamoo {
             }
         }
 
-        static std::vector<GameObject *> GetBroadPhaseCollisions(GameObject *gameObject) {
-            std::vector<GameObject *> _gameObjects;
+        static std::unordered_map<GameObject *, int> GetBroadPhaseCollisions(GameObject *gameObject) {
+            std::unordered_map<GameObject *, int> _gameObjects;
             GetBroadPhaseCollisionsRecursive(gameObject, root, _gameObjects);
             return _gameObjects;
         }
 
-        static void GetBroadPhaseCollisionsRecursive(GameObject *gameObject, std::shared_ptr<Node> node, std::vector<GameObject *> &_gameObjects) {
+        static void GetBroadPhaseCollisionsRecursive(GameObject *gameObject, std::shared_ptr<Node> node, std::unordered_map<GameObject *, int> &_gameObjects) {
             if (node->children.size() != 0) {
                 for (auto &_childNode: node->children) {
                     GetBroadPhaseCollisionsRecursive(gameObject, _childNode, _gameObjects);
@@ -595,7 +625,7 @@ namespace Kaamoo {
             for (auto &_gameObject: node->gameObjects) {
                 if (_gameObject == gameObject) {
                     for (auto &_gameObject1: node->gameObjects) {
-                        if (_gameObject1 == gameObject) {
+                        if (_gameObject1 == gameObject || _gameObjects.find(_gameObject1) != _gameObjects.end()) {
                             continue;
                         }
                         RigidBodyComponent *_rigidBodyComponentMain;
@@ -605,7 +635,7 @@ namespace Kaamoo {
                         RigidBodyComponent *_itemRigidBodyComponent;
                         if (_gameObject1->TryGetComponent(_itemRigidBodyComponent)) {
                             if (AABBIntersect(_rigidBodyComponentMain->GetAABB(gameObject->transform), _itemRigidBodyComponent->GetAABB(_gameObject1->transform))) {
-                                _gameObjects.push_back(_gameObject1);
+                                _gameObjects[_gameObject1] = 1;
                             }
                         }
                     }

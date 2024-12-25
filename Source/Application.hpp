@@ -193,6 +193,10 @@ namespace Kaamoo {
                     updateInfo.gameObject = &pair.second;
                     pair.second.FixedUpdate(updateInfo);
                 }
+                for (auto &pair: m_gameObjects) {
+                    updateInfo.gameObject = &pair.second;
+                    pair.second.LateFixedUpdate(updateInfo);
+                }
             }
             reservedFrameTime = frameTime;
 //            static int frameIndex = 0;
