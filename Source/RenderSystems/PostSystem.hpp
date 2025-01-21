@@ -20,7 +20,7 @@ namespace Kaamoo {
         PostSystem(const RenderSystem &) = delete;
 
 
-        void render(FrameInfo &frameInfo) override{
+        void render(FrameInfo &frameInfo,GameObject* gameObject = nullptr) override{
             m_pipeline->bind(frameInfo.commandBuffer);
 
             std::vector<VkDescriptorSet> descriptorSets;

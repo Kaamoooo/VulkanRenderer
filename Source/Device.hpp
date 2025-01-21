@@ -6,6 +6,7 @@
 #include "MyWindow.hpp"
 #include <string>
 #include <vector>
+#include <map>
 #include <vulkan/vulkan.h>
 
 namespace Kaamoo {

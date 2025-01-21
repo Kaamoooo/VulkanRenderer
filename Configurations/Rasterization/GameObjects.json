@@ -30,29 +30,29 @@
     "name": "Cube",
     "transform": {
       "id": 1,
-      "translation": [-2,-3,0],
+      "translation": [-2,-2,0],
       "scale": [0.1,0.2,0.1],
       "rotation": [0,0,0]
     },
-    "componentIds":[5,11]
+    "componentIds":[5]
   },
   {
     "name": "Cube1",
     "transform": {
-      "translation": [0,-2,-1],
+      "translation": [0,-1,-1],
       "scale": [0.3,0.6,0.3],
       "rotation": [0,0,45]
     },
-    "componentIds":[5,13]
+    "componentIds":[5]
   },
   {
     "name": "Cube2",
     "transform": {
-      "translation": [1,-2,0.7],
+      "translation": [1,-1,0.7],
       "scale": [0.3,0.6,0.3],
       "rotation": [0,0,0]
     },
-    "componentIds":[5,11]
+    "componentIds":[5]
   },
   {
     "name": "Vase",

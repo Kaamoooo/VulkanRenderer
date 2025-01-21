@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+//Todo: Circular include
+#include "../MeshRendererComponent.hpp"
 #include "InputControllerComponent.hpp"
 
 namespace Kaamoo {

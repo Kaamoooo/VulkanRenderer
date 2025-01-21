@@ -118,6 +118,8 @@ namespace Kaamoo {
     private:
         std::vector<Component *> m_components;
 
+        float m_maxOriginalVisualRadius = 1;
+
         id_t id;
 
         std::string name;

@@ -35,14 +35,19 @@ namespace Kaamoo {
 
         RenderSystem &operator=(const RenderSystem &) = delete;
 
-        virtual void render(FrameInfo &frameInfo);
-
+        virtual void render(FrameInfo &frameInfo,GameObject* gameObject = nullptr);
+        
+        
         template<class T>
         void UpdateGlobalUboBuffer(T &globalUbo, uint32_t frameIndex) {
             m_material->getBufferPointers()[0]->writeToIndex(&globalUbo, frameIndex);
             m_material->getBufferPointers()[0]->flushIndex(frameIndex);
         };
 
+        unsigned int GetRenderQueue() const {
+            auto _pipelineCategory = m_material->getPipelineCategory();
+            return PipelineRenderQueue.at(_pipelineCategory);
+        }
 
     protected:
         virtual void createPipeline(VkRenderPass renderPass);
@@ -56,6 +61,7 @@ namespace Kaamoo {
         VkPipelineLayout m_pipelineLayout;
         std::shared_ptr<Material> m_material;
         VkRenderPass m_renderPass;
+
     };
 
 

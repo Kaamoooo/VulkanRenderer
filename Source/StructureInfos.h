@@ -67,6 +67,10 @@ namespace Kaamoo {
         VkExtent2D extent;
         id_t selectedGameObjectId;
         bool sceneUpdated;
+#ifdef RAY_TRACING
+        std::shared_ptr<Buffer> pGameObjectDescBuffer;
+        std::vector<GameObjectDesc> pGameObjectDescs;
+#endif
     };
     
     struct RendererInfo{

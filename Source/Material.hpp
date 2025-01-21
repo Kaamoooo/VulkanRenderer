@@ -168,7 +168,7 @@ namespace Kaamoo {
                 imagePointers(std::move(imagePointers)),
                 samplerPointers(std::move(samplerPointers)),
                 bufferPointers(std::move(bufferPointers)),
-                pipelineCategory(pipelineCategory) {};
+                pipelineCategory(std::move(pipelineCategory)) {};
 
         [[nodiscard]] std::vector<std::shared_ptr<Image>> getImagePointers() const {
             return imagePointers;

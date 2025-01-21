@@ -12,6 +12,7 @@ namespace Kaamoo {
     }
 
     Application::Application() : m_shaderBuilder(m_device) {
+        m_renderManager = std::make_unique<RenderManager>();
         m_globalPool = DescriptorPool::Builder(m_device).
                 setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
                 addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT * MATERIAL_NUMBER).
@@ -26,7 +27,6 @@ namespace Kaamoo {
     void Application::run() {
         auto currentTime = std::chrono::high_resolution_clock::now();
         float totalTime = 0;
-        GlobalUbo ubo{};
         Awake();
         while (!m_window.shouldClose()) {
             glfwPollEvents();
@@ -37,63 +37,10 @@ namespace Kaamoo {
 
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, ubo, m_window.getCurrentExtent(), GUI::GetSelectedId(), false};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, m_gameObjects, m_materials, m_ubo, m_window.getCurrentExtent(), GUI::GetSelectedId(), false};
                 UpdateComponents(frameInfo);
-                UpdateUbo(ubo, totalTime);
-
-#ifdef RAY_TRACING
-                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
-                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects, &m_pGameObjectDescs, &m_hierarchyTree, frameInfo);
-                m_pGameObjectDescBuffer->writeToBuffer(m_pGameObjectDescs.data(), m_pGameObjectDescs.size() * sizeof(GameObjectDesc));
-
-                m_rayTracingSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
-                m_rayTracingSystem->rayTrace(frameInfo);
-
-                m_renderer.setDenoiseRtxToComputeSynchronization(commandBuffer, frameIndex % 2);
-
-                m_computeSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
-                m_computeSystem->render(frameInfo);
-
-                m_renderer.setDenoiseComputeToPostSynchronization(commandBuffer, frameIndex % 2);
-
-                m_renderer.beginSwapChainRenderPass(commandBuffer);
-
-                m_postSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
-                m_postSystem->render(frameInfo);
-#else
-                
-                m_renderer.beginShadowRenderPass(commandBuffer);
-                m_shadowSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
-                m_shadowSystem->renderShadow(frameInfo);
-                m_renderer.endShadowRenderPass(commandBuffer);
-
-                m_renderer.setShadowMapSynchronization(commandBuffer);
-
-                m_renderer.beginSwapChainRenderPass(commandBuffer);
-
-                for (const auto &item: m_renderSystems) {
-                    item->UpdateGlobalUboBuffer(ubo, frameIndex);
-                    item->render(frameInfo);
-                }
-
-                GUI::BeginFrame(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height));
-                GUI::ShowWindow(ImVec2(m_window.getCurrentExtent().width, m_window.getCurrentExtent().height),
-                                &m_gameObjects, &m_materials, &m_hierarchyTree, frameInfo);
-#endif
-                GUI::EndFrame(commandBuffer);
-                m_renderer.endSwapChainRenderPass(commandBuffer);
-
-                m_renderer.beginGizmosRenderPass(commandBuffer);
-                m_gizmosRenderSystem->UpdateGlobalUboBuffer(ubo, frameIndex);
-                m_gizmosRenderSystem->render(frameInfo, GizmosType::EdgeDetectionStencil);
-                m_gizmosRenderSystem->render(frameInfo, GizmosType::EdgeDetection);
-
-                m_gizmosRenderSystem->render(frameInfo, GizmosType::Axis);
-                m_renderer.endGizmosRenderPass(commandBuffer);
-
-                m_renderer.endFrame();
-//                std::cout << "Frame Time: " << frameTime << std::endl;
+                UpdateUbo(totalTime);
+                UpdateRendering(frameInfo);
             }
 
         }
@@ -175,7 +122,7 @@ namespace Kaamoo {
                 m_gameObjects.emplace(gameObject.getId(), std::move(gameObject));
             }
         }
-        
+
         for (auto &pair: m_gameObjects) {
             auto &gameObject = pair.second;
             if (transformIdToParentGameObjMap.find(gameObject.transform->GetTransformId()) != transformIdToParentGameObjMap.end()) {
@@ -193,7 +140,7 @@ namespace Kaamoo {
             auto &gameObject = pair.second;
             gameObject.Loaded();
         }
-        
+
 #ifdef RAY_TRACING
         BLAS::buildBLAS(VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
 #endif

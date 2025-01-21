@@ -20,7 +20,7 @@ namespace Kaamoo {
         ComputeSystem(const RenderSystem &) = delete;
 
 
-        void render(FrameInfo &frameInfo) override {
+        void render(FrameInfo &frameInfo, GameObject *gameObject = nullptr) override {
             m_pipeline->bind(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
 
             std::vector<VkDescriptorSet> descriptorSets;

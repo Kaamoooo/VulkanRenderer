@@ -130,3 +130,7 @@
 12.7 Now camera can move more smoothly.
 
 12.26 Updated rigidbody component, but there are still some issues.
+
+---------------2025----------------
+
+1.21 Optimized rendering related code structure. Added render queue.

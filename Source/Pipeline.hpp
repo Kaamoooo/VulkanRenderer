@@ -15,8 +15,9 @@ namespace Kaamoo {
     const struct PipelineCategory {
         std::string Opaque = "Opaque";
         std::string TessellationGeometry = "TessellationGeometry";
-        std::string SkyBox = "SkyBox";
+        std::string Light = "Light";
         std::string Transparent = "Transparent";
+        std::string SkyBox = "SkyBox";
         std::string Shadow = "Shadow";
         std::string Overlay = "Overlay";
         std::string Post = "Post";
@@ -24,6 +25,17 @@ namespace Kaamoo {
         std::string Gizmos = "Gizmos";
         std::string Compute = "Compute";
     } PipelineCategory;
+    
+    const std::unordered_map<std::string , unsigned int> PipelineRenderQueue{
+            {PipelineCategory.SkyBox, 1000},
+            {PipelineCategory.Opaque, 2000},
+            {PipelineCategory.TessellationGeometry, 2000},
+            {PipelineCategory.Light, 2500},
+            {PipelineCategory.Transparent, 2500},
+            {PipelineCategory.Overlay, 4000},
+            {PipelineCategory.Post, 5000},
+            {PipelineCategory.Gizmos, 6000},
+    };
 
     struct PipelineConfigureInfo {
         PipelineConfigureInfo() = default;

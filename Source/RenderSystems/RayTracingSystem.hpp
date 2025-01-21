@@ -52,7 +52,7 @@ namespace Kaamoo {
             );
         }
 
-        void render(FrameInfo &frameInfo) override {
+        void render(FrameInfo &frameInfo,GameObject* gameObject) override {
             rayTrace(frameInfo);
         }
 

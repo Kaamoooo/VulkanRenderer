@@ -17,18 +17,9 @@
 #include "Utils/JsonUtils.hpp"
 #include "Sampler.h"
 
-#include "RenderSystems/RenderSystem.h"
-#include "RenderSystems/PointLightSystem.h"
-#include "RenderSystems/ShadowSystem.h"
-#include "RenderSystems/GrassSystem.h"
-#include "RenderSystems/SkyBoxSystem.hpp"
-#include "RenderSystems/RayTracingSystem.hpp"
-#include "RenderSystems/PostSystem.hpp"
-#include "RenderSystems/GizmosRenderSystem.hpp"
-#include "RenderSystems/ComputeSystem.hpp"
-
 #include "ComponentFactory.hpp"
 #include "GUI.hpp"
+#include "RenderManager.hpp"
 
 namespace Kaamoo {
     class Application {
@@ -63,6 +54,7 @@ namespace Kaamoo {
         Renderer m_renderer{m_window, m_device};
 
         std::shared_ptr<DescriptorPool> m_globalPool;
+        GlobalUbo m_ubo{};
         GameObject::Map m_gameObjects;
         HierarchyTree m_hierarchyTree;
         ShaderBuilder m_shaderBuilder;
@@ -70,17 +62,11 @@ namespace Kaamoo {
         std::shared_ptr<VkRenderPass> m_shadowPass;
         std::shared_ptr<VkFramebuffer> m_shadowFramebuffer;
 
-        std::vector<std::shared_ptr<RenderSystem>> m_renderSystems;
-        std::shared_ptr<PostSystem> m_postSystem;
-        std::shared_ptr<GizmosRenderSystem> m_gizmosRenderSystem;
-        std::shared_ptr<ComputeSystem> m_computeSystem;
-        std::shared_ptr<Buffer> m_pGameObjectDescBuffer;
+        std::unique_ptr<RenderManager> m_renderManager;
 
 #ifdef RAY_TRACING
-        std::shared_ptr<RayTracingSystem> m_rayTracingSystem;
+        std::shared_ptr<Buffer> m_pGameObjectDescBuffer;
         std::vector<GameObjectDesc> m_pGameObjectDescs;
-#else
-        std::shared_ptr<ShadowSystem> m_shadowSystem;
 #endif
 
         void loadGameObjects();
@@ -88,70 +74,18 @@ namespace Kaamoo {
         void loadMaterials();
 
         void createRenderSystems() {
-            for (auto &material: m_materials) {
-                auto pipelineCategory = material.second->getPipelineCategory();
-#ifdef RAY_TRACING
-                if (pipelineCategory == PipelineCategory.RayTracing) {
-                    m_rayTracingSystem = std::make_shared<RayTracingSystem>(m_device, nullptr, material.second);
-                    m_rayTracingSystem->Init();
-                }
-                if (pipelineCategory == PipelineCategory.Post) {
-                    m_postSystem = std::make_shared<PostSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-                    m_postSystem->Init();
-                }
-                if (pipelineCategory == PipelineCategory.Compute) {
-                    m_computeSystem = std::make_shared<ComputeSystem>(m_device, nullptr, material.second);
-                    m_computeSystem->Init();
-                }
-#else
-                if (pipelineCategory == PipelineCategory.Shadow) {
-                    m_shadowSystem = std::make_shared<ShadowSystem>(m_device, m_renderer.getShadowRenderPass(), material.second);
-                    continue;
-                } else if (pipelineCategory == PipelineCategory.TessellationGeometry) {
-                    auto renderSystem = std::make_shared<GrassSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-                    renderSystem->Init();
-                    m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
-                    continue;
-                } else if (pipelineCategory == PipelineCategory.SkyBox) {
-                    auto renderSystem = std::make_shared<SkyBoxSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-                    renderSystem->Init();
-                    m_renderSystems.push_back(std::dynamic_pointer_cast<RenderSystem>(renderSystem));
-                    continue;
-                } else if (pipelineCategory == PipelineCategory.Opaque) {
-                    auto renderSystem = std::make_shared<RenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-                    renderSystem->Init();
-                    m_renderSystems.push_back(renderSystem);
-                }
-#endif
-                if (pipelineCategory == PipelineCategory.Gizmos) {
-                    m_gizmosRenderSystem = std::make_shared<GizmosRenderSystem>(m_device, m_renderer.getSwapChainRenderPass(), material.second);
-//          This render system contains multiple pipelines, so I initialize it in the constructor.
-//          m_gizmosRenderSystem->Init();   
-                }
-            }
+            m_renderManager->CreateRenderSystems(m_materials, m_device, m_renderer);
         }
 
-        void UpdateUbo(GlobalUbo &ubo, float totalTime) {
-            ubo.lightNum = LightComponent::GetLightNum();
-            ubo.curTime = totalTime;
-#ifndef RAY_TRACING
-            ubo.shadowViewMatrix[0] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 90, 180));
-            ubo.shadowViewMatrix[1] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, -90, 180));
-            ubo.shadowViewMatrix[2] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(-90, 0, 0));
-            ubo.shadowViewMatrix[3] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(90, 0, 0));
-            ubo.shadowViewMatrix[4] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(180, 0, 0));
-            ubo.shadowViewMatrix[5] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 0, 180));
-            ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 5.0f);
-            ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
-#endif
-
+        void UpdateUbo(float totalTime) {
+            m_renderManager->UpdateUbo(m_ubo, totalTime);
         }
 
         void Awake();
 
         void UpdateComponents(FrameInfo &frameInfo) {
             ComponentUpdateInfo updateInfo{};
-            RendererInfo rendererInfo{m_renderer.getAspectRatio(),m_renderer.FOV_Y, m_renderer.NEAR_CLIP, m_renderer.FAR_CLIP};
+            RendererInfo rendererInfo{m_renderer.getAspectRatio(), m_renderer.FOV_Y, m_renderer.NEAR_CLIP, m_renderer.FAR_CLIP};
             updateInfo.frameInfo = &frameInfo;
             updateInfo.rendererInfo = &rendererInfo;
 
@@ -202,6 +136,14 @@ namespace Kaamoo {
 //            static int frameIndex = 0;
 //            std::cout << "Frame " << frameIndex << " updated " << times << " times: " << frameInfo.frameTime << std::endl;
 //            frameIndex++;
+        }
+
+        void UpdateRendering(FrameInfo &frameInfo) {
+#ifdef RAY_TRACING
+            frameInfo.pGameObjectDescBuffer = m_pGameObjectDescBuffer;
+            frameInfo.pGameObjectDescs = m_pGameObjectDescs;
+#endif
+            m_renderManager->UpdateRendering(m_renderer, frameInfo, m_hierarchyTree);
         }
     };
 }
