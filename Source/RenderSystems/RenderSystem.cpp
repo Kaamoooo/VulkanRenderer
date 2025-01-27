@@ -7,7 +7,7 @@
 
 namespace Kaamoo {
 
-    RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material)
+    RenderSystem::RenderSystem(Device &device, const VkRenderPass &renderPass, const std::shared_ptr<Material> material)
             : device{device}, m_material{material}, m_renderPass{renderPass} {
 
     }
@@ -72,7 +72,7 @@ namespace Kaamoo {
     }
 
 
-    void RenderSystem::render(FrameInfo &frameInfo, GameObject* gameObject) {
+    void RenderSystem::render(FrameInfo &frameInfo, GameObject *gameObject) {
         m_pipeline->bind(frameInfo.commandBuffer);
 
         std::vector<VkDescriptorSet> descriptorSets;

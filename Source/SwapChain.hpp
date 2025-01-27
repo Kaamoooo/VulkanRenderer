@@ -27,7 +27,7 @@ namespace Kaamoo {
 
         VkFramebuffer getFrameBuffer(int index) { return swapChainFrameBuffers[index]; }
 
-        VkRenderPass getRenderPass() { return renderPass; }
+        VkRenderPass& getRenderPass() { return renderPass; }
 
         VkRenderPass getGizmosRenderPass() { return m_gizmosRenderPass; }
 

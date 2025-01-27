@@ -15,7 +15,7 @@ namespace Kaamoo {
             int rayTracingImageIndex;
         };
 
-        RayTracingSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) : RenderSystem(device, nullptr, material) {};
+        RayTracingSystem(Device &device,const VkRenderPass& renderPass, std::shared_ptr<Material> material) : RenderSystem(device, nullptr, material) {};
 
         void rayTrace(FrameInfo &frameInfo) {
             m_pipeline->bind(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR);

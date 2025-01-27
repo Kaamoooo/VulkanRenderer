@@ -23,7 +23,7 @@ namespace Kaamoo {
 
         };
 
-        GizmosRenderSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material)
+        GizmosRenderSystem(Device &device,const VkRenderPass& renderPass, std::shared_ptr<Material> material)
                 : RenderSystem(device, renderPass, material) {
             ShaderBuilder shaderBuilder(device);
             m_pipelineLayout = VK_NULL_HANDLE;

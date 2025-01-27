@@ -108,11 +108,7 @@ namespace Kaamoo {
         void createRayTracingPipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
         
         void createComputePipeline(const PipelineConfigureInfo &pipelineConfigureInfo);
-
-#endif
-
-#ifdef RAY_TRACING
-    public:
+        
     public:
         const VkStridedDeviceAddressRegionKHR &getGenRegion() const {
             return m_genRegion;

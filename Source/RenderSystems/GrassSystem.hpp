@@ -5,7 +5,7 @@
 namespace Kaamoo {
     class GrassSystem : public RenderSystem {
     public:
-        GrassSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) : RenderSystem(device, renderPass, material) {
+        GrassSystem(Device &device,const VkRenderPass& renderPass,std::shared_ptr<Material>& material) : RenderSystem(device, renderPass, material) {
         }
 
     private:

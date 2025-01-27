@@ -58,11 +58,11 @@ namespace Kaamoo {
             return commandBuffers[currentFrameIndex];
         }
 
-        VkRenderPass getSwapChainRenderPass() {
+        const VkRenderPass& getSwapChainRenderPass(){
             return swapChain->getRenderPass();
         }
 
-        VkRenderPass getShadowRenderPass() {
+        const VkRenderPass& getShadowRenderPass() const{
             return shadowRenderPass;
         }
 

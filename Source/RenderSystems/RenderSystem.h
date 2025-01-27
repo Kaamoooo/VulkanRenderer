@@ -21,11 +21,11 @@ namespace Kaamoo {
         glm::vec4 color{};
         float radius;
     };
-    
+
     class RenderSystem {
-        
+
     public:
-        RenderSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material);
+        RenderSystem(Device &device, const VkRenderPass &renderPass, const std::shared_ptr<Material> material);
 
         virtual void Init();
 
@@ -35,9 +35,9 @@ namespace Kaamoo {
 
         RenderSystem &operator=(const RenderSystem &) = delete;
 
-        virtual void render(FrameInfo &frameInfo,GameObject* gameObject = nullptr);
-        
-        
+        virtual void render(FrameInfo &frameInfo, GameObject *gameObject = nullptr);
+
+
         template<class T>
         void UpdateGlobalUboBuffer(T &globalUbo, uint32_t frameIndex) {
             m_material->getBufferPointers()[0]->writeToIndex(&globalUbo, frameIndex);

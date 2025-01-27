@@ -3,7 +3,6 @@
 #include "RenderSystem.h"
 
 namespace Kaamoo {
-    const std::string RayTracingDenoiseComputeShaderName = "Compute/RayTracingDenoise.comp.spv";
 
     class ComputeSystem : public RenderSystem {
     public:
@@ -14,7 +13,7 @@ namespace Kaamoo {
             alignas(16)glm::mat4 viewMatrix[2];
         };
 
-        ComputeSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) :
+        ComputeSystem(Device &device,const VkRenderPass& renderPass, std::shared_ptr<Material> material) :
                 RenderSystem(device, renderPass, material) {};
 
         ComputeSystem(const RenderSystem &) = delete;

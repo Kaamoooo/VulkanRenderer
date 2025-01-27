@@ -5,7 +5,7 @@
 namespace Kaamoo {
     class SkyBoxSystem : public RenderSystem {
     public:
-        SkyBoxSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material)
+        SkyBoxSystem(Device &device,const VkRenderPass& renderPass,std::shared_ptr<Material> material)
                 : RenderSystem(device, renderPass, material) {};
 
     private:

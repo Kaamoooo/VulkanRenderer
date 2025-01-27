@@ -12,7 +12,7 @@
 namespace Kaamoo {
     class ShadowSystem {
     public:
-        ShadowSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) : device{device}, material{material} {
+        ShadowSystem(Device &device, const VkRenderPass& renderPass, const std::shared_ptr<Material>& material) : device{device}, material{material} {
             createPipelineLayout();
             createPipeline(renderPass);
         }

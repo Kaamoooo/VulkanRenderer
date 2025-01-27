@@ -1,4 +1,6 @@
-﻿#include "RenderSystems/RenderSystem.h"
+﻿#include <utility>
+
+#include "RenderSystems/RenderSystem.h"
 #include "RenderSystems/ShadowSystem.hpp"
 #include "RenderSystems/GrassSystem.hpp"
 #include "RenderSystems/SkyBoxSystem.hpp"
@@ -10,7 +12,10 @@
 namespace Kaamoo {
     class RenderManager {
     public:
-        RenderManager() {};
+        RenderManager(std::shared_ptr<ResourceManager> resourceManager) {
+            m_resourceManager = std::move(resourceManager);
+            CreateRenderSystems(m_resourceManager->GetMaterials(), m_resourceManager->GetDevice(), m_resourceManager->GetRenderer());
+        };
 
         ~RenderManager() {};
 
@@ -127,8 +132,6 @@ namespace Kaamoo {
                 if (_gameObject.TryGetComponent(_meshRendererComponent)) {
                     _renderQueue.push_back(std::make_pair(m_renderSystemMap[_meshRendererComponent->GetMaterialID()], &_gameObject));
                     auto _renderSystem = m_renderSystemMap[_meshRendererComponent->GetMaterialID()];
-//                    _renderSystem->UpdateGlobalUboBuffer(ubo, _frameIndex);
-//                    _renderSystem->render(frameInfo, _gameObject);
                 }
             }
 
@@ -161,6 +164,8 @@ namespace Kaamoo {
         }
 
     private:
+        std::shared_ptr<ResourceManager> m_resourceManager;
+
         std::unordered_map<id_t, std::shared_ptr<RenderSystem>> m_renderSystemMap;
         std::shared_ptr<PostSystem> m_postSystem;
         std::shared_ptr<GizmosRenderSystem> m_gizmosRenderSystem;

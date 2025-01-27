@@ -18,13 +18,13 @@ namespace Kaamoo {
 
         ~MyWindow();
 
-        bool shouldClose() {
+        bool shouldClose() const{
             return glfwWindowShouldClose(window);
         };
 
         void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
 
-        VkExtent2D getCurrentExtent() {
+        VkExtent2D getCurrentExtent() const{
             return {static_cast<uint32_t>(m_windowWidth), static_cast<uint32_t>(m_windowHeight)};
         };
         

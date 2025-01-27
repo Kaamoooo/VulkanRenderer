@@ -61,7 +61,7 @@ namespace Kaamoo {
 
         VkCommandPool getCommandPool() { return commandPool; }
 
-        VkDevice device() { return device_; }
+        const VkDevice& device() const { return device_; }
 
         VkSurfaceKHR surface() { return surface_; }
 

@@ -3,9 +3,6 @@
 #include "RenderSystem.h"
 
 namespace Kaamoo {
-    const std::string PostVertexShaderName = "Post/passthrough.vert.spv";
-    const std::string PostFragmentShaderName = "Post/post.frag.spv";
-
     class PostSystem : public RenderSystem {
     public:
         struct PushConstant {
@@ -14,13 +11,13 @@ namespace Kaamoo {
             alignas(16)glm::mat4 viewMatrix[2];
         };
 
-        PostSystem(Device &device, VkRenderPass renderPass, std::shared_ptr<Material> material) :
+        PostSystem(Device &device, const VkRenderPass& renderPass, std::shared_ptr<Material> material) :
                 RenderSystem(device, renderPass, material) {};
 
         PostSystem(const RenderSystem &) = delete;
 
 
-        void render(FrameInfo &frameInfo,GameObject* gameObject = nullptr) override{
+        void render(FrameInfo &frameInfo, GameObject *gameObject = nullptr) override {
             m_pipeline->bind(frameInfo.commandBuffer);
 
             std::vector<VkDescriptorSet> descriptorSets;
@@ -29,11 +26,11 @@ namespace Kaamoo {
                     descriptorSets.push_back(*descriptorSetPointer);
                 }
             }
-            
+
             m_pushConstant.rayTracingImageIndex = frameInfo.frameIndex % 2;
             m_pushConstant.viewMatrix[m_pushConstant.rayTracingImageIndex] = frameInfo.globalUbo.viewMatrix;
             vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &m_pushConstant);
-            
+
             vkCmdBindDescriptorSets(
                     frameInfo.commandBuffer,
                     VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -45,13 +42,13 @@ namespace Kaamoo {
                     nullptr
             );
             vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
-            
+
             m_pushConstant.firstFrame = false;
         }
 
     private:
         PushConstant m_pushConstant{};
-        
+
         void createPipelineLayout() override {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -75,14 +72,14 @@ namespace Kaamoo {
             };
         }
 
-        void createPipeline(VkRenderPass renderPass) override{
+        void createPipeline(VkRenderPass renderPass) override {
             PipelineConfigureInfo pipelineConfigureInfo{};
             Pipeline::setDefaultPipelineConfigureInfo(pipelineConfigureInfo);
-            
+
             //No input bindings
             pipelineConfigureInfo.vertexBindingDescriptions.clear();
             pipelineConfigureInfo.attributeDescriptions.clear();
-            
+
             pipelineConfigureInfo.rasterizationInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
             pipelineConfigureInfo.depthStencilInfo.depthTestEnable = VK_FALSE;
             pipelineConfigureInfo.depthStencilInfo.depthWriteEnable = VK_FALSE;
@@ -94,7 +91,7 @@ namespace Kaamoo {
                     pipelineConfigureInfo,
                     m_material
             );
-        };;
+        }
 
     };
 }
