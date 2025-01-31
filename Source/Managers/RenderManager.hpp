@@ -1,13 +1,13 @@
 ﻿#include <utility>
 
-#include "RenderSystems/RenderSystem.h"
-#include "RenderSystems/ShadowSystem.hpp"
-#include "RenderSystems/GrassSystem.hpp"
-#include "RenderSystems/SkyBoxSystem.hpp"
-#include "RenderSystems/RayTracingSystem.hpp"
-#include "RenderSystems/PostSystem.hpp"
-#include "RenderSystems/GizmosRenderSystem.hpp"
-#include "RenderSystems/ComputeSystem.hpp"
+#include "../RenderSystems/RenderSystem.h"
+#include "../RenderSystems/ShadowSystem.hpp"
+#include "../RenderSystems/GrassSystem.hpp"
+#include "../RenderSystems/SkyBoxSystem.hpp"
+#include "../RenderSystems/RayTracingSystem.hpp"
+#include "../RenderSystems/PostSystem.hpp"
+#include "../RenderSystems/GizmosRenderSystem.hpp"
+#include "../RenderSystems/ComputeSystem.hpp"
 
 namespace Kaamoo {
     class RenderManager {
@@ -76,23 +76,23 @@ namespace Kaamoo {
             }
         }
 
-        void UpdateUbo(GlobalUbo &ubo, float totalTime) {
-            ubo.lightNum = LightComponent::GetLightNum();
-            ubo.curTime = totalTime;
+        void UpdateUbo(FrameInfo &frameInfo) {
 #ifndef RAY_TRACING
-            ubo.shadowViewMatrix[0] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 90, 180));
-            ubo.shadowViewMatrix[1] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, -90, 180));
-            ubo.shadowViewMatrix[2] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(-90, 0, 0));
-            ubo.shadowViewMatrix[3] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(90, 0, 0));
-            ubo.shadowViewMatrix[4] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(180, 0, 0));
-            ubo.shadowViewMatrix[5] = m_shadowSystem->calculateViewMatrixForRotation(ubo.lights[0].position, glm::vec3(0, 0, 180));
-            ubo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 5.0f);
-            ubo.lightProjectionViewMatrix = ubo.shadowProjMatrix * ubo.shadowViewMatrix[0];
+            frameInfo.globalUbo.shadowViewMatrix[0] = m_shadowSystem->calculateViewMatrixForRotation(frameInfo.globalUbo.lights[0].position, glm::vec3(0, 90, 180));
+            frameInfo.globalUbo.shadowViewMatrix[1] = m_shadowSystem->calculateViewMatrixForRotation(frameInfo.globalUbo.lights[0].position, glm::vec3(0, -90, 180));
+            frameInfo.globalUbo.shadowViewMatrix[2] = m_shadowSystem->calculateViewMatrixForRotation(frameInfo.globalUbo.lights[0].position, glm::vec3(-90, 0, 0));
+            frameInfo.globalUbo.shadowViewMatrix[3] = m_shadowSystem->calculateViewMatrixForRotation(frameInfo.globalUbo.lights[0].position, glm::vec3(90, 0, 0));
+            frameInfo.globalUbo.shadowViewMatrix[4] = m_shadowSystem->calculateViewMatrixForRotation(frameInfo.globalUbo.lights[0].position, glm::vec3(180, 0, 0));
+            frameInfo.globalUbo.shadowViewMatrix[5] = m_shadowSystem->calculateViewMatrixForRotation(frameInfo.globalUbo.lights[0].position, glm::vec3(0, 0, 180));
+            frameInfo.globalUbo.shadowProjMatrix = CameraComponent::CorrectionMatrix * glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 5.0f);
+            frameInfo.globalUbo.lightProjectionViewMatrix = frameInfo.globalUbo.shadowProjMatrix * frameInfo.globalUbo.shadowViewMatrix[0];
 #endif
 
         }
 
         void UpdateRendering(Renderer &renderer, FrameInfo &frameInfo, HierarchyTree &hierarchyTree) {
+            UpdateUbo(frameInfo);
+            
             auto _frameIndex = frameInfo.frameIndex;
 #ifdef RAY_TRACING
             GUI::BeginFrame(ImVec2(frameInfo.extent.width, frameInfo.extent.height));
@@ -114,7 +114,6 @@ namespace Kaamoo {
             m_postSystem->UpdateGlobalUboBuffer(frameInfo.globalUbo, _frameIndex);
             m_postSystem->render(frameInfo);
 #else
-
             renderer.beginShadowRenderPass(frameInfo.commandBuffer);
             m_shadowSystem->UpdateGlobalUboBuffer(frameInfo.globalUbo, _frameIndex);
             m_shadowSystem->renderShadow(frameInfo);
@@ -128,6 +127,7 @@ namespace Kaamoo {
             std::vector<std::pair<std::shared_ptr<RenderSystem>, GameObject *>> _renderQueue;
             for (auto &item: frameInfo.gameObjects) {
                 auto &_gameObject = item.second;
+                if (!_gameObject.IsActive()) continue;
                 MeshRendererComponent *_meshRendererComponent;
                 if (_gameObject.TryGetComponent(_meshRendererComponent)) {
                     _renderQueue.push_back(std::make_pair(m_renderSystemMap[_meshRendererComponent->GetMaterialID()], &_gameObject));

@@ -84,7 +84,7 @@ namespace Kaamoo {
 
             GrassPushConstant push{};
             //Todo: Huh?
-            if (moveObject == nullptr && gameObject->getName() == "Vase") {
+            if (moveObject == nullptr && gameObject->GetName() == "Vase") {
                 moveObject = gameObject;
             }
             if (moveObject != nullptr)

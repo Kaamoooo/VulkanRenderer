@@ -60,6 +60,7 @@ namespace Kaamoo {
     struct FrameInfo {
         int frameIndex;
         float frameTime;
+        float totalTime;
         VkCommandBuffer commandBuffer;
         std::unordered_map<id_t, GameObject> &gameObjects;
         Material::Map &materials;

@@ -15,7 +15,7 @@ namespace Kaamoo {
     inline const static std::string MaterialsFileName = "Materials.json";
     inline const static std::string ComponentsFileName = "Components.json";
     inline const static std::string SkyboxCubeMapName = "Cubemap/SwedishRoyalCastle";
-    
+
     const int MATERIAL_NUMBER = 16;
 
     class ResourceManager {
@@ -37,12 +37,17 @@ namespace Kaamoo {
 
         }
 
-        
+
         Device &GetDevice() { return m_device; }
+
         MyWindow &GetWindow() { return m_window; }
+
         HierarchyTree &GetHierarchyTree() { return m_hierarchyTree; }
+
         Material::Map &GetMaterials() { return m_materials; }
+
         GameObject::Map &GetGameObjects() { return m_gameObjects; }
+
         Renderer &GetRenderer() { return m_renderer; }
 
 #ifdef RAY_TRACING
@@ -74,38 +79,42 @@ namespace Kaamoo {
                     auto &gameObject = GameObject::createGameObject();
                     const rapidjson::Value &object = gameObjectsDocument[i];
 
-                    const rapidjson::Value &transformJsonObj = object["transform"];
+                    if (object.HasMember("transform")) {
+                        const rapidjson::Value &transformJsonObj = object["transform"];
+                        int32_t transformId = HierarchyTree::DEFAULT_TRANSFORM_ID;
+                        if (transformJsonObj.HasMember("id")) {
+                            transformId = transformJsonObj["id"].GetInt();
+                        }
 
-                    int32_t transformId = HierarchyTree::DEFAULT_TRANSFORM_ID;
-                    if (transformJsonObj.HasMember("id")) {
-                        transformId = transformJsonObj["id"].GetInt();
-                    }
+                        gameObject.transform->SetTransformId(transformId);
 
-                    gameObject.transform->SetTransformId(transformId);
-
-                    if (transformJsonObj.HasMember("childrenIds")) {
-                        const rapidjson::Value &childrenIdsArray = transformJsonObj["childrenIds"];
-                        for (rapidjson::SizeType j = 0; j < childrenIdsArray.Size(); j++) {
-                            const rapidjson::Value &arrayId = childrenIdsArray[j];
-                            const int childrenId = arrayId.GetInt();
-                            if (transformId != -1) {
-                                transformIdToParentGameObjMap[childrenId] = &gameObject;
+                        if (transformJsonObj.HasMember("childrenIds")) {
+                            const rapidjson::Value &childrenIdsArray = transformJsonObj["childrenIds"];
+                            for (rapidjson::SizeType j = 0; j < childrenIdsArray.Size(); j++) {
+                                const rapidjson::Value &arrayId = childrenIdsArray[j];
+                                const int childrenId = arrayId.GetInt();
+                                if (transformId != -1) {
+                                    transformIdToParentGameObjMap[childrenId] = &gameObject;
+                                }
                             }
                         }
+
+                        const rapidjson::Value &translationArray = transformJsonObj["translation"];
+                        glm::vec3 translation{translationArray[0].GetFloat(), translationArray[1].GetFloat(),
+                                              translationArray[2].GetFloat()};
+
+                        const rapidjson::Value &scaleArray = transformJsonObj["scale"];
+                        glm::vec3 scale{scaleArray[0].GetFloat(), scaleArray[1].GetFloat(), scaleArray[2].GetFloat()};
+
+                        const rapidjson::Value &rotationArray = transformJsonObj["rotation"];
+                        glm::vec3 rotation{rotationArray[0].GetFloat(), rotationArray[1].GetFloat(),
+                                           rotationArray[2].GetFloat()};
+
+                        gameObject.transform->SetTranslation(translation);
+                        gameObject.transform->SetScale(scale);
+                        gameObject.transform->SetRotation(glm::radians(rotation));
                     }
-
-                    const rapidjson::Value &translationArray = transformJsonObj["translation"];
-                    glm::vec3 translation{translationArray[0].GetFloat(), translationArray[1].GetFloat(),
-                                          translationArray[2].GetFloat()};
-
-                    const rapidjson::Value &scaleArray = transformJsonObj["scale"];
-                    glm::vec3 scale{scaleArray[0].GetFloat(), scaleArray[1].GetFloat(), scaleArray[2].GetFloat()};
-
-                    const rapidjson::Value &rotationArray = transformJsonObj["rotation"];
-                    glm::vec3 rotation{rotationArray[0].GetFloat(), rotationArray[1].GetFloat(),
-                                       rotationArray[2].GetFloat()};
-
-
+                    
                     if (object.HasMember("componentIds")) {
                         auto componentIdsArray = object["componentIds"].GetArray();
                         for (rapidjson::SizeType j = 0; j < componentIdsArray.Size(); j++) {
@@ -117,12 +126,16 @@ namespace Kaamoo {
                             }
                         }
                     }
-                    gameObject.setName(object["name"].GetString());
-                    gameObject.transform->SetTranslation(translation);
-                    gameObject.transform->SetScale(scale);
-                    gameObject.transform->SetRotation(glm::radians(rotation));
 
-                    m_gameObjects.emplace(gameObject.getId(), std::move(gameObject));
+                    if (object.HasMember("name")) {
+                        gameObject.SetName(object["name"].GetString());
+                    }
+
+                    if (object.HasMember("IsActive")) {
+                        gameObject.SetActive(object["IsActive"].GetBool());
+                    }
+
+                    m_gameObjects.emplace(gameObject.GetId(), std::move(gameObject));
                 }
             }
 
@@ -132,9 +145,9 @@ namespace Kaamoo {
                     auto parent = transformIdToParentGameObjMap[gameObject.transform->GetTransformId()];
                     parent->transform->AddChild(gameObject.transform);
                     //Make sure parent node exists in the hierarchy tree before inserting child node.
-                    m_hierarchyTree.AddNode(parent->getId(), gameObject.getId(), &gameObject);
+                    m_hierarchyTree.AddNode(parent->GetId(), gameObject.GetId(), &gameObject);
                 } else {
-                    m_hierarchyTree.AddNode(HierarchyTree::ROOT_ID, gameObject.getId(), &gameObject);
+                    m_hierarchyTree.AddNode(HierarchyTree::ROOT_ID, gameObject.GetId(), &gameObject);
                 }
                 gameObject.OnLoad();
             }
@@ -622,7 +635,7 @@ namespace Kaamoo {
         Renderer m_renderer{m_window, m_device};
         ShaderBuilder m_shaderBuilder{m_device};
         std::shared_ptr<DescriptorPool> m_globalPool;
-        
+
         GameObject::Map m_gameObjects;
         HierarchyTree m_hierarchyTree;
         Material::Map m_materials;

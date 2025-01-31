@@ -19,8 +19,9 @@
 
 #include "ComponentFactory.hpp"
 #include "GUI.hpp"
-#include "ResourceManager.hpp"
-#include "RenderManager.hpp"
+#include "Managers/ResourceManager.hpp"
+#include "Managers/LogicManager.hpp"
+#include "Managers/RenderManager.hpp"
 
 namespace Kaamoo {
     class Application {
@@ -28,21 +29,22 @@ namespace Kaamoo {
         Application() {
             m_resourceManager = std::make_shared<ResourceManager>();
             m_renderManager = std::make_unique<RenderManager>(m_resourceManager);
+            m_logicManager = std::make_unique<LogicManager>(m_resourceManager);
         }
 
         ~Application() {
             GUI::Destroy();
         }
-        
-        void run(){
+
+        void run() {
             auto currentTime = std::chrono::high_resolution_clock::now();
             float totalTime = 0;
             Awake();
-            auto& _window = m_resourceManager->GetWindow();
-            auto& _renderer = m_resourceManager->GetRenderer();
-            auto& _gameObjects = m_resourceManager->GetGameObjects();
-            auto& _materials = m_resourceManager->GetMaterials();
-            auto& _device = m_resourceManager->GetDevice();
+            auto &_window = m_resourceManager->GetWindow();
+            auto &_renderer = m_resourceManager->GetRenderer();
+            auto &_gameObjects = m_resourceManager->GetGameObjects();
+            auto &_materials = m_resourceManager->GetMaterials();
+            auto &_device = m_resourceManager->GetDevice();
             while (!_window.shouldClose()) {
                 glfwPollEvents();
                 auto newTime = std::chrono::high_resolution_clock::now();
@@ -52,9 +54,8 @@ namespace Kaamoo {
 
                 if (auto commandBuffer = _renderer.beginFrame()) {
                     int frameIndex = _renderer.getFrameIndex();
-                    FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, _gameObjects, _materials, m_ubo, _window.getCurrentExtent(), GUI::GetSelectedId(), false};
+                    FrameInfo frameInfo{frameIndex, frameTime, totalTime, commandBuffer, _gameObjects, _materials, m_ubo, _window.getCurrentExtent(), GUI::GetSelectedId(), false};
                     UpdateComponents(frameInfo);
-                    UpdateUbo(totalTime);
                     UpdateRendering(frameInfo);
                 }
 
@@ -68,17 +69,13 @@ namespace Kaamoo {
 
     private:
         GlobalUbo m_ubo{};
-        std::shared_ptr<VkFramebuffer> m_shadowFramebuffer;
 
-        std::unique_ptr<RenderManager> m_renderManager;
         std::shared_ptr<ResourceManager> m_resourceManager;
+        std::unique_ptr<RenderManager> m_renderManager;
+        std::unique_ptr<LogicManager> m_logicManager;
 
-        void UpdateUbo(float totalTime) {
-            m_renderManager->UpdateUbo(m_ubo, totalTime);
-        }
-
-        void Awake(){
-            auto& _gameObjects = m_resourceManager->GetGameObjects();
+        void Awake() {
+            auto &_gameObjects = m_resourceManager->GetGameObjects();
 
             ComponentAwakeInfo awakeInfo{};
             for (auto &pair: _gameObjects) {
@@ -88,67 +85,13 @@ namespace Kaamoo {
         }
 
         void UpdateComponents(FrameInfo &frameInfo) {
-            ComponentUpdateInfo updateInfo{};
-            auto& _renderer = m_resourceManager->GetRenderer();
-            auto& _gameObjects = m_resourceManager->GetGameObjects();
-            RendererInfo rendererInfo{_renderer.getAspectRatio(), _renderer.FOV_Y, _renderer.NEAR_CLIP, _renderer.FAR_CLIP};
-            updateInfo.frameInfo = &frameInfo;
-            updateInfo.rendererInfo = &rendererInfo;
-
-            static bool firstFrame = true;
-            if (firstFrame) {
-                for (auto &pair: _gameObjects) {
-                    updateInfo.gameObject = &pair.second;
-                    pair.second.Start(updateInfo);
-                }
-                firstFrame = false;
-            }
-
-            FixedUpdateComponents(frameInfo);
-
-            for (auto &pair: _gameObjects) {
-                updateInfo.gameObject = &pair.second;
-                pair.second.Update(updateInfo);
-            }
-
-            for (auto &pair: _gameObjects) {
-                updateInfo.gameObject = &pair.second;
-                pair.second.LateUpdate(updateInfo);
-            }
-        }
-
-        void FixedUpdateComponents(FrameInfo &frameInfo) {
-            auto& _renderer = m_resourceManager->GetRenderer();
-            auto& _gameObjects = m_resourceManager->GetGameObjects();
-            static float reservedFrameTime = 0;
-            float frameTime = frameInfo.frameTime + reservedFrameTime;
-            
-            while (frameTime >= FIXED_UPDATE_INTERVAL) {
-                frameTime -= FIXED_UPDATE_INTERVAL;
-
-                ComponentUpdateInfo updateInfo{};
-                RendererInfo rendererInfo{_renderer.getAspectRatio()};
-                updateInfo.frameInfo = &frameInfo;
-                updateInfo.rendererInfo = &rendererInfo;
-                for (auto &pair: _gameObjects) {
-                    updateInfo.gameObject = &pair.second;
-                    pair.second.FixedUpdate(updateInfo);
-                }
-                for (auto &pair: _gameObjects) {
-                    updateInfo.gameObject = &pair.second;
-                    pair.second.LateFixedUpdate(updateInfo);
-                }
-            }
-            reservedFrameTime = frameTime;
-//            static int frameIndex = 0;
-//            std::cout << "Frame " << frameIndex << " updated " << times << " times: " << frameInfo.frameTime << std::endl;
-//            frameIndex++;
+            m_logicManager->UpdateComponents(frameInfo);
         }
 
         void UpdateRendering(FrameInfo &frameInfo) {
-            auto& _renderer = m_resourceManager->GetRenderer();
-            auto& _gameObjects = m_resourceManager->GetGameObjects();
-            auto& _hierarchyTree = m_resourceManager->GetHierarchyTree();
+            auto &_renderer = m_resourceManager->GetRenderer();
+            auto &_gameObjects = m_resourceManager->GetGameObjects();
+            auto &_hierarchyTree = m_resourceManager->GetHierarchyTree();
 #ifdef RAY_TRACING
             auto& _pGameObjectDescBuffer = m_resourceManager->GetGameObjectDescBuffer();
             auto& _pGameObjectDescs = m_resourceManager->GetGameObjectDescs();

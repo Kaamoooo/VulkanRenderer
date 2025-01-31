@@ -175,7 +175,7 @@ namespace Kaamoo {
                 auto &gameObject = pGameObjectsMap->at(selectedId);
                 ImGui::Text("Name:");
                 ImGui::SameLine(70);
-                ImGui::Text(gameObject.getName().c_str());
+                ImGui::Text(gameObject.GetName().c_str());
 
                 //Transform is a special component of game object, so I handle it separately.
                 if (ImGui::TreeNode("Transform")) {
@@ -239,26 +239,48 @@ namespace Kaamoo {
 
         static void ShowHierarchyTree(HierarchyTree::Node *node) {
             for (auto &child: node->children) {
+                ImGui::SetNextItemAllowOverlap();
                 if (!child->children.empty()) {
-                    if (ImGui::TreeNodeEx(child->gameObject->getName().c_str(),
-                                          ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | (selectedId == child->gameObject->getId() ? ImGuiTreeNodeFlags_Selected : 0))) {
+                    if (ImGui::TreeNodeEx(child->gameObject->GetName().c_str(),
+                                          ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | (selectedId == child->gameObject->GetId() ? ImGuiTreeNodeFlags_Selected : 0))) {
                         if (ImGui::IsItemClicked()) {
-                            selectedId = child->gameObject->getId();
+                            selectedId = child->gameObject->GetId();
                             bSelected = true;
                         }
+                        DrawSelectionRect(child);
                         ShowHierarchyTree(child);
                         ImGui::TreePop();
                     }
                 } else {
-                    ImGui::TreeNodeEx(child->gameObject->getName().c_str(),
+                    ImGui::TreeNodeEx(child->gameObject->GetName().c_str(),
                                       ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanAvailWidth |
-                                      (selectedId == child->gameObject->getId() ? ImGuiTreeNodeFlags_Selected : 0));
+                                      (selectedId == child->gameObject->GetId() ? ImGuiTreeNodeFlags_Selected : 0));
                     if (ImGui::IsItemClicked()) {
-                        selectedId = child->gameObject->getId();
+                        selectedId = child->gameObject->GetId();
                         bSelected = true;
                     }
+                    DrawSelectionRect(child);
+
                 }
             }
+        }
+
+    private:
+        static void DrawSelectionRect(HierarchyTree::Node *child) {
+            auto _extent = ImGui::GetContentRegionAvail();
+
+            ImGui::PushID(child->gameObject->GetId());
+
+            ImGui::SameLine(_extent.x);
+
+            bool _isSelected = child->gameObject->IsActive();
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+            if (ImGui::Checkbox(("##Checkbox" + std::to_string(child->gameObject->GetId())).c_str(), &_isSelected)) {
+                child->gameObject->SetActive(_isSelected);
+            }
+            ImGui::PopStyleVar();
+
+            ImGui::PopID();
         }
     };
 }

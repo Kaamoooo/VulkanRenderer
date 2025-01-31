@@ -29,18 +29,20 @@ namespace Kaamoo {
             return *gameObject;
         }
 
-        id_t getId() { return id; }
 
-        //移动构造函数
         GameObject(GameObject &&) = default;
 
         GameObject &operator=(GameObject &) = delete;
 
         GameObject &operator=(GameObject &&) = default;
+        
+        id_t GetId() { return id; }
 
-        std::string getName() const { return name; }
-
-        void setName(std::string name) { GameObject::name = std::move(name); }
+        std::string GetName() const { return name; }
+        void SetName(std::string name) { GameObject::name = std::move(name); }
+        
+        bool IsActive() const { return m_isActive; }
+        void SetActive(bool isActive) { m_isActive = isActive; }
 
         std::vector<Component *> getComponents() { return m_components; }
 
@@ -116,9 +118,8 @@ namespace Kaamoo {
         }
 
     private:
+        bool m_isActive = true;
         std::vector<Component *> m_components;
-
-        float m_maxOriginalVisualRadius = 1;
 
         id_t id;
 
