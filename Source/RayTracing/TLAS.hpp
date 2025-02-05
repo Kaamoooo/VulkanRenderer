@@ -17,9 +17,10 @@ namespace Kaamoo {
             }
         }
 
-        static void updateTLAS(id_t tlasId, glm::mat4 translation) {
+        static void updateTLAS(id_t tlasId, glm::mat4 translation, uint32_t mask = 0xFF){
             id_t instanceIndex = tlasIdToInstanceIndexMap[tlasId];
             instances[instanceIndex].transform = Utils::GlmMatrixToVulkanMatrix(translation);
+            instances[instanceIndex].mask = mask;
             shouldUpdate = true;
         }
 

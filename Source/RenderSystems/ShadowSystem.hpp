@@ -61,7 +61,7 @@ namespace Kaamoo {
                                    sizeof(ShadowPushConstant),
                                    &push);
                 //too much draw call here, but currently I have no better ideas about how to batch all models together
-                if (meshRendererComponent->GetModelPtr() != nullptr) {
+                if (meshRendererComponent->GetModelPtr() != nullptr && obj.IsActive()) {
                     meshRendererComponent->GetModelPtr()->bind(frameInfo.commandBuffer);
                     meshRendererComponent->GetModelPtr()->draw(frameInfo.commandBuffer);
 //                break;

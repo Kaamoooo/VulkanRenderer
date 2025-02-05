@@ -112,12 +112,13 @@ void main()
 
     vec3 lo = vec3(0, 0, 0);
     for (int i = 0; i < ubo.lightNum; i++) {
-        //Directional Light for now
         Light light = ubo.lights[i];
         vec3 pixelToLight;
         float attenuation = 1;
         float shadowRayDistance = 10000;
         switch (light.lightCategory) {
+            case -1:
+                continue;
             case 0:
                 float distance = length(light.position.xyz - worldPos);
                 shadowRayDistance = distance;

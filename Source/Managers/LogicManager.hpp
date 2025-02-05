@@ -17,11 +17,12 @@ namespace Kaamoo {
         void UpdateComponents(FrameInfo &frameInfo) {
             UpdateUbo(frameInfo);
             ComponentUpdateInfo updateInfo{};
-            auto& _renderer = m_resourceManager->GetRenderer();
-            auto& _gameObjects = m_resourceManager->GetGameObjects();
+            auto &_renderer = m_resourceManager->GetRenderer();
+            auto &_gameObjects = m_resourceManager->GetGameObjects();
             RendererInfo rendererInfo{_renderer.getAspectRatio(), _renderer.FOV_Y, _renderer.NEAR_CLIP, _renderer.FAR_CLIP};
             updateInfo.frameInfo = &frameInfo;
             updateInfo.rendererInfo = &rendererInfo;
+
 
             static bool firstFrame = true;
             if (firstFrame) {
@@ -33,9 +34,18 @@ namespace Kaamoo {
                 firstFrame = false;
             }
 
-            FixedUpdateComponents(frameInfo);
+            for (auto &pair: _gameObjects) {
+                auto& _gameObject = pair.second;
+                updateInfo.gameObject = &_gameObject;
+                if (_gameObject.IsOnDisabled()) {
+                    _gameObject.OnDisable(updateInfo);
+                }
+                if (_gameObject.IsOnEnabled()){
+                    _gameObject.OnEnable(updateInfo);
+                }
+            }
 
-            for (auto &pair: _gameObjects) {                
+            for (auto &pair: _gameObjects) {
                 if (!pair.second.IsActive()) continue;
                 updateInfo.gameObject = &pair.second;
                 pair.second.Update(updateInfo);
@@ -46,11 +56,13 @@ namespace Kaamoo {
                 updateInfo.gameObject = &pair.second;
                 pair.second.LateUpdate(updateInfo);
             }
+
+            FixedUpdateComponents(frameInfo);
         }
 
         void FixedUpdateComponents(FrameInfo &frameInfo) {
-            auto& _renderer = m_resourceManager->GetRenderer();
-            auto& _gameObjects = m_resourceManager->GetGameObjects();
+            auto &_renderer = m_resourceManager->GetRenderer();
+            auto &_gameObjects = m_resourceManager->GetGameObjects();
             static float reservedFrameTime = 0;
             float frameTime = frameInfo.frameTime + reservedFrameTime;
 
@@ -74,12 +86,13 @@ namespace Kaamoo {
             }
             reservedFrameTime = frameTime;
         }
+
 //Todo: Light is not active but it still contributes lighting
         void UpdateUbo(FrameInfo &frameInfo) {
             frameInfo.globalUbo.lightNum = LightComponent::GetLightNum();
             frameInfo.globalUbo.curTime = frameInfo.totalTime;
         }
-        
+
     private:
         std::shared_ptr<ResourceManager> m_resourceManager;
     };

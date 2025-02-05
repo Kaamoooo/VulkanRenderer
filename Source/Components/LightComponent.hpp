@@ -54,6 +54,10 @@ namespace Kaamoo {
             light.direction = rotateMatrix * glm::vec4(0, 0, 1, 0);
             updateInfo.frameInfo->globalUbo.lights[lightIndex] = light;
         }
+        
+        void OnDisable(const ComponentUpdateInfo &updateInfo) override {
+            updateInfo.frameInfo->globalUbo.lights[lightIndex].lightCategory = LightCategory::NONE;
+        }
 
 #ifdef RAY_TRACING
 

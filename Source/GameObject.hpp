@@ -43,6 +43,12 @@ namespace Kaamoo {
         
         bool IsActive() const { return m_isActive; }
         void SetActive(bool isActive) { m_isActive = isActive; }
+        
+        bool IsOnDisabled() const { return m_onDisabled; }
+        void SetOnDisabled(bool onDisabled) { m_onDisabled = onDisabled; }
+        
+        bool IsOnEnabled() const { return m_onEnabled; }
+        void SetOnEnabled(bool onEnabled) { m_onEnabled = onEnabled; }
 
         std::vector<Component *> getComponents() { return m_components; }
 
@@ -116,9 +122,27 @@ namespace Kaamoo {
                 component->LateFixedUpdate(updateInfo);
             }
         }
+        
+        void OnDisable(const ComponentUpdateInfo &updateInfo) {
+            m_isActive = false;
+            m_onDisabled = false;
+            for (auto &component: m_components) {
+                component->OnDisable(updateInfo);
+            }
+        }
+
+        void OnEnable(const ComponentUpdateInfo &updateInfo) {
+            m_isActive = true;
+            m_onEnabled = false;
+            for (auto &component: m_components) {
+                component->OnEnable(updateInfo);
+            }
+        }
 
     private:
         bool m_isActive = true;
+        bool m_onDisabled = false;
+        bool m_onEnabled = false;
         std::vector<Component *> m_components;
 
         id_t id;

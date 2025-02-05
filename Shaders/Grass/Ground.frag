@@ -36,6 +36,8 @@ void main() {
     for (int i = 0;i < ubo.lightNum; i++) {
         Light light = ubo.lights[i];
 
+        if (light.lightCategory == -1) { continue; }
+
         float lightDistance = distance(worldPos.xyz, light.position.xyz);
         float c0 = 1, c1 = 0.002;
         float d = lightDistance;

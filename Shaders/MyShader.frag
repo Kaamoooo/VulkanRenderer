@@ -32,6 +32,8 @@ void main() {
     for (int i = 0;i < ubo.lightNum; i++) {
         Light light = ubo.lights[i];
 
+        if (light.lightCategory == -1) { continue; }
+
         float lightDistance = distance(worldPos.xyz, light.position.xyz);
         float c0 = 1, c1 = 0.002;
         float d = lightDistance;
@@ -61,7 +63,6 @@ void main() {
 
     vec3 cubeMapDirection = normalize(worldPos.xyz - ubo.lights[0].position.xyz);
     cubeMapDirection.y = -cubeMapDirection.y;
-    //    cubeMapDirection.z = -cubeMapDirection.z;
     int cubeMapIndex = getCubeMapIndex(cubeMapDirection);
     vec4 lightFragPos = ubo.shadowProjMatrix * ubo.shadowViewMatrix[cubeMapIndex] * worldPos;
     float depth = texture(shadowSampler, cubeMapDirection).x;
@@ -69,9 +70,4 @@ void main() {
     float shadowMask = clamp(0, 1, (fragDepth - depth));
     vec4 lightingResult = vec4(fragColor * texColor * (totalDiffuse + ambientLightColor + totalSpecular), 1);
     outColor = lightingResult * (1 - shadowMask);
-//    outColor = worldNormal
-    //    outColor = vec4(cubeMapIndex * 1.0 / 6.0);
-//        outColor = lightingResult;
-    //    outColor = vec4(ubo.curTime, 0, 0, 1);
-    //        outColor = vec4(worldPos.xyz, 1);
 }

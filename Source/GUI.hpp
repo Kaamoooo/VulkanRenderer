@@ -111,7 +111,7 @@ namespace Kaamoo {
                 auto &gameObject = pGameObjectsMap->at(selectedId);
                 ImGui::Text("Name:");
                 ImGui::SameLine(70);
-                ImGui::Text(gameObject.getName().c_str());
+                ImGui::Text(gameObject.GetName().c_str());
 
                 //Transform is a special component of game object, so I handle it separately.
                 if (ImGui::TreeNode("Transform")) {
@@ -275,9 +275,13 @@ namespace Kaamoo {
 
             bool _isSelected = child->gameObject->IsActive();
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-            if (ImGui::Checkbox(("##Checkbox" + std::to_string(child->gameObject->GetId())).c_str(), &_isSelected)) {
-                child->gameObject->SetActive(_isSelected);
+            ImGui::Checkbox(("##Checkbox" + std::to_string(child->gameObject->GetId())).c_str(), &_isSelected);
+
+            if (_isSelected == !child->gameObject->IsActive()) {
+                if (!_isSelected)child->gameObject->SetOnDisabled(true);
+                else child->gameObject->SetOnEnabled(true);
             }
+
             ImGui::PopStyleVar();
 
             ImGui::PopID();

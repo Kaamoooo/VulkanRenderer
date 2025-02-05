@@ -67,6 +67,14 @@ namespace Kaamoo {
 
 #ifdef RAY_TRACING
 
+        void OnDisable(const ComponentUpdateInfo &updateInfo) override {
+            TLAS::updateTLAS(tlasId, updateInfo.gameObject->transform->mat4(), 0x00);
+        }
+        
+        void OnEnable(const ComponentUpdateInfo &updateInfo) override {
+            TLAS::updateTLAS(tlasId, updateInfo.gameObject->transform->mat4(), 0xFF);
+        }
+
         id_t GetTLASId() const {
             return tlasId;
         }
