@@ -136,3 +136,5 @@
 1.21 Optimized rendering related code structure. Added render queue.
 
 1.27 Optimized code structure.
+
+2.5 We can disable a GameObject now.
